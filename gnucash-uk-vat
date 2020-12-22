@@ -5,6 +5,10 @@ import argparse
 import json
 from datetime import datetime, timedelta
 from tabulate import tabulate
+import uuid
+import getpass
+import socket
+import os
 
 import hmrc
 import accounts
@@ -84,6 +88,21 @@ class Auth:
 
 if args.init_config:
 
+    # FIXME: This is SOOOO hacky
+    try:
+        mac = uuid.getnode()
+        mac = ['{:02x}'.format((mac >> ele) & 0xff) for ele in range(0,8*6,8)][::-1]
+        mac = ':'.join(mac)
+    except:
+        mac = '00:00:00:00:00:00'
+
+    uname = os.uname()
+    ua = "%s/%s (%s/%s)" % (
+        uname.sysname, uname.release, "Python", uname.machine
+    )
+
+#'Linux/5.8.7-200.fc32.x86_64 (Intel/x686)',
+
     config = {
         "accounts": {
 	    "file": "accounts/accounts.gnucash",
@@ -100,11 +119,17 @@ if args.init_config:
         },
         "application": {
             "name": "gnucash-uk-vat",
+            "profile": "test",
             "client-id": "<CLIENTID>",
             "client-secret": "<CLIENTSECRET>"
         },
         "identity": {
             "vrn": "<VRN>",
+            "device": str(uuid.uuid1()),
+            "user": getpass.getuser(),
+            "hostname": socket.gethostbyname(socket.gethostname()),
+            "mac-address": mac,
+            "user-agent": ua
         }
     }
 
@@ -117,7 +142,14 @@ if args.init_config:
 config = Config(args.config)
 auth = Auth(args.auth)
 
-h = hmrc.HmrcTest(config, auth)
+prof = config.get("application.profile")
+
+if prof == "prod":
+    h = hmrc.Vat(config, auth)
+elif prof == "test":
+    h = hmrc.VatTest(config, auth)
+else:
+    raise RuntimeError("Profile '%s' is not known." % prof)
 
 if args.authenticate:
     code = h.get_code()
@@ -148,8 +180,8 @@ if args.show_open_obligations:
 
 if args.show_obligations:
 
-    start = datetime.utcnow() - timedelta(days=args.start)
-    end = datetime.utcnow() - timedelta(days=args.end)
+    start = datetime.utcnow() - timedelta(days=int(args.start))
+    end = datetime.utcnow() - timedelta(days=int(args.end))
 
     obs = h.get_obligations(config.get("identity.vrn"), start, end)
 
@@ -188,7 +220,7 @@ if args.submit_vat_return:
     }
     
     for k in range(0, 9):
-        valueName = hmrc.box[k]
+        valueName = hmrc.vat_box[k]
         rtn[valueName] = vals[valueName]["total"]
 
     print("%-30s: %15.2f" % ("VAT due on sales", rtn["vatDueSales"]))
@@ -219,24 +251,33 @@ if args.show_account_data:
         print("Period: %-10s    Start: %-10s     End: %-10s" % (
             v["periodKey"], v["start"], v["end"]
         ))
+        print()
 
         vals = accts.get_vat(v['start'], v['end'])
 
         for k in range(0, 9):
 
-            valueName = hmrc.box[k]
+            valueName = hmrc.vat_box[k]
 
-            print()
             print("    %s: %10.2f" % (valueName, vals[valueName]["total"]))
-
             print()
 
-            for w in vals[valueName]["splits"]:
-                print("        %12s: %10.2f   %s" % (
-                    w["date"], w["amount"], w["description"][0:60]
-                ))
+            if len(vals[valueName]["splits"]) > 0:
 
-            print()
+                tbl = []
+
+                for w in vals[valueName]["splits"]:
+                    tbl.append([
+                        w["date"], "%.2f" % w["amount"], w["description"][0:60]
+                    ])
+
+                tbl = tabulate(tbl, tablefmt="pretty",
+                               colalign=("left", "right","left"))
+
+                tbl = "        " + tbl.replace("\n", "\n        ")
+                print(tbl)
+
+                print()
 
     sys.exit(0)
 
@@ -307,3 +348,4 @@ if args.show_payments:
                    tablefmt="pretty"))
 
     sys.exit(0)
+

@@ -8,7 +8,7 @@ from datetime import datetime, timedelta, date
 import requests
 import json
 
-box = [
+vat_box = [
     
     # VAT due on sales and other outputs. This corresponds to box 1 on the VAT
     # Return form.
@@ -34,7 +34,6 @@ box = [
     # corresponds to box 6 on the VAT Return form. The value must be in pounds
     # (no pence)
     "totalValueSalesExVAT",
-
     
     # Total value of purchases and all other inputs excluding any VAT
     # (including exempt purchases). This corresponds to box 7 on the VAT
@@ -94,12 +93,12 @@ class AuthCollector:
 
         return self.result
 
-class HmrcTest:
+class Vat:
     def __init__(self, config, auth):
         self.config = config
         self.auth = auth
-        self.oauth_base = 'https://test-www.tax.service.gov.uk'
-        self.api_base = 'https://test-api.service.hmrc.gov.uk'
+        self.oauth_base = 'https://www.tax.service.gov.uk'
+        self.api_base = 'https://api.service.hmrc.gov.uk'
 
     def get_code(self):
         return asyncio.run(self.get_code_coro())
@@ -214,17 +213,25 @@ class HmrcTest:
         }
 
     def get_fraud_headers(self):
+
+        mac = self.config.get("identity.mac-address").replace(":", "%3A")
+
+        mfa = 'type=%s&timestamp=%sZ&unique-reference=%s' % (
+            "OTHER", datetime.utcnow().strftime("%Y-%m-%dT%H:%M:%SZ"),
+            self.config.get("identity.user")
+        )
+
         return {
             'Gov-Client-Connection-Method': 'OTHER_DIRECT',
-            'Gov-Client-Device-ID': 'abb03181-0664-4a4d-8ddd-fc69b2d577d7',
-            'Gov-Client-User-Ids': 'os=fjbloggs',
+            'Gov-Client-Device-ID': self.config.get("identity.device"),
+            'Gov-Client-User-Ids': 'os=%s' % self.config.get("identity.user"),
             'Gov-Client-Timezone': 'UTC+00:00',
-            'Gov-Client-Local-IPs': '10.0.2.15',
-            'Gov-Client-MAC-Addresses': '02:53:4a:6d:8c:85'.replace(":", "%3A"),
-            'Gov-Client-User-Agent': 'Linux/5.8.7-200.fc32.x86_64 (Intel/x686)',
-            'Gov-Client-Multi-Factor': 'type=OTHER&timestamp=2017-04-21T13%3A23Z&unique-reference=fbloggs',
-            'Gov-Vendor-Version': 'my-application=1.7.0',
-            'Gov-Vendor-License-IDs': 'gnu=e0d2747b9ab7abb6eb65e0373fa1b428a28bd6d8a2380106dcc080f58005ee14',
+            'Gov-Client-Local-IPs': self.config.get("identity.hostname"),
+            'Gov-Client-MAC-Addresses': mac,
+            'Gov-Client-User-Agent': self.config.get("identity.user-agent"),
+            'Gov-Client-Multi-Factor': mfa,
+            'Gov-Vendor-Version': 'gnucash-uk-vat=0.0.0',
+            'Gov-Vendor-License-IDs': 'gnu=eccbc87e4b5ce2fe28308fd9f2a7baf3',
             'Authorization': 'Bearer %s' % self.auth.get("access_token"),
         }
 
@@ -365,7 +372,7 @@ class HmrcTest:
 
         headers = self.get_fraud_headers()
         headers['Accept'] = 'application/vnd.hmrc.1.0+json'
-        headers['Gov-Test-Scenario'] = 'MULTIPLE_PAYMENTS'
+#        headers['Gov-Test-Scenario'] = 'MULTIPLE_PAYMENTS'
 
         params = {
             "from": start.strftime("%Y-%m-%d"),
@@ -389,3 +396,10 @@ class HmrcTest:
                 v["received"] = date.fromisoformat(v["received"])
 
         return obj["payments"]
+
+class VatTest(Vat):
+    def __init__(self, config, auth):
+        super().__init__(config, auth)
+        self.oauth_base = 'https://test-www.tax.service.gov.uk'
+        self.api_base = 'https://test-api.service.hmrc.gov.uk'
+

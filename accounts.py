@@ -58,7 +58,7 @@ class Accounts:
 
         for v in range(0, 9):
 
-            valueName = hmrc.box[v]
+            valueName = hmrc.vat_box[v]
 
             locator = self.config.get("accounts").get(valueName)
             acct = self.get_account(self.root, locator)
@@ -70,6 +70,10 @@ class Accounts:
                 "total": sum([v["amount"] for v in splits])
             }
 
+            # Some boxes need sign reversal, I think this is mapping whether
+            # the account is credit or debit type.
+            # FIXME: Should be user-configurable?
+            # FIXME: Should be able to work this out from account type?
             if v in [0, 1, 2, 4, 5, 7]:
                 vat[valueName]["total"] *= -1
                 for w in vat[valueName]["splits"]:
