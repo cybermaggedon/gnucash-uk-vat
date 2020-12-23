@@ -78,7 +78,7 @@ To continue you need to edit some things:
   `gnucash-uk-vat` to the HMRC APIs.  The `client-id` and `client-secret` values
   can only be obtained by registering the application with HMRC using a developer
   account.  The `profile` element can be `test` or `production` to determine
-  which API to talk to.
+  which API to talk to.  Or `dummy` to talk to my dummy VAT service (see below).
 - The `identity` block contains information about you.  The `vrn` elements contains
   your VAT registration number.  The other elements are *legally required* by
   HMRC's fraud API, but are difficult to gather.  So, you should ensure the
@@ -293,3 +293,33 @@ This is what you have paid HMRC for VAT.
 
 By default, records from the previous year are shown, this can be altered with
 the `--start` and `--end` options.
+
+## Dummy service
+
+There is a dummy VAT service, `dummy-vat-service` which provides some hard-coded
+VAT data and (roughly) conforms to the VAT API.
+
+You would run it thus:
+
+```
+./dummy-vat-service
+```
+
+To invoke the dummy service, change the configuration file:
+
+```
+{
+    ...
+    "application": {
+        "client-id": "whatever",
+        "client-secret": "!secret!",
+	"profile": "local"
+    },
+    ...
+```
+
+You should then use the service as above, including authenticating.  However,
+there is no real authentication step it just returns a dummy access token which
+is never checked.
+
+
