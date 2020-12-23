@@ -312,36 +312,6 @@ This is what you have paid HMRC for VAT.
 By default, records from the previous year are shown, this can be altered with
 the `--start` and `--end` options.
 
-## Dummy service
-
-There is a dummy VAT service, `dummy-vat-service` which provides some hard-coded
-VAT data and (roughly) conforms to the VAT API.
-
-You would run it thus:
-
-```
-./dummy-vat-service
-```
-
-To invoke the dummy service, change the configuration file:
-
-```
-{
-    ...
-    "application": {
-        ...
-	"profile": "local"
-	...
-    },
-    ...
-```
-
-This will cause the adaptor to use `http://localhost:8080` for the VAT service.
-
-You should then use the service as above, including authenticating.  However,
-there is no real authentication step it just returns a dummy access token which
-is never checked.
-
 ## GnuCash accounts structure
 
 The default configuration file broadly maps to the Accounts structures generated
@@ -372,3 +342,33 @@ section :)
 I have included a sample file `accounts/accounts.gnucash` which contains some
 sample transactions and works with the default configuration.
 
+
+## Dummy service
+
+There is a dummy VAT service, `dummy-vat-service` which provides some hard-coded
+VAT data and (roughly) conforms to the VAT API.
+
+You would run it thus:
+
+```
+./dummy-vat-service
+```
+
+To invoke the dummy service, change the configuration file:
+
+```
+{
+    ...
+    "application": {
+        ...
+	"profile": "local"
+	...
+    },
+    ...
+```
+
+This will cause the adaptor to use `http://localhost:8080` for the VAT service.
+
+You should then use the service as above, including authenticating.  However,
+there is no real authentication step it just returns a dummy access token which
+is never checked.
