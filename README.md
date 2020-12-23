@@ -313,12 +313,14 @@ To invoke the dummy service, change the configuration file:
 {
     ...
     "application": {
-        "client-id": "whatever",
-        "client-secret": "!secret!",
+        ...
 	"profile": "local"
+	...
     },
     ...
 ```
+
+This will cause the adaptor to use `http://localhost:8080` for the VAT service.
 
 You should then use the service as above, including authenticating.  However,
 there is no real authentication step it just returns a dummy access token which
@@ -338,15 +340,15 @@ box 1 and 2.  Box 5 is the delta between box 4 and box 3, which is achieved by
 having the account associated with box 5 being the parent of box 3 and box 4
 accounts.  Here are the default mappings:
 
-- Box 1 (vatDueSales): "VAT:Output:Sales",
-- Box 2 (vatDueAcquisitions): "VAT:Output:EU"
-- Box 3 (totalVatDue): "VAT:Output"
-- Box 4 (vatReclaimedCurrPeriod): "VAT:Input"
-- Box 5 (netVatDue): "VAT"
-- Box 6 (totalValueSalesExVAT): "Income:Sales:EU"
-- Box 7 (totalValuePurchasesExVAT): "Expenses:VAT Purchases"
-- Box 8 (totalValueGoodsSuppliedExVAT): "Income:Sales:EU:Goods"
-- Box 9 (totalAcquisitionsExVAT): "Expenses:VAT Purchases:EU Reverse VAT"
+- Box 1 (`vatDueSales`): "VAT:Output:Sales",
+- Box 2 (`vatDueAcquisitions`): "VAT:Output:EU"
+- Box 3 (`totalVatDue`): "VAT:Output"
+- Box 4 (`vatReclaimedCurrPeriod`): "VAT:Input"
+- Box 5 (`netVatDue`): "VAT"
+- Box 6 (`totalValueSalesExVAT`): "Income:Sales:EU"
+- Box 7 (`totalValuePurchasesExVAT`): "Expenses:VAT Purchases"
+- Box 8 (`totalValueGoodsSuppliedExVAT`): "Income:Sales:EU:Goods"
+- Box 9 (`totalAcquisitionsExVAT`): "Expenses:VAT Purchases:EU Reverse VAT"
 
 If you have experience with VAT accounting feel free to offer me a rewrite this
 section :)
