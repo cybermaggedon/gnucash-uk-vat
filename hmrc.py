@@ -262,7 +262,7 @@ class Vat:
             'Gov-Client-MAC-Addresses': mac,
             'Gov-Client-User-Agent': self.config.get("identity.user-agent"),
             'Gov-Client-Multi-Factor': mfa,
-            'Gov-Vendor-Version': 'gnucash-uk-vat=0.0.0',
+            'Gov-Vendor-Version': 'gnucash-uk-vat=0.0.1',
             'Gov-Vendor-License-IDs': 'gnu=eccbc87e4b5ce2fe28308fd9f2a7baf3',
             'Authorization': 'Bearer %s' % self.auth.get("access_token"),
         }
