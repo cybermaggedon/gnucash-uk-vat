@@ -403,3 +403,9 @@ class VatTest(Vat):
         self.oauth_base = 'https://test-www.tax.service.gov.uk'
         self.api_base = 'https://test-api.service.hmrc.gov.uk'
 
+class VatLocalTest(Vat):
+    def __init__(self, config, auth):
+        super().__init__(config, auth)
+        self.oauth_base = 'http://localhost:8080'
+        self.api_base = 'http://localhost:8080'
+

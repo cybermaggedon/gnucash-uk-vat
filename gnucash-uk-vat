@@ -148,6 +148,8 @@ if prof == "prod":
     h = hmrc.Vat(config, auth)
 elif prof == "test":
     h = hmrc.VatTest(config, auth)
+elif prof == "local":
+    h = hmrc.VatLocalTest(config, auth)
 else:
     raise RuntimeError("Profile '%s' is not known." % prof)
 

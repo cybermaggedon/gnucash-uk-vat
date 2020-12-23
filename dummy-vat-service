@@ -1,0 +1,152 @@
+#!/usr/bin/env python3
+
+import asyncio
+from aiohttp import web
+import json
+import os
+
+from datetime import date, datetime, timedelta
+
+def ago(days):
+    return datetime.utcnow().date() - timedelta(days=days)
+
+class Obligation:
+    def __init__(self, pKey, status, start, end, received=None, due=None):
+        self.periodKey = pKey
+        self.status = status
+        self.start = start
+        self.end = end
+        self.received = received
+        self.due = due
+    def to_dict(self):
+        obj = {
+            "status": self.status,
+            "periodKey": self.periodKey,
+            "start": self.start.isoformat(),
+            "end": self.end.isoformat()
+        }
+        if self.received != None:
+            obj["received"] = self.due.isoformat()
+        if self.due != None:
+            obj["due"] = self.due.isoformat()
+        return obj
+    def in_range(self, start, end):
+        if self.start >= start and self.start < end:
+            return True
+        if self.end >= start and self.end < end:
+            return True
+        if self.start <= start and self.end > end:
+            return True
+        return False
+
+obligations = [
+    Obligation("#000", "F", ago(300), ago(210), received=ago(200), due=ago(180)),
+    Obligation("#001", "F", ago(210), ago(120), received=ago(110), due=ago(90)),
+    Obligation("#002", "O", ago(120), ago(30), due=ago(0))
+]
+
+class Api:
+
+    def __init__(self):
+        pass
+
+    async def run(self):
+
+        async def get_obligations(request):
+
+            start=None
+            end=None
+            status=None
+
+            try:
+                start = datetime.fromisoformat(request.query["from"]).date()
+            except:
+                pass
+
+            try:
+                end = datetime.fromisoformat(request.query["to"]).date()
+            except:
+                pass
+
+            try:
+                status = request.query["status"]
+            except:
+                pass
+
+            obls = obligations
+            if start and end:
+                obls = [
+                    v for v in obls
+                    if v.in_range(start, end)
+                ]
+
+            if status:
+                obls = [
+                    v for v in obls
+                    if v.status == status
+                ]
+                
+            resp = {
+                "obligations": [
+                    v.to_dict()
+                    for v in obls
+                ]
+            }
+
+            return web.Response(
+                body=json.dumps(resp, indent=4) + "\n",
+                content_type="application/json"
+            )
+
+        async def get_token(request):
+
+            token = {
+                "access_token": "12345",
+                "refresh_token": "67890",
+                "token_type": "bearer",
+                "expires_in": 1440
+            }
+            
+            return web.Response(
+                body=json.dumps(token, indent=4) + "\n",
+                content_type="application/json"
+            )
+
+        async def authorize(request):
+
+            try:
+                id = request.query["client_id"]
+                scope = request.query["scope"]
+                redirect = request.query["redirect_uri"]
+            except:
+                raise web.HTTPBadRequest()
+                
+
+            resp = {
+                'code': 'code123',
+            }
+
+            raise web.HTTPFound(redirect + "?code=code123")
+            
+        app = web.Application()
+
+        app.router.add_get('/oauth/authorize', authorize)
+        app.router.add_post('/oauth/token', get_token)
+        app.router.add_get('/organisations/vat/{vrn}/obligations', get_obligations)
+
+        runner = web.AppRunner(app)
+        await runner.setup()
+
+        host = "0.0.0.0:8080"
+        host = host.split(":", 2)
+
+        site = web.TCPSite(runner, host[0], host[1])
+        await site.start()
+
+        while True:
+            await asyncio.sleep(1)
+
+loop = asyncio.get_event_loop()
+a = Api()
+loop.run_until_complete(a.run())
+
