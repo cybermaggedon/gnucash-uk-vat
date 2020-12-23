@@ -255,6 +255,22 @@ Purchases ex. VAT             :          352.00
 Goods supplied ex. VAT        :         1240.00
 Total acquisitions ex. VAT    :          200.00
 ```
+### View VAT return
+
+Views a previously submitted return by period key.
+
+```
+[user@machine mtd]$ gnucash-uk-vat --show-vat-return --period '20A1'
+VAT due on sales              :          100.00
+VAT due on acquisitions       :          120.00
+Total VAT due                 :          220.00
+VAT reclaimed                 :           30.00
+VAT due                       :          180.00
+Sales before VAT              :         1000.00
+Purchases ex. VAT             :         1200.00
+Goods supplied ex. VAT        :           50.00
+Total acquisitions ex. VAT    :           30.00
+```
 
 ### Show liabilities
 
@@ -352,4 +368,7 @@ accounts.  Here are the default mappings:
 
 If you have experience with VAT accounting feel free to offer me a rewrite this
 section :)
+
+I have included a sample file `accounts/accounts.gnucash` which contains some
+sample transactions and works with the default configuration.
 

@@ -4,7 +4,7 @@ import asyncio
 from aiohttp import web
 import json
 import os
-
+import uuid
 from datetime import date, datetime, timedelta
 
 def ago(days):
@@ -102,12 +102,70 @@ payments = [
     Payment(1400, ago(140))
 ]
 
+returns = [
+    {
+        "periodKey": "#000",
+        "vatDueSales": 100,
+        "vatDueAcquisitions": 120,
+        "totalVatDue": 220,
+        "vatReclaimedCurrPeriod": 30,
+        "netVatDue": 180,
+        "totalValueSalesExVAT": 1000,
+        "totalValuePurchasesExVAT": 1200,
+        "totalValueGoodsSuppliedExVAT": 50,
+        "totalAcquisitionsExVAT": 30,
+    },
+    {
+        "periodKey": "#001",
+        "vatDueSales": 100,
+        "vatDueAcquisitions": 120,
+        "totalVatDue": 220,
+        "vatReclaimedCurrPeriod": 30,
+        "netVatDue": 180,
+        "totalValueSalesExVAT": 1000,
+        "totalValuePurchasesExVAT": 1200,
+        "totalValueGoodsSuppliedExVAT": 50,
+        "totalAcquisitionsExVAT": 30
+    }
+]
+
 class Api:
 
     def __init__(self):
         pass
 
     async def run(self):
+
+        async def get_return(request):
+
+            key = request.match_info["periodKey"]
+
+            for v in returns:
+                if v["periodKey"] == key:
+                    return web.Response(
+                        body=json.dumps(v, indent=4),
+                        content_type="application/json"
+                    )
+
+            raise web.HTTPBadRequest()
+
+        async def submit_return(request):
+
+            body = await request.json()
+            if "periodKey" in body:
+                returns.append(body)
+
+            resp = {
+                "processingDate": datetime.utcnow().isoformat(),
+                "paymentIndicator": "BANK",
+                "formBundleNumber": str(uuid.uuid1()),
+                "chargeRefNumber": str(uuid.uuid1()),
+            }
+
+            raise web.HTTPCreated(
+                body=json.dumps(resp, indent=4),
+                content_type="application/json"
+            )
 
         async def get_obligations(request):
 
@@ -232,6 +290,8 @@ class Api:
         app.router.add_get('/organisations/vat/{vrn}/obligations', get_obligations)
         app.router.add_get('/organisations/vat/{vrn}/liabilities', get_liabilities)
         app.router.add_get('/organisations/vat/{vrn}/payments', get_payments)
+        app.router.add_get('/organisations/vat/{vrn}/returns/{periodKey}', get_return)
+        app.router.add_post('/organisations/vat/{vrn}/returns', submit_return)
 
         runner = web.AppRunner(app)
         await runner.setup()

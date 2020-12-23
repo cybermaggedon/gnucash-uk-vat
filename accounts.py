@@ -1,34 +1,53 @@
 #!/usr/bin/env python3
 
+#
+# Wrapper for GnuCash Python API, extracts account structure, splits, and
+# also VAT return information from the accounts.
+#
+# Usage:
+#     s = Accounts("file.gnucash")
+#     rtn = s.get_vat()
+#     print(rtn["totalVatDue"]["total"])
+#     for v in rtn["totalVatDue"]["splits"]:
+#         print(v["date"], v["amount"])
+
 import gnucash
 import json
 import math
 from decimal import Decimal
 import hmrc
 
+# Wrapper for GnuCash accounts.
 class Accounts:
 
+    # Opens a GnuCash book.  Config object provides configuration, needs
+    # to support config.get("key.name") method.
     def __init__(self, config):
         self.config = config
         self.session = self.open_session(config.get("accounts.file"))
         self.book = self.session.book
         self.root = self.book.get_root_account()
 
+    # Creates a read-only session associated with a GnuCash file
     @staticmethod
     def open_session(file):
         mode = gnucash.SessionOpenMode.SESSION_READ_ONLY
         session = gnucash.Session(file, mode)
         return session
 
+    # Given a root account and start/end points return all matching splits
+    # recorded against that account and any child accounts.
     def get_splits(self, acct, start, end):
 
         splits = []
 
+        # Recurse into children
         childs = acct.get_children()
         if childs != None:
             for v in acct.get_children():
                 splits.extend(self.get_splits(v, start, end))
 
+        # Iterate over split list
         for spl in acct.GetSplitList():
             tx = spl.parent
             dt = tx.GetDate().date()
@@ -44,6 +63,8 @@ class Accounts:
 
         return splits
 
+    # Return an account given an account locator.  Navigates through
+    # hierarchy, account parts are colon separated.
     def get_account(self, par, locator):
         acct = par
         for v in locator.split(":"):
@@ -52,10 +73,13 @@ class Accounts:
                 raise RuntimeError("Can't locate account '%s'" % locator)
         return acct
 
+    # Return VAT return for the defined period.  Makes use of the
+    # configuration object to describe which accounts to analyse.
     def get_vat(self, start, end):
 
         vat = {}
 
+        # Boxes 1 to 9, are referred to as 0 to 8 in this loop.
         for v in range(0, 9):
 
             valueName = hmrc.vat_box[v]
@@ -79,7 +103,7 @@ class Accounts:
                 for w in vat[valueName]["splits"]:
                     w["amount"] *= -1
 
-            # Some boxes are pounds only, no pence.
+            # Some boxes are pounds only, round off the pence.
             if v in [5, 6, 7, 8]:
                 vat[valueName]["total"] = round(vat[valueName]["total"])
 

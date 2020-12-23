@@ -10,9 +10,11 @@ import getpass
 import socket
 import os
 
+# Local Python modules
 import hmrc
 import accounts
 
+# Command-line argument parser
 parser = argparse.ArgumentParser(description="Gnucash to HMRC VAT API")
 parser.add_argument('--config', '-c',
 		    default='config.json',
@@ -47,8 +49,11 @@ parser.add_argument('--show-liabilities', action='store_true',
 parser.add_argument('--show-payments', action='store_true',
                     help='Show VAT payments')
 
+# Parse arguments
 args = parser.parse_args(sys.argv[1:])
 
+# Configuration object, loads configuration from a JSON file, and then
+# supports path navigate with config.get("part1.part2.part3")
 class Config:
     def __init__(self, file="config.json"):
         self.config = json.loads(open(file).read())
@@ -58,27 +63,36 @@ class Config:
             cfg = cfg[v]
         return cfg
 
+# Authentication object.  Supports loading from file as JSON, writing back
+# updated auth, and refresh
 class Auth:
+    # Constructor, load auth from file
     def __init__(self, file="auth.json"):
         self.file = file
         try:
             self.auth = json.loads(open(file).read())
         except:
             self.auth = {}
+
+    # Get an authentication data value
     def get(self, key):
         cfg = self.auth
         for v in key.split("."):
             cfg = cfg[v]
         return cfg
 
+    # Write back to file
     def write(self):
         with open(self.file, "w") as auth_file:
             auth_file.write(json.dumps(self.auth, indent=4))
 
+    # Refresh expired token using the refresh token, and write new
+    # creds back to the auth file.  svc=API service
     def refresh(self, svc):
         self.auth = svc.refresh_token(self.auth["refresh_token"])
         self.write()
 
+    # If token has expired, refresh.
     def maybe_refresh(self, svc):
         if "expires" not in self.auth:
             raise RuntimeError("No token expiry.  Have you authenticated?")
@@ -86,22 +100,28 @@ class Auth:
         if  datetime.utcnow() > expires:
             self.refresh(svc)
 
-if args.init_config:
+# Initialise configuration file with some (mainly) static values.  Also,
+# collate personal information for the Fraud API.
+def initialise_config(config_file):
 
-    # FIXME: This is SOOOO hacky
+    # This gets hold of the MAC address, which the uuid module knows.
+    # FIXME: Hacky.
     try:
         mac = uuid.getnode()
-        mac = ['{:02x}'.format((mac >> ele) & 0xff) for ele in range(0,8*6,8)][::-1]
+        mac = [
+            '{:02x}'.format((mac >> ele) & 0xff)
+            for ele in range(0,8*6,8)
+        ][::-1]
         mac = ':'.join(mac)
     except:
+        # Fallback.
         mac = '00:00:00:00:00:00'
 
+    # Operating system information
     uname = os.uname()
     ua = "%s/%s (%s/%s)" % (
         uname.sysname, uname.release, "Python", uname.machine
     )
-
-#'Linux/5.8.7-200.fc32.x86_64 (Intel/x686)',
 
     config = {
         "accounts": {
@@ -133,40 +153,22 @@ if args.init_config:
         }
     }
 
-    with open(args.config, "w") as cfg_file:
+    with open(config_file, "w") as cfg_file:
         cfg_file.write(json.dumps(config, indent=4))
 
-    sys.stderr.write("Wrote %s.\n" % args.config)
-    sys.exit(0)
+    sys.stderr.write("Wrote %s.\n" % config_file)
 
-config = Config(args.config)
-auth = Auth(args.auth)
-
-prof = config.get("application.profile")
-
-if prof == "prod":
-    h = hmrc.Vat(config, auth)
-elif prof == "test":
-    h = hmrc.VatTest(config, auth)
-elif prof == "local":
-    h = hmrc.VatLocalTest(config, auth)
-else:
-    raise RuntimeError("Profile '%s' is not known." % prof)
-
-if args.authenticate:
+# Perform authentication operation
+def authenticate(h, auth):
     code = h.get_code()
     sys.stderr.write("Got one-time code.\n")
     h.get_auth(code)
     sys.stderr.write("Got authentication key.\n")
     auth.write()
-    sys.stderr.write("Wrote %s.\n" % args.auth)
+    sys.stderr.write("Wrote %s.\n" % auth.file)
 
-    sys.exit(0)
-
-# Refresh token if expired.
-auth.maybe_refresh(h)
-
-if args.show_open_obligations:
+# Show obligations with the O state
+def show_open_obligations(h, config):
 
     obs = h.get_open_obligations(config.get("identity.vrn"))
 
@@ -178,138 +180,174 @@ if args.show_open_obligations:
     print(tabulate(tbl, ["Period", "Start", "End", "Due", "Status"],
                    tablefmt="pretty"))
 
-    sys.exit(0)
-
-if args.show_obligations:
-
-    start = datetime.utcnow() - timedelta(days=int(args.start))
-    end = datetime.utcnow() - timedelta(days=int(args.end))
+# Show obligations in a time period
+def show_obligations(start, end, h, config):
 
     obs = h.get_obligations(config.get("identity.vrn"), start, end)
 
     tbl = [
-        [v['periodKey'], v['start'], v['end'], v['due'], v['received'], v['status']]
+        [
+            v['periodKey'], v['start'], v['end'], v['due'], v['received'],
+            v['status']
+        ]
         for v in obs
     ]
 
-    print(tabulate(tbl, ["Period", "Start", "End", "Due", "Received", "Status"],
+    print(tabulate(tbl,
+                   ["Period", "Start", "End", "Due", "Received", "Status"],
                    tablefmt="pretty"))
 
-    sys.exit(0)
+# Submit a VAT return
+def submit_vat_return(period, h, config):
 
-if args.submit_vat_return:
-
+    # We need start/end information, but only have a period key first.
+    # Load the obligations to get the mapping
     obs = h.get_open_obligations(config.get("identity.vrn"))
 
-    period = None
-
+    # Iterate over obligations to find the period
+    obl = None
     for v in obs:
-        if v["periodKey"] == args.period:
-            period = v
+        if v["periodKey"] == period:
+            obl = v
 
-    if period == None:
-        raise RuntimeError("Period '%s' not in obligations" % args.period)
+    # Not found
+    if obl == None:
+        raise RuntimeError("Period '%s' not in obligations" % period)
 
-    start = period["start"]
-    end = period["end"]
+    # Get start/end date
+    start = obl["start"]
+    end = obl["end"]
 
+    # Open GnuCash accounts, and get VAT records for the period
     accts = accounts.Accounts(config)
-    vals = accts.get_vat(period['start'], period['end'])
+    vals = accts.get_vat(start, end)
 
+    # Build base of the VAT return
     rtn = {
-        "periodKey": args.period,
+        "periodKey": period,
         "finalised": True
     }
-    
+
+    # Add VAT values
     for k in range(0, 9):
         valueName = hmrc.vat_box[k]
         rtn[valueName] = vals[valueName]["total"]
 
+    # Dump output.  Too late to fix anything anyway.
+    # FIXME: Are you sure? etc.
     print("%-30s: %15.2f" % ("VAT due on sales", rtn["vatDueSales"]))
-    print("%-30s: %15.2f" % ("VAT due on acquisitions", rtn["vatDueAcquisitions"]))
+    print("%-30s: %15.2f" % ("VAT due on acquisitions",
+                             rtn["vatDueAcquisitions"]))
     print("%-30s: %15.2f" % ("Total VAT due", rtn["totalVatDue"]))
     print("%-30s: %15.2f" % ("VAT reclaimed", rtn["vatReclaimedCurrPeriod"]))
     print("%-30s: %15.2f" % ("VAT due", rtn["netVatDue"]))
     print("%-30s: %15.2f" % ("Sales before VAT", rtn["totalValueSalesExVAT"]))
-    print("%-30s: %15.2f" % ("Purchases ex. VAT", rtn["totalValuePurchasesExVAT"]))
+    print("%-30s: %15.2f" % ("Purchases ex. VAT",
+                             rtn["totalValuePurchasesExVAT"]))
     print("%-30s: %15.2f" % ("Goods supplied ex. VAT",
                          rtn["totalValueGoodsSuppliedExVAT"]))
     print("%-30s: %15.2f" % ("Total acquisitions ex. VAT",
                          rtn["totalAcquisitionsExVAT"]))
 
+    # Call the API
     resp = h.submit_vat_return(config.get("identity.vrn"), rtn)
-    print(resp)
 
-    sys.exit(0)
+    # Dump out the response
+    print()
+    print("Submitted.")
+    if "processingDate" in resp:
+        print("%-30s: %s" % ("Processing date", resp["processingDate"]))
+    if "paymentIndicator" in resp:
+        print("%-30s: %s" % ("Payment indicator", resp["paymentIndicator"]))
+    if "formBundleNumber" in resp:
+        print("%-30s: %s" % ("Form bundle", resp["formBundleNumber"]))
+    if "chargeRefNumber" in resp:
+        print("%-30s: %s" % ("Charge ref", resp["chargeRefNumber"]))
 
-if args.show_account_data:
+# Show GnuCash information relating to open VAT obligations
+def show_account_data(h, config):
 
+    # Get open obligations
     obs = h.get_open_obligations(config.get("identity.vrn"))
 
+    # Get accounts
     accts = accounts.Accounts(config)
 
+    # Iterate over obligations
     for v in obs:
 
+        # Write out obligation header
         print("Period: %-10s    Start: %-10s     End: %-10s" % (
             v["periodKey"], v["start"], v["end"]
         ))
         print()
 
+        # Get VAT values for this period from accounts
         vals = accts.get_vat(v['start'], v['end'])
 
+        # Loop over 9 boxes (0 .. 8 in this loop)
         for k in range(0, 9):
 
+            # Get the name of the VAT value
             valueName = hmrc.vat_box[k]
 
+            # Output the value
             print("    %s: %10.2f" % (valueName, vals[valueName]["total"]))
             print()
 
+            # Dump out all contributing transactions
             if len(vals[valueName]["splits"]) > 0:
 
+                # Construct a transaction table
                 tbl = []
 
+                # Add transactions to table
                 for w in vals[valueName]["splits"]:
                     tbl.append([
                         w["date"], "%.2f" % w["amount"], w["description"][0:60]
                     ])
 
+                # Create table
                 tbl = tabulate(tbl, tablefmt="pretty",
                                colalign=("left", "right","left"))
 
+                # Indent table by 8 characters
                 tbl = "        " + tbl.replace("\n", "\n        ")
                 print(tbl)
 
                 print()
 
-    sys.exit(0)
+# Dump out a VAT return
+def show_vat_return(h, config, period):
 
-if args.show_vat_return:
+    # Fetch VAT return data
+    rtn = h.get_vat_return(config.get("identity.vrn"), period)
 
-    rtn = h.get_vat_return(config.get("identity.vrn"), args.period)
-
+    # Dump out data
     print("%-30s: %15.2f" % ("VAT due on sales", rtn["vatDueSales"]))
-    print("%-30s: %15.2f" % ("VAT due on acquisitions", rtn["vatDueAcquisitions"]))
+    print("%-30s: %15.2f" % ("VAT due on acquisitions",
+                             rtn["vatDueAcquisitions"]))
     print("%-30s: %15.2f" % ("Total VAT due", rtn["totalVatDue"]))
     print("%-30s: %15.2f" % ("VAT reclaimed", rtn["vatReclaimedCurrPeriod"]))
     print("%-30s: %15.2f" % ("VAT due", rtn["netVatDue"]))
     print("%-30s: %15.2f" % ("Sales before VAT", rtn["totalValueSalesExVAT"]))
-    print("%-30s: %15.2f" % ("Purchases ex. VAT", rtn["totalValuePurchasesExVAT"]))
+    print("%-30s: %15.2f" % ("Purchases ex. VAT",
+                             rtn["totalValuePurchasesExVAT"]))
     print("%-30s: %15.2f" % ("Goods supplied ex. VAT",
                          rtn["totalValueGoodsSuppliedExVAT"]))
     print("%-30s: %15.2f" % ("Total acquisitions ex. VAT",
                          rtn["totalAcquisitionsExVAT"]))
 
-    sys.exit(0)
+# Show liabilities
+def show_liabilities(start, end, h, config):
 
-if args.show_liabilities:
-
-    start = datetime.utcnow() - timedelta(days=int(args.start))
-    end = datetime.utcnow() - timedelta(days=int(args.end))
-
+    # Fetch values from liabilities endpoint
     rtn = h.get_vat_liabilities(config.get("identity.vrn"), start, end)
 
+    # Initialise empty table
     tbl = []
 
+    # Iterate over liabilities, build table
     for v in rtn:
         ent = []
         if "taxPeriod" in v:
@@ -325,20 +363,19 @@ if args.show_liabilities:
             ent.append("")
         tbl.append(ent)
 
+    # Dump out table
     print(tabulate(tbl, ["Period", "Type", "Amount", "Outstanding", "Due"],
                    tablefmt="pretty"))
 
-    sys.exit(0)
+def show_payments(start, end, h, config):
 
-if args.show_payments:
-
-    start = datetime.utcnow() - timedelta(days=int(args.start))
-    end = datetime.utcnow() - timedelta(days=int(args.end))
-
+    # Fetch values from payments endpoint
     rtn = h.get_vat_payments(config.get("identity.vrn"), start, end)
 
+    # Initialise empty table
     tbl = []
 
+    # Iterate over payments, build table
     for v in rtn:
         ent = []
         ent.append(v["amount"])
@@ -346,8 +383,68 @@ if args.show_payments:
             ent.append(v["received"])
         tbl.append(ent)
 
+    # Dump out table
     print(tabulate(tbl, ["Amount", "Received"],
                    tablefmt="pretty"))
 
+# Initialise configuration operation.  This goes here as configuration
+# can be initialised if no auth has been performed
+if args.init_config:
+    initialise_config(args.config)
     sys.exit(0)
 
+# Initialise config and auth.  
+config = Config(args.config)
+auth = Auth(args.auth)
+
+# Get profile
+prof = config.get("application.profile")
+
+# Initialise API client endpoint based on selected profile
+if prof == "prod":
+    h = hmrc.Vat(config, auth)
+elif prof == "test":
+    h = hmrc.VatTest(config, auth)
+elif prof == "local":
+    h = hmrc.VatLocalTest(config, auth)
+else:
+    raise RuntimeError("Profile '%s' is not known." % prof)
+
+# Authentication operation goes here.
+if args.authenticate:
+    authenticate(h, auth)
+    sys.exit(0)
+
+# All following operations require a valid token, so refresh token if expired.
+auth.maybe_refresh(h)
+
+# Call appropriate function to implement operations
+if args.show_open_obligations:
+    show_open_obligations(h, config)
+    sys.exit(0)
+elif args.show_obligations:
+    start = datetime.utcnow() - timedelta(days=int(args.start))
+    end = datetime.utcnow() - timedelta(days=int(args.end))
+    show_obligations(start, end, h, config)
+    sys.exit(0)
+elif args.submit_vat_return:
+    submit_vat_return(args.period, h, config)
+    sys.exit(0)
+elif args.show_account_data:
+    show_account_data(h, config)
+    sys.exit(0)
+elif args.show_vat_return:
+    show_vat_return(h, config, args.period)
+    sys.exit(0)
+elif args.show_liabilities:
+    start = datetime.utcnow() - timedelta(days=int(args.start))
+    end = datetime.utcnow() - timedelta(days=int(args.end))
+    show_liabilities(start, end, h, config)
+    sys.exit(0)
+elif args.show_payments:
+    start = datetime.utcnow() - timedelta(days=int(args.start))
+    end = datetime.utcnow() - timedelta(days=int(args.end))
+    show_payments(start, end, h, config)
+    sys.exit(0)
+else:
+    raise RuntimeError("No operation specified.")
