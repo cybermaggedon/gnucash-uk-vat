@@ -134,7 +134,7 @@ short-hand id for the time period.  The status column shows status F=fulfilled,
 O=Open.
 
 You can narrow the list to a time window by specifying the start and end
-point as number of days in the past.
+point as number of days in the past.  The default is to cover the previous year.
 
 ```
 [user@machine mtd]$ gnucash-uk-vat --show-obligations --start 1500 --end 1200
@@ -270,6 +270,9 @@ This is what you owe HMRC for VAT returns.
 +------------+----------------------+---------+-------------+------------+
 ```
 
+By default, records from the previous year are shown, this can be altered with
+the `--start` and `--end` options.
+
 ### Show payments
 
 This is what you have paid HMRC for VAT.
@@ -288,3 +291,5 @@ This is what you have paid HMRC for VAT.
 +--------+------------+
 ```
 
+By default, records from the previous year are shown, this can be altered with
+the `--start` and `--end` options.
