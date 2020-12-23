@@ -283,6 +283,8 @@ class Vat:
         )
 
         resp = requests.get(url, headers=headers)
+        if resp.status_code != 200:
+            raise RuntimeError("HTTP error %d" % resp.status_code)
 
         obj = resp.json()
 
@@ -313,6 +315,8 @@ class Vat:
         )
 
         resp = requests.get(url, headers=headers)
+        if resp.status_code != 200:
+            raise RuntimeError("HTTP error %d" % resp.status_code)
 
         obj = resp.json()
 
@@ -345,6 +349,8 @@ class Vat:
         )
 
         resp = requests.get(url, headers=headers)
+        if resp.status_code != 200:
+            raise RuntimeError("HTTP error %d" % resp.status_code)
 
         obj = resp.json()
 
@@ -364,6 +370,8 @@ class Vat:
         )
 
         resp = requests.post(url, headers=headers, data=json.dumps(rtn))
+        if resp.status_code != 201:
+            raise RuntimeError("HTTP error %d" % resp.status_code)
 
         obj = resp.json()
 
@@ -389,6 +397,8 @@ class Vat:
         )
 
         resp = requests.get(url, headers=headers)
+        if resp.status_code != 200:
+            raise RuntimeError("HTTP error %d" % resp.status_code)
 
         obj = resp.json()
 
@@ -421,6 +431,8 @@ class Vat:
         )
 
         resp = requests.get(url, headers=headers)
+        if resp.status_code != 200:
+            raise RuntimeError("HTTP error %d" % resp.status_code)
 
         obj = resp.json()
 

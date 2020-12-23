@@ -408,7 +408,7 @@ elif prof == "test":
 elif prof == "local":
     h = hmrc.VatLocalTest(config, auth)
 else:
-    raise RuntimeError("Profile '%s' is not known." % prof)
+    sys.stderr.write("Profile '%s' is not known." % prof)
 
 # Authentication operation goes here.
 if args.authenticate:
@@ -419,32 +419,36 @@ if args.authenticate:
 auth.maybe_refresh(h)
 
 # Call appropriate function to implement operations
-if args.show_open_obligations:
-    show_open_obligations(h, config)
-    sys.exit(0)
-elif args.show_obligations:
-    start = datetime.utcnow() - timedelta(days=int(args.start))
-    end = datetime.utcnow() - timedelta(days=int(args.end))
-    show_obligations(start, end, h, config)
-    sys.exit(0)
-elif args.submit_vat_return:
-    submit_vat_return(args.period, h, config)
-    sys.exit(0)
-elif args.show_account_data:
-    show_account_data(h, config)
-    sys.exit(0)
-elif args.show_vat_return:
-    show_vat_return(h, config, args.period)
-    sys.exit(0)
-elif args.show_liabilities:
-    start = datetime.utcnow() - timedelta(days=int(args.start))
-    end = datetime.utcnow() - timedelta(days=int(args.end))
-    show_liabilities(start, end, h, config)
-    sys.exit(0)
-elif args.show_payments:
-    start = datetime.utcnow() - timedelta(days=int(args.start))
-    end = datetime.utcnow() - timedelta(days=int(args.end))
-    show_payments(start, end, h, config)
-    sys.exit(0)
-else:
-    raise RuntimeError("No operation specified.")
+try:
+    if args.show_open_obligations:
+        show_open_obligations(h, config)
+        sys.exit(0)
+    elif args.show_obligations:
+        start = datetime.utcnow() - timedelta(days=int(args.start))
+        end = datetime.utcnow() - timedelta(days=int(args.end))
+        show_obligations(start, end, h, config)
+        sys.exit(0)
+    elif args.submit_vat_return:
+        submit_vat_return(args.period, h, config)
+        sys.exit(0)
+    elif args.show_account_data:
+        show_account_data(h, config)
+        sys.exit(0)
+    elif args.show_vat_return:
+        show_vat_return(h, config, args.period)
+        sys.exit(0)
+    elif args.show_liabilities:
+        start = datetime.utcnow() - timedelta(days=int(args.start))
+        end = datetime.utcnow() - timedelta(days=int(args.end))
+        show_liabilities(start, end, h, config)
+        sys.exit(0)
+    elif args.show_payments:
+        start = datetime.utcnow() - timedelta(days=int(args.start))
+        end = datetime.utcnow() - timedelta(days=int(args.end))
+        show_payments(start, end, h, config)
+        sys.exit(0)
+    else:
+        raise RuntimeError("No operation specified.")
+except Exception as e:
+    sys.stderr.write("Exception: %s\n" % e)
+    sys.exit(1)
