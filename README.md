@@ -160,23 +160,23 @@ shows what happens when HMRC's test interface meets the sample GnuCash file
 which is bundled with the code:
 
 ```
-[user@machine mtd]$ gnucash-uk-vat --show-account-data
+[user@machine mtd]$ gnucash-uk-vat --show-account-detail
 Period: 18A1          Start: 2017-01-01     End: 2017-03-31
 
-    vatDueSales:    1914.60
+    VAT due on sales: 1914.60
 
         +------------+---------+-----------------------+
         | 2017-01-10 |  248.00 | Widget 1              |
         | 2017-02-10 | 1666.60 | Sale 100 to Acme Ltd. |
         +------------+---------+-----------------------+
 
-    vatDueAcquisitions:      40.00
+    VAT due on acquisitions: 40.00
 
         +------------+-------+-----------------------------+
         | 2017-01-03 | 40.00 | £220 service from Acme GmBH |
         +------------+-------+-----------------------------+
 
-    totalVatDue:    1954.60
+    Total VAT due: 1954.60
 
         +------------+---------+-----------------------------+
         | 2017-01-03 |   40.00 | £220 service from Acme GmBH |
@@ -184,14 +184,14 @@ Period: 18A1          Start: 2017-01-01     End: 2017-03-31
         | 2017-02-10 | 1666.60 | Sale 100 to Acme Ltd.       |
         +------------+---------+-----------------------------+
 
-    vatReclaimedCurrPeriod:      78.00
+    VAT reclaimed: 78.00
 
         +------------+-------+-----------------------------+
         | 2017-01-03 | 40.00 | £220 service from Acme GmBH |
         | 2017-01-05 | 38.00 | Micropants Windows          |
         +------------+-------+-----------------------------+
 
-    netVatDue:    1876.60
+    VAT due: 1876.60
 
         +------------+---------+-----------------------------+
         | 2017-01-03 |  -40.00 | £220 service from Acme GmBH |
@@ -201,27 +201,27 @@ Period: 18A1          Start: 2017-01-01     End: 2017-03-31
         | 2017-02-10 | 1666.60 | Sale 100 to Acme Ltd.       |
         +------------+---------+-----------------------------+
 
-    totalValueSalesExVAT:    9573.00
+    Sales before VAT: 9573.00
 
         +------------+---------+-----------------------+
         | 2017-01-10 | 1240.00 | Widget 1              |
         | 2017-02-10 | 8333.00 | Sale 100 to Acme Ltd. |
         +------------+---------+-----------------------+
 
-    totalValuePurchasesExVAT:     352.00
+    Purchases ex. VAT: 352.00
 
         +------------+--------+-----------------------------+
         | 2017-01-03 | 200.00 | £220 service from Acme GmBH |
         | 2017-01-05 | 152.00 | Micropants Windows          |
         +------------+--------+-----------------------------+
 
-    totalValueGoodsSuppliedExVAT:    1240.00
+    Goods supplied ex. VAT: 1240.00
 
         +------------+---------+----------+
         | 2017-01-10 | 1240.00 | Widget 1 |
         +------------+---------+----------+
 
-    totalAcquisitionsExVAT:     200.00
+    Total acquisitions ex. VAT: 200.00
 
         +------------+--------+-----------------------------+
         | 2017-01-03 | 200.00 | £220 service from Acme GmBH |
@@ -239,7 +239,7 @@ transactions which contribute to that total.
 If you were happy with the data that would be submitted from the previous
 step, you can go ahead and submit the data.  However, this is not recommended
 at the moment.  You need to specify the Period key visible in the obligations
-list, or the output from `--show-account-data`.  Once submitted, you cannot
+list, or the output from `--show-account-detail`.  Once submitted, you cannot
 recall the VAT return.  Given the limited testing, it really is not recommended
 you perform this step.
 
@@ -345,8 +345,9 @@ sample transactions and works with the default configuration.
 
 ## Dummy service
 
-There is a dummy VAT service, `dummy-vat-service` which provides some hard-coded
-VAT data and (roughly) conforms to the VAT API.
+There is a dummy VAT service, `dummy-vat-service` which has some VAT data
+(in `vat-data.json`) and (roughly) conforms to the VAT API.  The
+VRN is `1234567890`.
 
 You would run it thus:
 
@@ -364,11 +365,15 @@ To invoke the dummy service, change the configuration file:
 	"profile": "local"
 	...
     },
-    ...
+    "identity": {
+        "vrn": "1234567890",
+	...
+    }
 ```
 
 This will cause the adaptor to use `http://localhost:8080` for the VAT service.
 
-You should then use the service as above, including authenticating.  However,
-there is no real authentication step it just returns a dummy access token which
-is never checked.
+You should then use the service as above, including authenticating.
+The authentication mechanism is there, but dummy credentials are issued, and
+nothing is verified.
+

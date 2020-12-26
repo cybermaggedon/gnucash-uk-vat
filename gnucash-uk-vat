@@ -15,6 +15,18 @@ from model import Return
 import hmrc
 import accounts
 
+vat_descriptions = {
+    "vatDueSales": "VAT due on sales",
+    "vatDueAcquisitions": "VAT due on acquisitions",
+    "totalVatDue": "Total VAT due",
+    "vatReclaimedCurrPeriod": "VAT reclaimed",
+    "netVatDue": "VAT due",
+    "totalValueSalesExVAT": "Sales before VAT",
+    "totalValuePurchasesExVAT": "Purchases ex. VAT",
+    "totalValueGoodsSuppliedExVAT": "Goods supplied ex. VAT",
+    "totalAcquisitionsExVAT": "Total acquisitions ex. VAT",
+}
+
 # Command-line argument parser
 parser = argparse.ArgumentParser(description="Gnucash to HMRC VAT API")
 parser.add_argument('--config', '-c',
@@ -37,8 +49,10 @@ parser.add_argument('--start',
 parser.add_argument('--end',
                     default=0,
                     help='End of period as days back from today')
-parser.add_argument('--show-account-data', action='store_true',
-                    help='Show account data for VAT obligations')
+parser.add_argument('--show-account-detail', action='store_true',
+                    help='Show account detail for VAT obligations')
+parser.add_argument('--show-account-summary', action='store_true',
+                    help='Show account summary for VAT obligations')
 parser.add_argument('--show-vat-return', action='store_true',
                     help='Show VAT return for period')
 parser.add_argument('--period', default=None,
@@ -262,7 +276,7 @@ def submit_vat_return(period, h, config):
         print("%-30s: %s" % ("Charge ref", resp["chargeRefNumber"]))
 
 # Show GnuCash information relating to open VAT obligations
-def show_account_data(h, config):
+def show_account_data(h, config, detail=False):
 
     # Get open obligations
     obs = h.get_open_obligations(config.get("identity.vrn"))
@@ -288,8 +302,14 @@ def show_account_data(h, config):
             # Get the name of the VAT value
             valueName = hmrc.vat_box[k]
 
+            valueDesc = vat_descriptions.get(valueName, valueName)
+
             # Output the value
-            print("    %s: %10.2f" % (valueName, vals[valueName]["total"]))
+            print("    %s: %.2f" % (valueDesc, vals[valueName]["total"]))
+
+            # In detail mode, transactions are shown, otherwise skip that part
+            if not detail: continue
+
             print()
 
             # Dump out all contributing transactions
@@ -421,7 +441,10 @@ try:
     elif args.submit_vat_return:
         submit_vat_return(args.period, h, config)
         sys.exit(0)
-    elif args.show_account_data:
+    elif args.show_account_detail:
+        show_account_data(h, config, detail=True)
+        sys.exit(0)
+    elif args.show_account_summary:
         show_account_data(h, config)
         sys.exit(0)
     elif args.show_vat_return:
