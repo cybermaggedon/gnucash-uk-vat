@@ -124,6 +124,7 @@ class Return:
         self.totalValuePurchasesExVAT = None
         self.totalValueGoodsSuppliedExVAT = None
         self.totalAcquisitionsExVAT = None
+        self.finalised = None
     @staticmethod
     def from_dict(d):
         r = Return()
@@ -137,9 +138,11 @@ class Return:
         r.totalValuePurchasesExVAT = d["totalValuePurchasesExVAT"]
         r.totalValueGoodsSuppliedExVAT = d["totalValueGoodsSuppliedExVAT"]
         r.totalAcquisitionsExVAT = d["totalAcquisitionsExVAT"]
+        if "finalised" in d:
+            r.finalised = d["finalised"]
         return r
     def to_dict(self):
-        return {
+        d = {
             "periodKey": self.periodKey,
             "vatDueSales": self.vatDueSales,
             "vatDueAcquisitions": self.vatDueAcquisitions,
@@ -151,6 +154,9 @@ class Return:
             "totalValueGoodsSuppliedExVAT": self.totalValueGoodsSuppliedExVAT,
             "totalAcquisitionsExVAT": self.totalAcquisitionsExVAT,
         }
+        if self.finalised:
+            d["finalised"] = self.finalised
+        return d
 
 class VATUser:
     def __init__(self):
