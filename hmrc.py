@@ -8,6 +8,8 @@ from datetime import datetime, timedelta, date
 import requests
 import json
 
+from model import *
+
 vat_box = [
     
     # VAT due on sales and other outputs. This corresponds to box 1 on the VAT
@@ -242,7 +244,7 @@ class Vat:
 
     # Constructs HTTP headers which meet the Fraud API.  Most of this comes from
     # config
-    def get_fraud_headers(self):
+    def build_fraud_headers(self):
 
         mac = self.config.get("identity.mac-address").replace(":", "%3A")
 
@@ -270,7 +272,7 @@ class Vat:
     # API request, fetch obligations which are in state O.
     def get_open_obligations(self, vrn):
 
-        headers = self.get_fraud_headers()
+        headers = self.build_fraud_headers()
         headers['Accept'] = 'application/vnd.hmrc.1.0+json'
 
         params = {
@@ -295,17 +297,16 @@ class Vat:
         if "obligations" not in obj:
             raise RuntimeError(obj["message"])
 
-        for v in obj["obligations"]:
-            v["start"] = date.fromisoformat(v["start"])
-            v["end"] = date.fromisoformat(v["end"])
-            v["due"] = date.fromisoformat(v["due"])
+        obligations = [
+            Obligation.from_dict(v) for v in  obj["obligations"]
+        ]
 
-        return obj["obligations"]
+        return obligations
 
     # API request, fetch obligations which are in a time period.
     def get_obligations(self, vrn, start, end):
 
-        headers = self.get_fraud_headers()
+        headers = self.build_fraud_headers()
         headers['Accept'] = 'application/vnd.hmrc.1.0+json'
 
         params = {
@@ -331,21 +332,14 @@ class Vat:
         if "obligations" not in obj:
             raise RuntimeError(obj["message"])
 
-        for v in obj["obligations"]:
-            v["start"] = date.fromisoformat(v["start"])
-            v["end"] = date.fromisoformat(v["end"])
-            v["due"] = date.fromisoformat(v["due"])
-            if "received" in v:
-                v["received"] = date.fromisoformat(v["received"])
-            else:
-                v["received"] = None
-
-        return obj["obligations"]
+        return [
+            Obligation.from_dict(v) for v in obj["obligations"]
+        ]
 
     # API request, fetch a VAT return instance.
     def get_vat_return(self, vrn, period):
 
-        headers = self.get_fraud_headers()
+        headers = self.build_fraud_headers()
         headers['Accept'] = 'application/vnd.hmrc.1.0+json'
 
         params = {
@@ -366,22 +360,21 @@ class Vat:
 
         obj = resp.json()
 
-        if "code" in obj:
-            raise RuntimeError(obj["message"])
-
-        return obj
+        return Return.from_dict(obj)
 
     # API request, submit a VAT return.
     def submit_vat_return(self, vrn, rtn):
 
-        headers = self.get_fraud_headers()
+        headers = self.build_fraud_headers()
         headers['Accept'] = 'application/vnd.hmrc.1.0+json'
 
         url = self.api_base + '/organisations/vat/%s/returns' % (
             vrn
         )
 
-        resp = requests.post(url, headers=headers, data=json.dumps(rtn))
+        print("YER")
+        resp = requests.post(url, headers=headers,
+                             data=json.dumps(rtn.to_dict()))
         if resp.status_code != 201:
             try:
                 msg = resp.json()["message"]
@@ -399,7 +392,7 @@ class Vat:
     # Get liabilities in time period
     def get_vat_liabilities(self, vrn, start, end):
 
-        headers = self.get_fraud_headers()
+        headers = self.build_fraud_headers()
         headers['Accept'] = 'application/vnd.hmrc.1.0+json'
 
         params = {
@@ -422,22 +415,12 @@ class Vat:
 
         obj = resp.json()
 
-        if "liabilities" not in obj:
-            raise RuntimeError(obj["message"])
-
-        for v in obj["liabilities"]:
-            if "taxPeriod" in v:
-                v["taxPeriod"]["from"] = date.fromisoformat(v["taxPeriod"]["from"])
-                v["taxPeriod"]["to"] = date.fromisoformat(v["taxPeriod"]["to"])
-            if "due" in v:
-                v["due"] = date.fromisoformat(v["due"])
-
-        return obj["liabilities"]
+        return [Liability.from_dict(v) for v in obj["liabilities"]]
 
     # Get payments in time period
     def get_vat_payments(self, vrn, start, end):
 
-        headers = self.get_fraud_headers()
+        headers = self.build_fraud_headers()
         headers['Accept'] = 'application/vnd.hmrc.1.0+json'
 
         params = {
@@ -460,14 +443,9 @@ class Vat:
 
         obj = resp.json()
 
-        if "payments" not in obj:
-            raise RuntimeError(obj["message"])
-
-        for v in obj["payments"]:
-            if "received" in v:
-                v["received"] = date.fromisoformat(v["received"])
-
-        return obj["payments"]
+        return [
+            Payment.from_dict(v) for v in obj["payments"]
+        ]
 
 # Like VAT, but talks to test API endpoints.
 class VatTest(Vat):

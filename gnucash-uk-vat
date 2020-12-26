@@ -9,6 +9,7 @@ import uuid
 import getpass
 import socket
 import os
+from model import Return
 
 # Local Python modules
 import hmrc
@@ -173,7 +174,7 @@ def show_open_obligations(h, config):
     obs = h.get_open_obligations(config.get("identity.vrn"))
 
     tbl = [
-        [v['periodKey'], v['start'], v['end'], v['due'], v['status']]
+        [v.periodKey, v.start, v.end, v.due, v.status]
         for v in obs
     ]
 
@@ -186,10 +187,7 @@ def show_obligations(start, end, h, config):
     obs = h.get_obligations(config.get("identity.vrn"), start, end)
 
     tbl = [
-        [
-            v['periodKey'], v['start'], v['end'], v['due'], v['received'],
-            v['status']
-        ]
+        [v.periodKey, v.start, v.end, v.due, v.received, v.status]
         for v in obs
     ]
 
@@ -207,7 +205,7 @@ def submit_vat_return(period, h, config):
     # Iterate over obligations to find the period
     obl = None
     for v in obs:
-        if v["periodKey"] == period:
+        if v.periodKey == period:
             obl = v
 
     # Not found
@@ -215,39 +213,38 @@ def submit_vat_return(period, h, config):
         raise RuntimeError("Period '%s' not in obligations" % period)
 
     # Get start/end date
-    start = obl["start"]
-    end = obl["end"]
+    start = obl.start
+    end = obl.end
 
     # Open GnuCash accounts, and get VAT records for the period
     accts = accounts.Accounts(config)
     vals = accts.get_vat(start, end)
 
     # Build base of the VAT return
-    rtn = {
-        "periodKey": period,
-        "finalised": True
-    }
+    rtn = Return()
+    rtn.periodKey = period
+    rtn.finalised = True
 
     # Add VAT values
     for k in range(0, 9):
         valueName = hmrc.vat_box[k]
-        rtn[valueName] = vals[valueName]["total"]
+        setattr(rtn, valueName, vals[valueName]["total"])
 
     # Dump output.  Too late to fix anything anyway.
     # FIXME: Are you sure? etc.
-    print("%-30s: %15.2f" % ("VAT due on sales", rtn["vatDueSales"]))
+    print("%-30s: %15.2f" % ("VAT due on sales", rtn.vatDueSales))
     print("%-30s: %15.2f" % ("VAT due on acquisitions",
-                             rtn["vatDueAcquisitions"]))
-    print("%-30s: %15.2f" % ("Total VAT due", rtn["totalVatDue"]))
-    print("%-30s: %15.2f" % ("VAT reclaimed", rtn["vatReclaimedCurrPeriod"]))
-    print("%-30s: %15.2f" % ("VAT due", rtn["netVatDue"]))
-    print("%-30s: %15.2f" % ("Sales before VAT", rtn["totalValueSalesExVAT"]))
+                             rtn.vatDueAcquisitions))
+    print("%-30s: %15.2f" % ("Total VAT due", rtn.totalVatDue))
+    print("%-30s: %15.2f" % ("VAT reclaimed", rtn.vatReclaimedCurrPeriod))
+    print("%-30s: %15.2f" % ("VAT due", rtn.netVatDue))
+    print("%-30s: %15.2f" % ("Sales before VAT", rtn.totalValueSalesExVAT))
     print("%-30s: %15.2f" % ("Purchases ex. VAT",
-                             rtn["totalValuePurchasesExVAT"]))
+                             rtn.totalValuePurchasesExVAT))
     print("%-30s: %15.2f" % ("Goods supplied ex. VAT",
-                         rtn["totalValueGoodsSuppliedExVAT"]))
+                         rtn.totalValueGoodsSuppliedExVAT))
     print("%-30s: %15.2f" % ("Total acquisitions ex. VAT",
-                         rtn["totalAcquisitionsExVAT"]))
+                         rtn.totalAcquisitionsExVAT))
 
     # Call the API
     resp = h.submit_vat_return(config.get("identity.vrn"), rtn)
@@ -278,12 +275,12 @@ def show_account_data(h, config):
 
         # Write out obligation header
         print("Period: %-10s    Start: %-10s     End: %-10s" % (
-            v["periodKey"], v["start"], v["end"]
+            v.periodKey, v.start, v.end
         ))
         print()
 
         # Get VAT values for this period from accounts
-        vals = accts.get_vat(v['start'], v['end'])
+        vals = accts.get_vat(v.start, v.end)
 
         # Loop over 9 boxes (0 .. 8 in this loop)
         for k in range(0, 9):
@@ -324,19 +321,19 @@ def show_vat_return(h, config, period):
     rtn = h.get_vat_return(config.get("identity.vrn"), period)
 
     # Dump out data
-    print("%-30s: %15.2f" % ("VAT due on sales", rtn["vatDueSales"]))
+    print("%-30s: %15.2f" % ("VAT due on sales", rtn.vatDueSales))
     print("%-30s: %15.2f" % ("VAT due on acquisitions",
-                             rtn["vatDueAcquisitions"]))
-    print("%-30s: %15.2f" % ("Total VAT due", rtn["totalVatDue"]))
-    print("%-30s: %15.2f" % ("VAT reclaimed", rtn["vatReclaimedCurrPeriod"]))
-    print("%-30s: %15.2f" % ("VAT due", rtn["netVatDue"]))
-    print("%-30s: %15.2f" % ("Sales before VAT", rtn["totalValueSalesExVAT"]))
+                             rtn.vatDueAcquisitions))
+    print("%-30s: %15.2f" % ("Total VAT due", rtn.totalVatDue))
+    print("%-30s: %15.2f" % ("VAT reclaimed", rtn.vatReclaimedCurrPeriod))
+    print("%-30s: %15.2f" % ("VAT due", rtn.netVatDue))
+    print("%-30s: %15.2f" % ("Sales before VAT", rtn.totalValueSalesExVAT))
     print("%-30s: %15.2f" % ("Purchases ex. VAT",
-                             rtn["totalValuePurchasesExVAT"]))
+                             rtn.totalValuePurchasesExVAT))
     print("%-30s: %15.2f" % ("Goods supplied ex. VAT",
-                         rtn["totalValueGoodsSuppliedExVAT"]))
+                         rtn.totalValueGoodsSuppliedExVAT))
     print("%-30s: %15.2f" % ("Total acquisitions ex. VAT",
-                         rtn["totalAcquisitionsExVAT"]))
+                         rtn.totalAcquisitionsExVAT))
 
 # Show liabilities
 def show_liabilities(start, end, h, config):
@@ -350,17 +347,11 @@ def show_liabilities(start, end, h, config):
     # Iterate over liabilities, build table
     for v in rtn:
         ent = []
-        if "taxPeriod" in v:
-            ent.append(v["taxPeriod"]["to"])
-        else:
-            ent.append("")
-        ent.append(v["type"][0:20])
-        ent.append(v["originalAmount"])
-        ent.append(v["outstandingAmount"])
-        if "due" in v:
-            ent.append(v["due"])
-        else:
-            ent.append("")
+        ent.append(v.end)
+        ent.append(v.typ[0:20])
+        ent.append(v.original)
+        ent.append(v.outstanding)
+        ent.append(v.due)
         tbl.append(ent)
 
     # Dump out table
@@ -378,9 +369,8 @@ def show_payments(start, end, h, config):
     # Iterate over payments, build table
     for v in rtn:
         ent = []
-        ent.append(v["amount"])
-        if "received" in v:
-            ent.append(v["received"])
+        ent.append(v.amount)
+        ent.append(v.received)
         tbl.append(ent)
 
     # Dump out table
