@@ -1,0 +1,90 @@
+{
+    "1234567890": {
+        "payments": [
+            {
+                "amount": 600,
+                "received": "2020-07-18"
+            },
+            {
+                "amount": 400,
+                "received": "2020-08-27"
+            },
+            {
+                "amount": 1400,
+                "received": "2020-08-07"
+            }
+        ],
+        "liabilities": [
+            {
+                "type": "Net VAT",
+                "originalAmount": 1100,
+                "outstandingAmount": 100,
+                "taxPeriod": {
+                    "from": "2020-02-29",
+                    "to": "2020-05-29"
+                },
+                "due": "2020-07-28"
+            },
+            {
+                "type": "Net VAT",
+                "originalAmount": 1400,
+                "taxPeriod": {
+                    "from": "2020-05-29",
+                    "to": "2020-08-27"
+                },
+                "due": "2020-10-26"
+            }
+        ],
+        "returns": [
+            {
+                "periodKey": "#000",
+                "vatDueSales": 100,
+                "vatDueAcquisitions": 120,
+                "totalVatDue": 220,
+                "vatReclaimedCurrPeriod": 30,
+                "netVatDue": 180,
+                "totalValueSalesExVAT": 1000,
+                "totalValuePurchasesExVAT": 1200,
+                "totalValueGoodsSuppliedExVAT": 50,
+                "totalAcquisitionsExVAT": 30
+            },
+            {
+                "periodKey": "#001",
+                "vatDueSales": 100,
+                "vatDueAcquisitions": 120,
+                "totalVatDue": 220,
+                "vatReclaimedCurrPeriod": 30,
+                "netVatDue": 180,
+                "totalValueSalesExVAT": 1000,
+                "totalValuePurchasesExVAT": 1200,
+                "totalValueGoodsSuppliedExVAT": 50,
+                "totalAcquisitionsExVAT": 30
+            }
+        ],
+        "obligations": [
+            {
+                "status": "F",
+                "periodKey": "#000",
+                "start": "2020-02-29",
+                "end": "2020-05-29",
+                "received": "2020-06-28",
+                "due": "2020-06-28"
+            },
+            {
+                "status": "F",
+                "periodKey": "#001",
+                "start": "2020-05-29",
+                "end": "2020-08-27",
+                "received": "2020-09-26",
+                "due": "2020-09-26"
+            },
+            {
+                "status": "O",
+                "periodKey": "#002",
+                "start": "2020-08-27",
+                "end": "2020-11-25",
+                "due": "2020-12-25"
+            }
+        ]
+    }
+}

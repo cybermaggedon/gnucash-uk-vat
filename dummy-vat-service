@@ -6,172 +6,103 @@ import json
 import os
 import uuid
 from datetime import date, datetime, timedelta
+import sys
+from model import *
 
-def ago(days):
-    return datetime.utcnow().date() - timedelta(days=days)
+# def ago(days):
+#     return datetime.utcnow().date() - timedelta(days=days)
 
-class Obligation:
-    def __init__(self, pKey, status, start, end, received=None, due=None):
-        self.periodKey = pKey
-        self.status = status
-        self.start = start
-        self.end = end
-        self.received = received
-        self.due = due
-    def to_dict(self):
-        obj = {
-            "status": self.status,
-            "periodKey": self.periodKey,
-            "start": self.start.isoformat(),
-            "end": self.end.isoformat()
-        }
-        if self.received != None:
-            obj["received"] = self.due.isoformat()
-        if self.due != None:
-            obj["due"] = self.due.isoformat()
-        return obj
-    def in_range(self, start, end):
-        if self.start >= start and self.start < end:
-            return True
-        if self.end >= start and self.end < end:
-            return True
-        if self.start <= start and self.end > end:
-            return True
-        return False
+# def json_default(o):
+#     return o.to_dict()
 
-class Liability:
-    def __init__(self, start, end, typ, original, outstanding=None, due=None):
-        self.start = start
-        self.end = end
-        self.typ = typ
-        self.original = original
-        self.outstanding = outstanding
-        self.due = due
-    def to_dict(self):
-        obj = {
-            "type": self.typ,
-            "originalAmount": self.original,
-            "outstandingAmount": self.outstanding,
-        }
+# print(json.dumps(v.to_dict(), indent=4))
 
-        if self.start and self.end:
-            obj["taxPeriod"] = {
-                "from": self.start.isoformat(),
-                "to": self.end.isoformat()
-            }
-        if self.due:
-            obj["due"] = self.due.isoformat()
-        return obj
-    def in_range(self, start, end):
-        if self.start >= start and self.start < end:
-            return True
-        if self.end >= start and self.end < end:
-            return True
-        if self.start <= start and self.end > end:
-            return True
-        return False
 
-class Payment:
-    def __init__(self, amount, received):
-        self.amount = amount
-        self.received = received
-    def to_dict(self):
-        return {
-            "amount": self.amount,
-            "received": self.received.isoformat()
-        }
-    def in_range(self, start, end):
-        if self.received >= start and self.received < end:
-            return True
-        return False
+# sys.exit(0)
 
-obligations = [
-    Obligation("#000", "F", ago(300), ago(210), received=ago(200), due=ago(180)),
-    Obligation("#001", "F", ago(210), ago(120), received=ago(110), due=ago(90)),
-    Obligation("#002", "O", ago(120), ago(30), due=ago(0))
-]
 
-liabilities = [
-    Liability(ago(300), ago(210), "Net VAT", 1100, outstanding=100, due=ago(150)),
-    Liability(ago(210), ago(120), "Net VAT", 1400),
-]
+# obligations = [
+#     Obligation("#000", "F", ago(300), ago(210), received=ago(200), due=ago(180)),
+#     Obligation("#001", "F", ago(210), ago(120), received=ago(110), due=ago(90)),
+#     Obligation("#002", "O", ago(120), ago(30), due=ago(0))
+# ]
 
-payments = [
-    Payment(600, ago(160)),
-    Payment(400, ago(120)),
-    Payment(1400, ago(140))
-]
+# liabilities = [
+#     Liability(ago(300), ago(210), "Net VAT", 1100, outstanding=100, due=ago(150)),
+#     Liability(ago(210), ago(120), "Net VAT", 1400),
+# ]
 
-returns = [
-    {
-        "periodKey": "#000",
-        "vatDueSales": 100,
-        "vatDueAcquisitions": 120,
-        "totalVatDue": 220,
-        "vatReclaimedCurrPeriod": 30,
-        "netVatDue": 180,
-        "totalValueSalesExVAT": 1000,
-        "totalValuePurchasesExVAT": 1200,
-        "totalValueGoodsSuppliedExVAT": 50,
-        "totalAcquisitionsExVAT": 30,
-    },
-    {
-        "periodKey": "#001",
-        "vatDueSales": 100,
-        "vatDueAcquisitions": 120,
-        "totalVatDue": 220,
-        "vatReclaimedCurrPeriod": 30,
-        "netVatDue": 180,
-        "totalValueSalesExVAT": 1000,
-        "totalValuePurchasesExVAT": 1200,
-        "totalValueGoodsSuppliedExVAT": 50,
-        "totalAcquisitionsExVAT": 30
-    }
-]
+# payments = [
+#     Payment(600, ago(160)),
+#     Payment(400, ago(120)),
+#     Payment(1400, ago(140))
+# ]
+
+# returns = [
+#     {
+#         "periodKey": "#000",
+#         "vatDueSales": 100,
+#         "vatDueAcquisitions": 120,
+#         "totalVatDue": 220,
+#         "vatReclaimedCurrPeriod": 30,
+#         "netVatDue": 180,
+#         "totalValueSalesExVAT": 1000,
+#         "totalValuePurchasesExVAT": 1200,
+#         "totalValueGoodsSuppliedExVAT": 50,
+#         "totalAcquisitionsExVAT": 30,
+#     },
+#     {
+#         "periodKey": "#001",
+#         "vatDueSales": 100,
+#         "vatDueAcquisitions": 120,
+#         "totalVatDue": 220,
+#         "vatReclaimedCurrPeriod": 30,
+#         "netVatDue": 180,
+#         "totalValueSalesExVAT": 1000,
+#         "totalValuePurchasesExVAT": 1200,
+#         "totalValueGoodsSuppliedExVAT": 50,
+#         "totalAcquisitionsExVAT": 30
+#     }
+# ]
+
+# stuff = {
+#     "1234567890": {#
+#         "payments": payments,
+#         "liabilities": liabilities,
+#         "returns": returns,
+#         "obligations": obligations
+#     }
+# }
 
 class Api:
 
-    def __init__(self):
-        pass
+    def __init__(self, data):
+        self.data = data
 
     async def run(self):
 
         async def get_return(request):
 
             key = request.match_info["periodKey"]
+            vrn = request.match_info["vrn"]
 
-            for v in returns:
-                if v["periodKey"] == key:
-                    return web.Response(
-                        body=json.dumps(v, indent=4),
-                        content_type="application/json"
-                    )
+            if vrn in self.data.data:
+                user = self.data.data[vrn]
+                for v in user.returns:
+                    if v.periodKey == key:
+                        return web.Response(
+                            body=json.dumps(v.to_dict(), indent=4),
+                            content_type="application/json"
+                        )
 
             raise web.HTTPBadRequest()
-
-        async def submit_return(request):
-
-            body = await request.json()
-            if "periodKey" in body:
-                returns.append(body)
-
-            resp = {
-                "processingDate": datetime.utcnow().isoformat(),
-                "paymentIndicator": "BANK",
-                "formBundleNumber": str(uuid.uuid1()),
-                "chargeRefNumber": str(uuid.uuid1()),
-            }
-
-            raise web.HTTPCreated(
-                body=json.dumps(resp, indent=4),
-                content_type="application/json"
-            )
 
         async def get_obligations(request):
 
             start=None
             end=None
             status=None
+            vrn = request.match_info["vrn"]
 
             try:
                 start = datetime.fromisoformat(request.query["from"]).date()
@@ -188,7 +119,11 @@ class Api:
             except:
                 pass
 
-            obls = obligations
+            try:
+                obls = self.data.data[vrn].obligations
+            except:
+                raise web.HTTPBadRequest()
+
             if start and end:
                 obls = [
                     v for v in obls
@@ -221,6 +156,10 @@ class Api:
             except:
                 raise web.HTTPBadRequest()
 
+            vrn = request.match_info["vrn"]
+
+            liabilities = self.data.data[vrn].liabilities
+
             resp = {
                 "liabilities": [
                     v.to_dict() for v in liabilities
@@ -241,6 +180,10 @@ class Api:
             except:
                 raise web.HTTPBadRequest()
 
+            vrn = request.match_info["vrn"]
+
+            payments = self.data.data[vrn].payments
+
             resp = {
                 "payments": [
                     v.to_dict() for v in payments
@@ -250,6 +193,27 @@ class Api:
 
             return web.Response(
                 body=json.dumps(resp, indent=4) + "\n",
+                content_type="application/json"
+            )
+
+        async def submit_return(request):
+
+            body = await request.json()
+            rtn =  Return.from_dict(body)
+
+            vrn = request.match_info["vrn"]
+
+            self.data.add_return(vrn, rtn)
+
+            resp = {
+                "processingDate": datetime.utcnow().isoformat(),
+                "paymentIndicator": "BANK",
+                "formBundleNumber": str(uuid.uuid1()),
+                "chargeRefNumber": str(uuid.uuid1()),
+            }
+
+            raise web.HTTPCreated(
+                body=json.dumps(resp, indent=4),
                 content_type="application/json"
             )
 
@@ -305,7 +269,10 @@ class Api:
         while True:
             await asyncio.sleep(1)
 
+data = open("vat-data.json").read()
+v = VATData.from_json(data)
+a = Api(v)
+
 loop = asyncio.get_event_loop()
-a = Api()
 loop.run_until_complete(a.run())
 
