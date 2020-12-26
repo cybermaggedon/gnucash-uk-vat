@@ -9,71 +9,6 @@ from datetime import date, datetime, timedelta
 import sys
 from model import *
 
-# def ago(days):
-#     return datetime.utcnow().date() - timedelta(days=days)
-
-# def json_default(o):
-#     return o.to_dict()
-
-# print(json.dumps(v.to_dict(), indent=4))
-
-
-# sys.exit(0)
-
-
-# obligations = [
-#     Obligation("#000", "F", ago(300), ago(210), received=ago(200), due=ago(180)),
-#     Obligation("#001", "F", ago(210), ago(120), received=ago(110), due=ago(90)),
-#     Obligation("#002", "O", ago(120), ago(30), due=ago(0))
-# ]
-
-# liabilities = [
-#     Liability(ago(300), ago(210), "Net VAT", 1100, outstanding=100, due=ago(150)),
-#     Liability(ago(210), ago(120), "Net VAT", 1400),
-# ]
-
-# payments = [
-#     Payment(600, ago(160)),
-#     Payment(400, ago(120)),
-#     Payment(1400, ago(140))
-# ]
-
-# returns = [
-#     {
-#         "periodKey": "#000",
-#         "vatDueSales": 100,
-#         "vatDueAcquisitions": 120,
-#         "totalVatDue": 220,
-#         "vatReclaimedCurrPeriod": 30,
-#         "netVatDue": 180,
-#         "totalValueSalesExVAT": 1000,
-#         "totalValuePurchasesExVAT": 1200,
-#         "totalValueGoodsSuppliedExVAT": 50,
-#         "totalAcquisitionsExVAT": 30,
-#     },
-#     {
-#         "periodKey": "#001",
-#         "vatDueSales": 100,
-#         "vatDueAcquisitions": 120,
-#         "totalVatDue": 220,
-#         "vatReclaimedCurrPeriod": 30,
-#         "netVatDue": 180,
-#         "totalValueSalesExVAT": 1000,
-#         "totalValuePurchasesExVAT": 1200,
-#         "totalValueGoodsSuppliedExVAT": 50,
-#         "totalAcquisitionsExVAT": 30
-#     }
-# ]
-
-# stuff = {
-#     "1234567890": {#
-#         "payments": payments,
-#         "liabilities": liabilities,
-#         "returns": returns,
-#         "obligations": obligations
-#     }
-# }
-
 class Api:
 
     def __init__(self, data):
@@ -200,6 +135,9 @@ class Api:
 
             body = await request.json()
             rtn =  Return.from_dict(body)
+
+            if not rtn.finalised:
+                raise web.HTTPBadRequest()
 
             vrn = request.match_info["vrn"]
 
