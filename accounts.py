@@ -14,7 +14,6 @@
 import gnucash
 import json
 import math
-from decimal import Decimal
 import hmrc
 
 # Wrapper for GnuCash accounts.
@@ -22,16 +21,32 @@ class Accounts:
 
     # Opens a GnuCash book.  Config object provides configuration, needs
     # to support config.get("key.name") method.
-    def __init__(self, config):
+    def __init__(self, config, rw=False):
         self.config = config
-        self.session = self.open_session(config.get("accounts.file"))
+        file = config.get("accounts.file")
+        if rw:
+            self.session = self.open_session(file)
+        else:
+            self.session = self.open_session_rw(file)
         self.book = self.session.book
         self.root = self.book.get_root_account()
+
+    def __del__(self):
+        self.session.destroy()
+
+    def save(self):
+        self.session.save()
 
     # Creates a read-only session associated with a GnuCash file
     @staticmethod
     def open_session(file):
         mode = gnucash.SessionOpenMode.SESSION_READ_ONLY
+        session = gnucash.Session(file, mode)
+        return session
+
+    @staticmethod
+    def open_session_rw(file):
+        mode = gnucash.SessionOpenMode.SESSION_NORMAL_OPEN
         session = gnucash.Session(file, mode)
         return session
 
@@ -108,4 +123,41 @@ class Accounts:
                 vat[valueName]["total"] = round(vat[valueName]["total"])
 
         return vat
+
+    def get_vendor(self, id):
+        return self.book.VendorLookupByID(id)
+
+    def get_vendors(self):
+
+        query = gnc.Query()
+        query.search_for('gncVendor')
+        query.set_book(self.book)
+        vendors = []
+
+        vnds = [
+            biz.Vendor(instance=result)
+            for result in query.run()
+        ]
+
+        query.destroy()
+
+        return vnds
+
+    def create_vendor(self, id, currency, name):
+        return gnucash.gnucash_business.Vendor(self.book, id, currency, name)
+
+    def get_currency(self, mn):
+
+        return self.book.get_table().lookup("CURRENCY", mn)
+
+    def next_bill_id(self,  vendor):
+        return self.book.BillNextID(vendor)
+
+    def create_bill(self, id, currency, vendor, date_opened):
+        return gnucash.gnucash_business.Bill(self.book, id, currency, vendor,
+                                             date_opened)
+
+    def create_bill_entry(self, bill, date_opened):
+        entry = gnucash.gnucash_business.Entry(self.book, bill, date_opened)
+        return entry
 
