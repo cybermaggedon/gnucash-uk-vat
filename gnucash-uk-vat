@@ -9,23 +9,11 @@ import uuid
 import getpass
 import socket
 import os
-from model import Return
+import model
 
 # Local Python modules
 import hmrc
 import accounts
-
-vat_descriptions = {
-    "vatDueSales": "VAT due on sales",
-    "vatDueAcquisitions": "VAT due on acquisitions",
-    "totalVatDue": "Total VAT due",
-    "vatReclaimedCurrPeriod": "VAT reclaimed",
-    "netVatDue": "VAT due",
-    "totalValueSalesExVAT": "Sales before VAT",
-    "totalValuePurchasesExVAT": "Purchases ex. VAT",
-    "totalValueGoodsSuppliedExVAT": "Goods supplied ex. VAT",
-    "totalAcquisitionsExVAT": "Total acquisitions ex. VAT",
-}
 
 # Command-line argument parser
 parser = argparse.ArgumentParser(description="Gnucash to HMRC VAT API")
@@ -59,6 +47,8 @@ parser.add_argument('--period', default=None,
                     help='VAT period key')
 parser.add_argument('--submit-vat-return', action='store_true',
                     help='Submit VAT return for period')
+parser.add_argument('--post-vat-bill', action='store_true',
+                    help='Post a VAT bill to accounts for period')
 parser.add_argument('--show-liabilities', action='store_true',
                     help='Show VAT liabilities')
 parser.add_argument('--show-payments', action='store_true',
@@ -150,10 +140,23 @@ def initialise_config(config_file):
             "Assets:Capital Equipment:EU Reverse VAT Purchase",
             "totalValuePurchasesExVAT": "Assets:Computer Equipment",
             "totalValueGoodsSuppliedExVAT": "Income:Sales:EU:Goods",
-            "totalAcquisitionsExVAT": "Expenses:VAT Purchases:EU Reverse VAT"
+            "totalAcquisitionsExVAT": "Expenses:VAT Purchases:EU Reverse VAT",
+            "liabilities": "VAT:Liabilities",
+            "bills": "Accounts Payable",
+            "vendor": {
+                "id": "hmrc-vat",
+                "currency": "GBP",
+                "name": "HM Revenue and Customs - VAT",
+                "address": [
+                    "123 St Vincent Street",
+                    "Glasgow City",
+                    "Glasgow G2 5EA",
+                    "UK"
+                ],
+                "phone": "0300 200 3700"
+            }
         },
         "application": {
-            "name": "gnucash-uk-vat",
             "profile": "test",
             "client-id": "<CLIENTID>",
             "client-secret": "<CLIENTSECRET>"
@@ -235,30 +238,18 @@ def submit_vat_return(period, h, config):
     vals = accts.get_vat(start, end)
 
     # Build base of the VAT return
-    rtn = Return()
+    rtn = model.Return()
     rtn.periodKey = period
     rtn.finalised = True
 
     # Add VAT values
     for k in range(0, 9):
-        valueName = hmrc.vat_box[k]
+        valueName = model.vat_fields[k]
         setattr(rtn, valueName, vals[valueName]["total"])
 
     # Dump output.  Too late to fix anything anyway.
     # FIXME: Are you sure? etc.
-    print("%-30s: %15.2f" % ("VAT due on sales", rtn.vatDueSales))
-    print("%-30s: %15.2f" % ("VAT due on acquisitions",
-                             rtn.vatDueAcquisitions))
-    print("%-30s: %15.2f" % ("Total VAT due", rtn.totalVatDue))
-    print("%-30s: %15.2f" % ("VAT reclaimed", rtn.vatReclaimedCurrPeriod))
-    print("%-30s: %15.2f" % ("VAT due", rtn.netVatDue))
-    print("%-30s: %15.2f" % ("Sales before VAT", rtn.totalValueSalesExVAT))
-    print("%-30s: %15.2f" % ("Purchases ex. VAT",
-                             rtn.totalValuePurchasesExVAT))
-    print("%-30s: %15.2f" % ("Goods supplied ex. VAT",
-                         rtn.totalValueGoodsSuppliedExVAT))
-    print("%-30s: %15.2f" % ("Total acquisitions ex. VAT",
-                         rtn.totalAcquisitionsExVAT))
+    sys.stdout.write(rtn.to_string())
 
     # Call the API
     resp = h.submit_vat_return(config.get("identity.vrn"), rtn)
@@ -274,6 +265,57 @@ def submit_vat_return(period, h, config):
         print("%-30s: %s" % ("Form bundle", resp["formBundleNumber"]))
     if "chargeRefNumber" in resp:
         print("%-30s: %s" % ("Charge ref", resp["chargeRefNumber"]))
+
+# Submit a VAT return
+def post_vat_bill(start, end, period, h, config):
+
+    # We need start/end information, but only have a period key first.
+    # Load the obligations to get the mapping
+    obs = h.get_obligations(config.get("identity.vrn"), start, end)
+
+    # Iterate over obligations to find the period
+    obl = None
+    for v in obs:
+        if v.periodKey == period:
+            obl = v
+
+    # Not found
+    if obl == None:
+        raise RuntimeError("Period '%s' not in obligations" % period)
+
+    # Get start/end date
+    start = obl.start
+    end = obl.end
+    print(start, end)
+
+    # Open GnuCash accounts, and get VAT records for the period
+    accts = accounts.Accounts(config)
+    vals = accts.get_vat(start, end)
+
+    # Build base of the VAT return
+    rtn = model.Return()
+    rtn.periodKey = period
+    rtn.finalised = True
+
+    # Add VAT values
+    for k in range(0, 9):
+        valueName = model.vat_fields[k]
+        setattr(rtn, valueName, vals[valueName]["total"])
+
+    # Dump output.  Too late to fix anything anyway.
+    # FIXME: Are you sure? etc.
+    sys.stdout.write(rtn.to_string())
+
+    # FIXME: How to work out due date?  Online says 1 cal month plus 7 days
+    # from end of accounting period
+    accts.post_vat_bill(
+        period,
+        datetime.utcnow().date(),
+        end + timedelta(days=28) + timedelta(days=7),
+        rtn,
+        rtn.to_string(show_key=True),
+        "VAT payment for period " + period
+    )
 
 # Show GnuCash information relating to open VAT obligations
 def show_account_data(h, config, detail=False):
@@ -300,9 +342,9 @@ def show_account_data(h, config, detail=False):
         for k in range(0, 9):
 
             # Get the name of the VAT value
-            valueName = hmrc.vat_box[k]
+            valueName = model.vat_fields[k]
 
-            valueDesc = vat_descriptions.get(valueName, valueName)
+            valueDesc = model.vat_descriptions.get(valueName, valueName)
 
             # Output the value
             print("    %s: %.2f" % (valueDesc, vals[valueName]["total"]))
@@ -339,21 +381,7 @@ def show_vat_return(h, config, period):
 
     # Fetch VAT return data
     rtn = h.get_vat_return(config.get("identity.vrn"), period)
-
-    # Dump out data
-    print("%-30s: %15.2f" % ("VAT due on sales", rtn.vatDueSales))
-    print("%-30s: %15.2f" % ("VAT due on acquisitions",
-                             rtn.vatDueAcquisitions))
-    print("%-30s: %15.2f" % ("Total VAT due", rtn.totalVatDue))
-    print("%-30s: %15.2f" % ("VAT reclaimed", rtn.vatReclaimedCurrPeriod))
-    print("%-30s: %15.2f" % ("VAT due", rtn.netVatDue))
-    print("%-30s: %15.2f" % ("Sales before VAT", rtn.totalValueSalesExVAT))
-    print("%-30s: %15.2f" % ("Purchases ex. VAT",
-                             rtn.totalValuePurchasesExVAT))
-    print("%-30s: %15.2f" % ("Goods supplied ex. VAT",
-                         rtn.totalValueGoodsSuppliedExVAT))
-    print("%-30s: %15.2f" % ("Total acquisitions ex. VAT",
-                         rtn.totalAcquisitionsExVAT))
+    sys.stdout.write(rtn.to_string())
 
 # Show liabilities
 def show_liabilities(start, end, h, config):
@@ -440,6 +468,11 @@ try:
         sys.exit(0)
     elif args.submit_vat_return:
         submit_vat_return(args.period, h, config)
+        sys.exit(0)
+    elif args.post_vat_bill:
+        start = datetime.utcnow() - timedelta(days=int(args.start))
+        end = datetime.utcnow() - timedelta(days=int(args.end))
+        post_vat_bill(start, end, args.period, h, config)
         sys.exit(0)
     elif args.show_account_detail:
         show_account_data(h, config, detail=True)

@@ -10,50 +10,6 @@ import json
 
 from model import *
 
-vat_box = [
-    
-    # VAT due on sales and other outputs. This corresponds to box 1 on the VAT
-    # Return form.
-    "vatDueSales",
-    
-    # VAT due on acquisitions from other EC Member States. This corresponds
-    # to box 2 on the VAT Return form.
-    "vatDueAcquisitions",
-    
-    # Total VAT due (the sum of vatDueSales and vatDueAcquisitions). This
-    # corresponds to box 3 on the VAT Return form.
-    "totalVatDue",
-    
-    # VAT reclaimed on purchases and other inputs (including acquisitions
-    # from the EC). This corresponds to box 4 on the VAT Return form.
-    "vatReclaimedCurrPeriod",
-    
-    # The difference between totalVatDue and vatReclaimedCurrPeriod. This
-    # corresponds to box 5 on the VAT Return form.
-    "netVatDue",
-    
-    # Total value of sales and all other outputs excluding any VAT. This
-    # corresponds to box 6 on the VAT Return form. The value must be in pounds
-    # (no pence)
-    "totalValueSalesExVAT",
-    
-    # Total value of purchases and all other inputs excluding any VAT
-    # (including exempt purchases). This corresponds to box 7 on the VAT
-    # Return form. The value must be in pounds (no pence)
-    "totalValuePurchasesExVAT",
-
-    # Total value of all supplies of goods and related costs, excluding any
-    # VAT, to other EC member states. This corresponds to box 8 on the VAT
-    # Return form.
-    "totalValueGoodsSuppliedExVAT",
-
-    # Total value of acquisitions of goods and related costs excluding any
-    # VAT, from other EC member states. This corresponds to box 9 on the VAT
-    # Return form.
-    "totalAcquisitionsExVAT"
-
-]
-
 # AuthCollector is a class which provides a temporary web service in order to
 # receive OAUTH credential tokens
 class AuthCollector:
@@ -372,7 +328,6 @@ class Vat:
             vrn
         )
 
-        print("YER")
         resp = requests.post(url, headers=headers,
                              data=json.dumps(rtn.to_dict()))
         if resp.status_code != 201:

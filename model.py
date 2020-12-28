@@ -2,6 +2,62 @@
 import json
 from datetime import datetime, timedelta
 
+vat_fields = [
+
+    # VAT due on sales and other outputs. This corresponds to box 1 on the VAT
+    # Return form.
+    "vatDueSales",
+
+    # VAT due on acquisitions from other EC Member States. This corresponds
+    # to box 2 on the VAT Return form.
+    "vatDueAcquisitions",
+
+    # Total VAT due (the sum of vatDueSales and vatDueAcquisitions). This
+    # corresponds to box 3 on the VAT Return form.
+    "totalVatDue",
+
+    # VAT reclaimed on purchases and other inputs (including acquisitions
+    # from the EC). This corresponds to box 4 on the VAT Return form.
+    "vatReclaimedCurrPeriod",
+
+    # The difference between totalVatDue and vatReclaimedCurrPeriod. This
+    # corresponds to box 5 on the VAT Return form.
+    "netVatDue",
+
+    # Total value of sales and all other outputs excluding any VAT. This
+    # corresponds to box 6 on the VAT Return form. The value must be in pounds
+    # (no pence)
+    "totalValueSalesExVAT",
+
+    # Total value of purchases and all other inputs excluding any VAT
+    # (including exempt purchases). This corresponds to box 7 on the VAT
+    # Return form. The value must be in pounds (no pence)
+    "totalValuePurchasesExVAT",
+
+    # Total value of all supplies of goods and related costs, excluding any
+    # VAT, to other EC member states. This corresponds to box 8 on the VAT
+    # Return form.
+    "totalValueGoodsSuppliedExVAT",
+
+    # Total value of acquisitions of goods and related costs excluding any
+    # VAT, from other EC member states. This corresponds to box 9 on the VAT
+    # Return form.
+    "totalAcquisitionsExVAT"
+
+]
+
+vat_descriptions = {
+    "vatDueSales": "VAT due on sales",
+    "vatDueAcquisitions": "VAT due on acquisitions",
+    "totalVatDue": "Total VAT due",
+    "vatReclaimedCurrPeriod": "VAT reclaimed",
+    "netVatDue": "VAT due",
+    "totalValueSalesExVAT": "Sales before VAT",
+    "totalValuePurchasesExVAT": "Purchases ex. VAT",
+    "totalValueGoodsSuppliedExVAT": "Goods supplied ex. VAT",
+    "totalAcquisitionsExVAT": "Total acquisitions ex. VAT",
+}
+
 class Obligation:
     def __init__(self, pKey, status, start, end, received=None, due=None):
         self.periodKey = pKey
@@ -157,6 +213,22 @@ class Return:
         if self.finalised:
             d["finalised"] = self.finalised
         return d
+    def to_string(self, show_key=False):
+        s = ""
+        if show_key:
+            s += "%-30s: %s\n" % (
+                "Period Key", self.periodKey
+            )
+        for v in [ "vatDueSales", "vatDueAcquisitions",
+                   "totalVatDue", "vatReclaimedCurrPeriod", "netVatDue",
+                   "totalValueSalesExVAT", "totalValuePurchasesExVAT",
+                   "totalValueGoodsSuppliedExVAT",
+                   "totalAcquisitionsExVAT" ]:
+            s += "%-30s: %15.2f\n" % (
+                vat_descriptions[v],
+                getattr(self, v) if getattr(self, v) != None else 0
+            )
+        return s
 
 class VATUser:
     def __init__(self):

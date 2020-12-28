@@ -14,7 +14,7 @@
 import gnucash
 import json
 import math
-import hmrc
+import model
 
 # Wrapper for GnuCash accounts.
 class Accounts:
@@ -97,7 +97,7 @@ class Accounts:
         # Boxes 1 to 9, are referred to as 0 to 8 in this loop.
         for v in range(0, 9):
 
-            valueName = hmrc.vat_box[v]
+            valueName = model.vat_fields[v]
 
             locator = self.config.get("accounts").get(valueName)
             acct = self.get_account(self.root, locator)
@@ -110,7 +110,7 @@ class Accounts:
             }
 
             # Some boxes need sign reversal, I think this is mapping whether
-            # the account is credit or debit type.
+            # the account is asset or liability type.
             # FIXME: Should be user-configurable?
             # FIXME: Should be able to work this out from account type?
             if v in [0, 1, 2, 4, 5, 7]:
@@ -129,7 +129,7 @@ class Accounts:
 
     def get_vendors(self):
 
-        query = gnc.Query()
+        query = gnucash.Query()
         query.search_for('gncVendor')
         query.set_book(self.book)
         vendors = []
@@ -160,4 +160,66 @@ class Accounts:
     def create_bill_entry(self, bill, date_opened):
         entry = gnucash.gnucash_business.Entry(self.book, bill, date_opened)
         return entry
+
+    def get_vat_vendor(self):
+
+        id = self.config.get("accounts.vendor.id")
+        gbp = self.get_currency(self.config.get("accounts.vendor.currency"))
+        name = self.config.get("accounts.vendor.name")
+        ad = self.config.get("accounts.vendor.address")
+
+        vendor = self.get_vendor(id)
+        if vendor == None:
+            vendor = self.create_vendor(id, gbp, name)
+            address = vendor.GetAddr()
+            if len(ad) > 0:
+                address.SetAddr1(ad[0])
+            if len(ad) > 1:
+                address.SetAddr2(ad[1])
+            if len(ad) > 2:
+                address.SetAddr3(ad[2])
+            if len(ad) > 3:
+                address.SetAddr4(ad[3])
+
+            self.save()
+
+        return vendor
+
+    def post_vat_bill(self, billing_id, bill_date, due_date, vat, notes, memo):
+
+        # Get the VAT vendor (HMRC)
+        vendor = self.get_vat_vendor()
+
+        bill_id  = self.next_bill_id(vendor)
+        bill = self.create_bill(bill_id, vendor.GetCurrency(), vendor,
+                                bill_date)
+
+        vat_due = vat.totalVatDue
+        vat_rebate = vat.vatReclaimedCurrPeriod
+        bill.SetNotes(notes)
+        bill.SetBillingID(billing_id)
+
+        liability_account_name = self.config.get("accounts.liabilities")
+        liability_acct = self.get_account(self.root, liability_account_name)
+
+        bill_account_name = self.config.get("accounts.bills")
+        bill_acct = self.get_account(self.root, bill_account_name)
+
+        description = "VAT from sales and acquisitions"
+        ent = self.create_bill_entry(bill, bill_date)
+        ent.SetDescription(description)
+        ent.SetBillAccount(liability_acct)
+        ent.SetQuantity(gnucash.GncNumeric(1.0))
+        ent.SetBillPrice(gnucash.GncNumeric(round(100 * vat_due), 100))
+
+        description = "VAT rebate on acquisitions"
+        ent = self.create_bill_entry(bill, bill_date)
+        ent.SetDescription(description)
+        ent.SetBillAccount(liability_acct)
+        ent.SetQuantity(gnucash.GncNumeric(1.0))
+        ent.SetBillPrice(gnucash.GncNumeric(-round(100 * vat_rebate), 100))
+
+        bill.PostToAccount(bill_acct, bill_date, due_date, memo, False, False)
+
+        self.save()
 
