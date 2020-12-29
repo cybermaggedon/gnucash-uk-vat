@@ -95,8 +95,8 @@ class Obligation:
         return obj
     def in_range(self, start, end):
         if self.status == "O":
-            return self.due >= start and self.due < end
-        return self.received >= start and self.received < end
+            return self.due >= start and self.due <= end
+        return self.received >= start and self.received <= end
 
 class Liability:
     def __init__(self, start, end, typ, original, outstanding=None, due=None):
@@ -137,11 +137,11 @@ class Liability:
             obj["due"] = self.due.isoformat()
         return obj
     def in_range(self, start, end):
-        if self.start >= start and self.start < end:
+        if self.start >= start and self.start <= end:
             return True
-        if self.end >= start and self.end < end:
+        if self.end >= start and self.end <= end:
             return True
-        if self.start <= start and self.end > end:
+        if self.start <= start and self.end >= end:
             return True
         return False
 
@@ -160,7 +160,7 @@ class Payment:
             "received": self.received.isoformat()
         }
     def in_range(self, start, end):
-        if self.received >= start and self.received < end:
+        if self.received >= start and self.received <= end:
             return True
         return False
 

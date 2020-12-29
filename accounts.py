@@ -124,9 +124,11 @@ class Accounts:
 
         return vat
 
+    # Get vendor by vendor ID, returns Vendor object
     def get_vendor(self, id):
         return self.book.VendorLookupByID(id)
 
+    # Get list of all vendors, list of Vendor objects
     def get_vendors(self):
 
         query = gnucash.Query()
@@ -143,24 +145,29 @@ class Accounts:
 
         return vnds
 
+    # Create a vendor
     def create_vendor(self, id, currency, name):
         return gnucash.gnucash_business.Vendor(self.book, id, currency, name)
 
+    # Get a currency given the mnemonic.  Returns a Commodity object.
     def get_currency(self, mn):
-
         return self.book.get_table().lookup("CURRENCY", mn)
 
-    def next_bill_id(self,  vendor):
+    # Get next bill ID given vendor
+    def next_bill_id(self, vendor):
         return self.book.BillNextID(vendor)
 
+    # Createa a bill
     def create_bill(self, id, currency, vendor, date_opened):
         return gnucash.gnucash_business.Bill(self.book, id, currency, vendor,
                                              date_opened)
 
+    # Add a bill entry to a bill
     def create_bill_entry(self, bill, date_opened):
         entry = gnucash.gnucash_business.Entry(self.book, bill, date_opened)
         return entry
 
+    # Get our 'special' predefined vendor for VAT returns.
     def get_vat_vendor(self):
 
         id = self.config.get("accounts.vendor.id")
@@ -168,6 +175,7 @@ class Accounts:
         name = self.config.get("accounts.vendor.name")
         ad = self.config.get("accounts.vendor.address")
 
+        # If vendor does not exist, create it
         vendor = self.get_vendor(id)
         if vendor == None:
             vendor = self.create_vendor(id, gbp, name)
@@ -185,6 +193,7 @@ class Accounts:
 
         return vendor
 
+    # Post the VAT bill to a liability account.
     def post_vat_bill(self, billing_id, bill_date, due_date, vat, notes, memo):
 
         # Get the VAT vendor (HMRC)

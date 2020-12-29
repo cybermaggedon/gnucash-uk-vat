@@ -138,10 +138,10 @@ The status column shows status F=fulfilled, O=Open.
 `gnucash-uk-vat` uses the due date to refer to obligation periods.
 
 You can narrow the list to a time window by specifying the start and end
-point as number of days in the past.  The default is to cover the previous year.
+date.  The default is to cover the previous year.
 
 ```
-[user@machine mtd]$ gnucash-uk-vat --show-obligations --start 1500 --end 1200
+[user@machine mtd]$ gnucash-uk-vat --show-obligations --start 2019-06-01 --end 2019-12-31
 ```
 
 You can also show just open obligations, ignoring obligations which are
@@ -406,3 +406,21 @@ A sample account file is included at `accounts/accounts.gnucash`.  This
 account file contains some transactions dated in the 1Q17 quarter which match
 the test data in HMRC's Sandbox.  There are also some transactions in 2020
 which match the obligations in the `dummy-vat-service` data.
+
+## Licence
+
+Copyright (C) 2020, Cyberapocalypse Limited
+
+This program is free software: you can redistribute it and/or modify
+it under the terms of the GNU General Public License as published by
+the Free Software Foundation, either version 3 of the License, or
+(at your option) any later version.
+
+This program is distributed in the hope that it will be useful,
+but WITHOUT ANY WARRANTY; without even the implied warranty of
+MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+GNU General Public License for more details.
+
+You should have received a copy of the GNU General Public License
+along with this program.  If not, see <https://www.gnu.org/licenses/>.
+
