@@ -202,13 +202,13 @@ class Vat:
     # config
     def build_fraud_headers(self):
 
-        mac = self.config.get("identity.mac-address").replace(":", "%3A")
+        mac = quote_plus(self.config.get("identity.mac-address"))
 
-        # This is a script, no multi-factor authentication to call on
-        mfa = 'type=%s&timestamp=%sZ&unique-reference=%s' % (
-            "OTHER", datetime.utcnow().strftime("%Y-%m-%dT%H:%M:%SZ"),
-            self.config.get("identity.user")
-        )
+        mfa = urlencode({
+            "type": "OTHER",
+            "timestamp": datetime.utcnow().strftime("%Y-%m-%dT%H:%M:%SZ"),
+            "unique-reference": self.config.get("identity.user")
+        })
 
         # Return headers
         return {
@@ -224,6 +224,33 @@ class Vat:
             'Gov-Vendor-License-IDs': 'gnu=eccbc87e4b5ce2fe28308fd9f2a7baf3',
             'Authorization': 'Bearer %s' % self.auth.get("access_token"),
         }
+
+    # Test fraud headers.  Only available in Sandbox, not production
+    def test_fraud_headers(self):
+
+        headers = self.build_fraud_headers()
+        headers['Accept'] = 'application/vnd.hmrc.1.0+json'
+
+        url = self.api_base + '/test/fraud-prevention-headers/validate'
+
+        resp = requests.get(url, headers=headers)
+        if resp.status_code != 200:
+            try:
+                msg = resp.json()["message"]
+            except:
+                msg = "HTTP error %d" % resp.status_code
+            raise RuntimeError(msg)
+
+        obj = resp.json()
+
+        if resp.status_code != 200:
+            try:
+                msg = resp.json()["message"]
+            except:
+                msg = "HTTP error %d" % resp.status_code
+            raise RuntimeError(msg)
+
+        return obj
 
     # API request, fetch obligations which are in state O.
     def get_open_obligations(self, vrn):

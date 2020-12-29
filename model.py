@@ -89,18 +89,14 @@ class Obligation:
             "end": self.end.isoformat()
         }
         if self.received != None:
-            obj["received"] = self.due.isoformat()
+            obj["received"] = self.received.isoformat()
         if self.due != None:
             obj["due"] = self.due.isoformat()
         return obj
     def in_range(self, start, end):
-        if self.start >= start and self.start < end:
-            return True
-        if self.end >= start and self.end < end:
-            return True
-        if self.start <= start and self.end > end:
-            return True
-        return False
+        if self.status == "O":
+            return self.due >= start and self.due < end
+        return self.received >= start and self.received < end
 
 class Liability:
     def __init__(self, start, end, typ, original, outstanding=None, due=None):
@@ -213,21 +209,30 @@ class Return:
         if self.finalised:
             d["finalised"] = self.finalised
         return d
-    def to_string(self, show_key=False):
+    def to_string(self, show_key=False, indent=True):
         s = ""
         if show_key:
-            s += "%-30s: %s\n" % (
-                "Period Key", self.periodKey
-            )
+            if indent:
+                s += "%-30s: %s\n" % (
+                    "Period Key", self.periodKey
+                )
+            else:
+                s += "Period Key: %s\n" % self.periodKey
         for v in [ "vatDueSales", "vatDueAcquisitions",
                    "totalVatDue", "vatReclaimedCurrPeriod", "netVatDue",
                    "totalValueSalesExVAT", "totalValuePurchasesExVAT",
                    "totalValueGoodsSuppliedExVAT",
                    "totalAcquisitionsExVAT" ]:
-            s += "%-30s: %15.2f\n" % (
-                vat_descriptions[v],
-                getattr(self, v) if getattr(self, v) != None else 0
-            )
+            if indent:
+                s += "%-30s: %15.2f\n" % (
+                    vat_descriptions[v],
+                    getattr(self, v) if getattr(self, v) != None else 0
+                )
+            else:
+                s += "%s: %.2f\n" % (
+                    vat_descriptions[v],
+                    getattr(self, v) if getattr(self, v) != None else 0
+                )
         return s
 
 class VATUser:

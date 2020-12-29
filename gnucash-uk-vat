@@ -30,25 +30,25 @@ parser.add_argument('--authenticate', action='store_true',
 parser.add_argument('--show-open-obligations', action='store_true',
                     help='Show VAT obligations')
 parser.add_argument('--show-obligations', action='store_true',
-                    help='Show all VAT obligations in time period')
+                    help='Show all VAT obligations in start/end period')
 parser.add_argument('--start',
                     default=356,
                     help='Start period as days back from today')
 parser.add_argument('--end',
-                    default=0,
+                    default=-1,
                     help='End of period as days back from today')
 parser.add_argument('--show-account-detail', action='store_true',
                     help='Show account detail for VAT obligations')
 parser.add_argument('--show-account-summary', action='store_true',
                     help='Show account summary for VAT obligations')
 parser.add_argument('--show-vat-return', action='store_true',
-                    help='Show VAT return for period')
-parser.add_argument('--period', default=None,
-                    help='VAT period key')
+                    help='Show VAT return for start/end period')
+parser.add_argument('--due-date', default=None,
+                    help='Define obligation by specifying due date')
 parser.add_argument('--submit-vat-return', action='store_true',
-                    help='Submit VAT return for period')
+                    help='Submit VAT return for obligation due date')
 parser.add_argument('--post-vat-bill', action='store_true',
-                    help='Post a VAT bill to accounts for period')
+                    help='Post a VAT bill to accounts for due date')
 parser.add_argument('--show-liabilities', action='store_true',
                     help='Show VAT liabilities')
 parser.add_argument('--show-payments', action='store_true',
@@ -190,11 +190,11 @@ def show_open_obligations(h, config):
     obs = h.get_open_obligations(config.get("identity.vrn"))
 
     tbl = [
-        [v.periodKey, v.start, v.end, v.due, v.status]
+        [v.start, v.end, v.due, v.status]
         for v in obs
     ]
 
-    print(tabulate(tbl, ["Period", "Start", "End", "Due", "Status"],
+    print(tabulate(tbl, ["Start", "End", "Due", "Status"],
                    tablefmt="pretty"))
 
 # Show obligations in a time period
@@ -203,30 +203,30 @@ def show_obligations(start, end, h, config):
     obs = h.get_obligations(config.get("identity.vrn"), start, end)
 
     tbl = [
-        [v.periodKey, v.start, v.end, v.due, v.received, v.status]
+        [v.start, v.end, v.due, v.received, v.status]
         for v in obs
     ]
 
     print(tabulate(tbl,
-                   ["Period", "Start", "End", "Due", "Received", "Status"],
+                   ["Start", "End", "Due", "Received", "Status"],
                    tablefmt="pretty"))
 
 # Submit a VAT return
-def submit_vat_return(period, h, config):
+def submit_vat_return(due, h, config):
 
-    # We need start/end information, but only have a period key first.
+    # We need start/end information, but only have a due date.
     # Load the obligations to get the mapping
     obs = h.get_open_obligations(config.get("identity.vrn"))
 
     # Iterate over obligations to find the period
     obl = None
     for v in obs:
-        if v.periodKey == period:
+        if v.due == due:
             obl = v
 
     # Not found
     if obl == None:
-        raise RuntimeError("Period '%s' not in obligations" % period)
+        raise RuntimeError("Due date '%s' does not match any obligations" % due)
 
     # Get start/end date
     start = obl.start
@@ -238,7 +238,7 @@ def submit_vat_return(period, h, config):
 
     # Build base of the VAT return
     rtn = model.Return()
-    rtn.periodKey = period
+    rtn.periodKey = obl.periodKey
     rtn.finalised = True
 
     # Add VAT values
@@ -279,7 +279,7 @@ declaration can result in prosecution.
         print("%-30s: %s" % ("Charge ref", resp["chargeRefNumber"]))
 
 # Submit a VAT return
-def post_vat_bill(start, end, period, h, config):
+def post_vat_bill(start, end, due, h, config):
 
     # We need start/end information, but only have a period key first.
     # Load the obligations to get the mapping
@@ -288,12 +288,12 @@ def post_vat_bill(start, end, period, h, config):
     # Iterate over obligations to find the period
     obl = None
     for v in obs:
-        if v.periodKey == period:
+        if v.due == due:
             obl = v
 
     # Not found
     if obl == None:
-        raise RuntimeError("Period '%s' not in obligations" % period)
+        raise RuntimeError("Due date '%s' does not match any obligation" % due)
 
     # Get start/end date
     start = obl.start
@@ -306,7 +306,7 @@ def post_vat_bill(start, end, period, h, config):
 
     # Build base of the VAT return
     rtn = model.Return()
-    rtn.periodKey = period
+    rtn.periodKey = obl.periodKey
     rtn.finalised = True
 
     # Add VAT values
@@ -321,12 +321,12 @@ def post_vat_bill(start, end, period, h, config):
     # FIXME: How to work out due date?  Online says 1 cal month plus 7 days
     # from end of accounting period
     accts.post_vat_bill(
-        period,
+        str(due),
         datetime.utcnow().date(),
         end + timedelta(days=28) + timedelta(days=7),
         rtn,
-        rtn.to_string(show_key=True),
-        "VAT payment for period " + period
+        rtn.to_string(indent=False),
+        "VAT payment for due date " + str(due)
     )
 
 # Show GnuCash information relating to open VAT obligations
@@ -342,8 +342,8 @@ def show_account_data(h, config, detail=False):
     for v in obs:
 
         # Write out obligation header
-        print("Period: %-10s    Start: %-10s     End: %-10s" % (
-            v.periodKey, v.start, v.end
+        print("VAT due: %-10s    Start: %-10s     End: %-10s" % (
+            v.due, v.start, v.end
         ))
         print()
 
@@ -389,10 +389,23 @@ def show_account_data(h, config, detail=False):
                 print()
 
 # Dump out a VAT return
-def show_vat_return(h, config, period):
+def show_vat_return(start, end, due, h, config):
+
+    # We need start/end information, but only have a period key first.
+    # Load the obligations to get the mapping
+    obs = h.get_obligations(config.get("identity.vrn"), start, end)
+
+    # Iterate over obligations to find the period
+    obl = None
+    for v in obs:
+        if v.due == due:
+            obl = v
+
+    if obl == None:
+        raise RuntimeError("Due date '%s' does not match any obligation" % due)
 
     # Fetch VAT return data
-    rtn = h.get_vat_return(config.get("identity.vrn"), period)
+    rtn = h.get_vat_return(config.get("identity.vrn"), obl.periodKey)
     sys.stdout.write(rtn.to_string())
 
 # Show liabilities
@@ -479,12 +492,14 @@ try:
         show_obligations(start, end, h, config)
         sys.exit(0)
     elif args.submit_vat_return:
-        submit_vat_return(args.period, h, config)
+        due = datetime.fromisoformat(args.due_date).date()
+        submit_vat_return(due, h, config)
         sys.exit(0)
     elif args.post_vat_bill:
         start = datetime.utcnow() - timedelta(days=int(args.start))
         end = datetime.utcnow() - timedelta(days=int(args.end))
-        post_vat_bill(start, end, args.period, h, config)
+        due = datetime.fromisoformat(args.due_date).date()
+        post_vat_bill(start, end, due, h, config)
         sys.exit(0)
     elif args.show_account_detail:
         show_account_data(h, config, detail=True)
@@ -493,7 +508,10 @@ try:
         show_account_data(h, config)
         sys.exit(0)
     elif args.show_vat_return:
-        show_vat_return(h, config, args.period)
+        start = datetime.utcnow() - timedelta(days=int(args.start))
+        end = datetime.utcnow() - timedelta(days=int(args.end))
+        due = datetime.fromisoformat(args.due_date).date()
+        show_vat_return(start, end, due, h, config)
         sys.exit(0)
     elif args.show_liabilities:
         start = datetime.utcnow() - timedelta(days=int(args.start))
