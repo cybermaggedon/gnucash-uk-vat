@@ -136,9 +136,8 @@ def initialise_config(config_file):
             "totalVatDue": "VAT:Output",
             "vatReclaimedCurrPeriod": "VAT:Input",
             "netVatDue": "VAT",
-            "totalValueSalesExVAT":
-            "Assets:Capital Equipment:EU Reverse VAT Purchase",
-            "totalValuePurchasesExVAT": "Assets:Computer Equipment",
+            "totalValueSalesExVAT": "Income:Sales",
+            "totalValuePurchasesExVAT": "Expenses:VAT Purchases",
             "totalValueGoodsSuppliedExVAT": "Income:Sales:EU:Goods",
             "totalAcquisitionsExVAT": "Expenses:VAT Purchases:EU Reverse VAT",
             "liabilities": "VAT:Liabilities",
