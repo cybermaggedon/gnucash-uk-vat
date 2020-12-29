@@ -250,6 +250,19 @@ def submit_vat_return(period, h, config):
     # FIXME: Are you sure? etc.
     sys.stdout.write(rtn.to_string())
 
+    while True:
+        print("""
+When you submit this VAT information you are making a legal
+declaration that the information is true and complete. A false
+declaration can result in prosecution.
+""")
+        reply = input("OK to submit? (yes/no) ")
+        if reply == "no":
+            raise RuntimeError("Submission was not accepted.")
+        if reply == "yes":
+            break
+        print("Answer not acceptible.")
+
     # Call the API
     resp = h.submit_vat_return(config.get("identity.vrn"), rtn)
 
