@@ -5,34 +5,31 @@
 
 This code manages HMRC (UK) VAT returns in accordance with HMRC MTD directives
 for users of the GnuCash accounting system.  It can study your GnuCash accounts,
-compare this with your HMRC VAT obligations, and craft the VAT return to meet
-your obligations.
+compare this with your HMRC VAT obligations, and produce the VAT return to meet
+your obligations.  As an optional step, once the VAT return is filed, a
+bill can be created describing the VAT owing, and posted to an Accounts
+Payable account.
 
 This is command-line Python code.  At the time of writing, this code is
-immature - it has only been tested against the test APIs.  It's possible
-this code will not work at all.  It is not known whether an open source
-project can achieve signoff to use production HMRC APIs.
+immature - it has only been tested against the Sandbox APIs.  It is not known
+whether this open source project will be able achieve signoff to use
+production HMRC APIs.
 
-In order to get this to work, you will need to be able to register the application
-with HMRC for yourself as I am not in a position to share a client ID/secret with
-you.  You will need an HMRC developer's account.
+Anyone can register an HMRC developer test/sandbox account and run this code
+against the sandbox.
 
 If you're an HMRC VAT user, and you use GnuCash, here are some ways
 you can help:
 
 - Try the `gnucash-uk-vat` in read-only mode.  Options `--show-obligations`,
   `--show-open-obligations`, `--show-payments`, `--show-liabilities` and
-  `--show-vat-return` interact with the VAT API, but do not modify your VAT data.
+  `--show-vat-return` interact with the VAT API.
   Feedback on their successful operation would be appreciated.
 - Try the `--show-account-data` mode.  Again, this is read-only, but interacts
   with the VAT API and your GnuCash accounts.  For all open VAT obligations, the
-  output shows the 9 VAT return totals for the time period, along with individual
-  account records   that combine to make these values.  Feedback that the right
-  data is returned.   I am not a VAT accountant.
-- The option to submit a VAT return is totally untested, and not recommended
-  at the moment.  If you are a developer, and familiar with techniques to
-  capture outbound data and study it before it is sent to the production API,
-  you may be able to help testing.
+  output shows the 9 VAT return totals for the time period, along with
+  individual account records   that combine to make these values.
+  Feedback that the right data is returned.   I am not a VAT accountant.
 - If you have been using GnuCash to keep VAT accounts, you can provide feedback
   on good ways to do this.
 
@@ -57,9 +54,11 @@ The configuration file looks something like this:
         "file": "accounts/accounts.gnucash",
         "vatDueSales": "VAT:Output:Sales",
 	...
+        "liabilities": "VAT:Liabilities",
+        "bills": "Accounts Payable",
+        
     },
     "application": {
-        "name": "gnucash-uk-vat",
         "profile": "test",
         "client-id": "<CLIENTID>",
         "client-secret": "<CLIENTSECRET>"
@@ -72,20 +71,23 @@ The configuration file looks something like this:
 ```
 
 To continue you need to edit some things:
-- The `accounts` block describes your GnuCash setup.  The `file` element
-  has the filename of your accounts.  The rest of the elements map the
-  9 VAT return boxes to GnuCash account names.  The default names map to common
-  ways of setting up GnuCash to manage VAT returns.
+- The `accounts` block describes your GnuCash setup.  The `file` element has
+  the filename of your accounts.  The next 9 elements map the 9 VAT return
+  boxes to GnuCash account names.  The default names map to common ways of
+  setting up GnuCash to manage VAT returns.  The `liabilities` and `bills`
+  describe accounts to debit/credit the VAT bill to if you want to use the
+  `--post-vat-bill` option.
 - The `application` block provides information authenticating
-  `gnucash-uk-vat` to the HMRC APIs.  The `client-id` and `client-secret` values
-  can only be obtained by registering the application with HMRC using a developer
-  account.  The `profile` element can be `test` or `production` to determine
-  which API to talk to.  Or `dummy` to talk to my dummy VAT service (see below).
-- The `identity` block contains information about you.  The `vrn` elements contains
-  your VAT registration number.  The other elements are *legally required* by
-  HMRC's fraud API, but are difficult to gather.  So, you should ensure the
-  information is correct and accurate because you are *legally required* to do so
-  in order to use the HMRC VAT APIs.
+  `gnucash-uk-vat` to the HMRC APIs.  The `client-id` and `client-secret`
+  values can only be obtained by registering the application with HMRC using
+  a developer account.  The `profile` element can be `test` or `production`
+  to determine which API to talk to.  Or `dummy` to talk to my dummy VAT
+  service (see below).
+- The `identity` block contains information about you.  The `vrn` elements
+  contains your VAT registration number.  The other elements are *legally
+  required* by HMRC's fraud API, but are difficult to gather.  So, you
+  should ensure the information is correct and accurate because you are
+  *legally required* to do so in order to use the HMRC VAT APIs.
  
 ### Authentication
 
@@ -111,9 +113,9 @@ Your next steps are:
 - Once you are happy, authenticate with HMRC, and grant permission for the
   client API to access your HMRC data.
 
-If all is successful, file `auth.json` is created containing security credentials.
-You should treat the contents of that file as a password as it will permit
-access to your VAT records by anyone who acquires that file.
+If all is successful, file `auth.json` is created containing security
+credentials.  You should treat the contents of that file as a password as it
+will permit access to your VAT records by anyone who acquires that file.
 
 ## Using `gnucash-uk-vat`
 
@@ -122,18 +124,18 @@ access to your VAT records by anyone who acquires that file.
 You can list your recent obligation history:
 ```
 [user@machine]$ gnucash-uk-vat --show-obligations
-+--------+------------+------------+------------+------------+--------+
-| Period |   Start    |    End     |    Due     |  Received  | Status |
-+--------+------------+------------+------------+------------+--------+
-|  18A1  | 2017-01-01 | 2017-03-31 | 2017-05-07 | 2017-05-06 |   F    |
-|  18A2  | 2017-04-01 | 2017-06-30 | 2017-08-07 |            |   O    |
-+--------+------------+------------+------------+------------+--------+
++------------+------------+------------+------------+--------+
+|   Start    |    End     |    Due     |  Received  | Status |
++------------+------------+------------+------------+--------+
+| 2017-01-01 | 2017-03-31 | 2017-05-07 | 2017-05-06 |   F    |
+| 2017-04-01 | 2017-06-30 | 2017-08-07 |            |   O    |
++------------+------------+------------+------------+--------+
 ```
 
 The output shows VAT return periods defined by start and end dates, along
-with a due date and received date if submitted.  The Period column shows a
-short-hand id for the time period.  The status column shows status F=fulfilled,
-O=Open.
+with a due date and received date if submitted.
+The status column shows status F=fulfilled, O=Open.
+`gnucash-uk-vat` uses the due date to refer to obligation periods.
 
 You can narrow the list to a time window by specifying the start and end
 point as number of days in the past.  The default is to cover the previous year.
@@ -142,26 +144,27 @@ point as number of days in the past.  The default is to cover the previous year.
 [user@machine mtd]$ gnucash-uk-vat --show-obligations --start 1500 --end 1200
 ```
 
-You can also show just open obligations, ignoring obligations which are fulfilled.
+You can also show just open obligations, ignoring obligations which are
+fulfilled.
 
 ```
 [user@machine mtd]$ gnucash-uk-vat --show-open-obligations 
-+--------+------------+------------+------------+--------+
-| Period |   Start    |    End     |    Due     | Status |
-+--------+------------+------------+------------+--------+
-|  18A1  | 2017-01-01 | 2017-03-31 | 2017-05-07 |   O    |
-+--------+------------+------------+------------+--------+
++------------+------------+------------+--------+
+|   Start    |    End     |    Due     | Status |
++------------+------------+------------+--------+
+| 2017-01-01 | 2017-03-31 | 2017-05-07 |   O    |
++------------+------------+------------+--------+
 ```
 
 ### Studying account data
 
-This is really a debug / verification step at the moment.  The output below
-shows what happens when HMRC's test interface meets the sample GnuCash file
-which is bundled with the code:
+Prior to submitting a VAT return, you will want to study  the return figures.
+The output below shows what happens when HMRC's test interface meets the
+sample GnuCash file which is bundled with the code:
 
 ```
 [user@machine mtd]$ gnucash-uk-vat --show-account-detail
-Period: 18A1          Start: 2017-01-01     End: 2017-03-31
+VAT due: 2017-05-07    Start: 2017-01-01     End: 2017-03-31
 
     VAT due on sales: 1914.60
 
@@ -229,22 +232,25 @@ Period: 18A1          Start: 2017-01-01     End: 2017-03-31
 ```
 
 The output shows a section for each obligation period which is opened.  The
-obligation period is shown with a header indented hard-left on output.
+obligation period due date is shown with a header indented hard-left on output.
 Then, for each of the 9 values which must be reported (referred to as 9 boxes
 in VAT documentation), the summary line is shown, and a table of individual
 transactions which contribute to that total.
 
+There is a `--show-account-summary` operation which just shows the 9 VAT
+box values without transaction data.
+
 ### Submit VAT return
 
 If you were happy with the data that would be submitted from the previous
-step, you can go ahead and submit the data.  However, this is not recommended
-at the moment.  You need to specify the Period key visible in the obligations
+step, you can go ahead and submit the data.  
+You need to specify the obligation using the due date as shown in
+Period key visible in the obligations
 list, or the output from `--show-account-detail`.  Once submitted, you cannot
-recall the VAT return.  Given the limited testing, it really is not recommended
-you perform this step.
+recall the VAT return.
 
 ```
-[user@machine mtd]$ gnucash-uk-vat --submit-vat-return --period 18A1
+[user@machine mtd]$ gnucash-uk-vat --submit-vat-return --due-date 2017-05-07
 VAT due on sales              :         1914.60
 VAT due on acquisitions       :           40.00
 Total VAT due                 :         1954.60
@@ -255,12 +261,30 @@ Purchases ex. VAT             :          352.00
 Goods supplied ex. VAT        :         1240.00
 Total acquisitions ex. VAT    :          200.00
 ```
-### View VAT return
 
-Views a previously submitted return by period key.
+Before submission, you are shown the return summary, and are offered a final
+yes/no prompt to confirm submission.
+
+### Create VAT bill
+
+This is an optional step which you would use after submitting a VAT return.
+This operation posts a bill for the VAT owed.  The bill debits a VAT Liability
+account and credits an Accounts Payable account.  An HMRC VAT vendor is
+created with the `hmrc-vat` ID if such a vendor does not already exist.
 
 ```
-[user@machine mtd]$ gnucash-uk-vat --show-vat-return --period '20A1'
+[user@machine mtd]$ gnucash-uk-vat --post-vat-bill --due-date 2017-05-07
+```
+
+The bill records the amount of VAT due on sales and goods, and shows a
+negative line for VAT rebate.
+
+### View VAT return
+
+Views a previously submitted return by due date.
+
+```
+[user@machine mtd]$ gnucash-uk-vat --show-vat-return --due-date 2017-05-07
 VAT due on sales              :          100.00
 VAT due on acquisitions       :          120.00
 Total VAT due                 :          220.00
@@ -342,7 +366,6 @@ section :)
 I have included a sample file `accounts/accounts.gnucash` which contains some
 sample transactions and works with the default configuration.
 
-
 ## Dummy service
 
 There is a dummy VAT service, `dummy-vat-service` which has some VAT data
@@ -377,3 +400,9 @@ You should then use the service as above, including authenticating.
 The authentication mechanism is there, but dummy credentials are issued, and
 nothing is verified.
 
+## Sample accounts
+
+A sample account file is included at `accounts/accounts.gnucash`.  This
+account file contains some transactions dated in the 1Q17 quarter which match
+the test data in HMRC's Sandbox.  There are also some transactions in 2020
+which match the obligations in the `dummy-vat-service` data.
