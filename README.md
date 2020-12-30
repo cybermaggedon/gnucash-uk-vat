@@ -3,17 +3,20 @@
 
 ## Introduction
 
-This code manages HMRC (UK) VAT returns in accordance with HMRC MTD directives
-for users of the GnuCash accounting system.  It can study your GnuCash accounts,
-compare this with your HMRC VAT obligations, and produce the VAT return to meet
-your obligations.  As an optional step, once the VAT return is filed, a
-bill can be created describing the VAT owing, and posted to an Accounts
-Payable account.
+This is a utility which manages HMRC (UK) VAT returns in accordance with
+HMRC MTD directives for users of the GnuCash accounting system.  It can
+study your GnuCash accounts, compare this with your HMRC VAT obligations,
+and produce the VAT return to meet your obligations.  As an optional step,
+once the VAT return is filed, a bill can be created describing the VAT
+owing, and posted to an Accounts Payable account.
 
-This is command-line Python code.  At the time of writing, this code is
+## Status
+
+This is a command-line utility.  At the time of writing, this code is
 immature - it has only been tested against the Sandbox APIs.  It is not known
 whether this open source project will be able achieve signoff to use
-production HMRC APIs.
+production HMRC APIs.   I am in the process submitting for production
+credentials.
 
 Anyone can register an HMRC developer test/sandbox account and run this code
 against the sandbox.
@@ -32,6 +35,12 @@ you can help:
   Feedback that the right data is returned.   I am not a VAT accountant.
 - If you have been using GnuCash to keep VAT accounts, you can provide feedback
   on good ways to do this.
+
+## Installing
+
+```
+sudo pip3 install git+https://github.com/cybermaggedon/gnucash-uk-vat
+```
 
 ## Setting things up
 
@@ -81,7 +90,7 @@ To continue you need to edit some things:
   `gnucash-uk-vat` to the HMRC APIs.  The `client-id` and `client-secret`
   values can only be obtained by registering the application with HMRC using
   a developer account.  The `profile` element can be `test` or `production`
-  to determine which API to talk to.  Or `dummy` to talk to my dummy VAT
+  to determine which API to talk to.  Or `local` to talk to my test VAT
   service (see below).
 - The `identity` block contains information about you.  The `vrn` elements
   contains your VAT registration number.  The other elements are *legally
@@ -366,19 +375,19 @@ section :)
 I have included a sample file `accounts/accounts.gnucash` which contains some
 sample transactions and works with the default configuration.
 
-## Dummy service
+## Test VAT service
 
-There is a dummy VAT service, `dummy-vat-service` which has some VAT data
-(in `vat-data.json`) and (roughly) conforms to the VAT API.  The
-VRN is `1234567890`.
+There is a test service which serves test data.  (See
+`vat-data.json` in the source tree for an example.  The test service (roughly)
+conforms to the HMRC VAT API.  The VRN is `vat-data.json` is `1234567890`.
 
 You would run it thus:
 
 ```
-./dummy-vat-service
+./test-vat-service -d vat-data.json
 ```
 
-To invoke the dummy service, change the configuration file:
+To invoke the test service, change the configuration file:
 
 ```
 {
