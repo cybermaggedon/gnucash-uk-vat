@@ -39,7 +39,7 @@ you can help:
 ## Installing
 
 ```
-sudo pip3 install git+https://github.com/cybermaggedon/gnucash-uk-vat
+pip3 install git+https://github.com/cybermaggedon/gnucash-uk-vat
 ```
 
 ## Setting things up
