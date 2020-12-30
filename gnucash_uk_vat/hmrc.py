@@ -8,7 +8,7 @@ from datetime import datetime, timedelta, date
 import requests
 import json
 
-from model import *
+from . model import *
 
 # AuthCollector is a class which provides a temporary web service in order to
 # receive OAUTH credential tokens

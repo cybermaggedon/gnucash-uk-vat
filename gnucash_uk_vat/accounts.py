@@ -14,7 +14,8 @@
 import gnucash
 import json
 import math
-import model
+
+from . import model
 
 # Wrapper for GnuCash accounts.
 class Accounts:

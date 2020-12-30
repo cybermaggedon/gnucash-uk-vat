@@ -3,8 +3,8 @@ import sys
 from tabulate import tabulate
 from datetime import datetime, timedelta
 
-import accounts
-import model
+from . import accounts
+from . import model
 
 # Perform authentication operation
 def authenticate(h, auth):

@@ -7,7 +7,8 @@ import os
 import uuid
 from datetime import date, datetime, timedelta
 import sys
-from model import *
+
+from gnucash_uk_vat.model import *
 
 class Api:
 

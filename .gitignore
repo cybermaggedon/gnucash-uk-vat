@@ -1,2 +1,10 @@
-accounts/accounts.gnucash.*
+accounts/*.gnucash.*.gnucash
+accounts/*.gnucash.*.log
 *~
+build/
+dist/
+gnucash_uk_vat*.whl
+gnucash_uk_vat.egg-info/
+auth.json
+config.json
+__pycache__
