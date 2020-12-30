@@ -7,12 +7,14 @@ import os
 import uuid
 from datetime import date, datetime, timedelta
 import sys
+import argparse
 
 from gnucash_uk_vat.model import *
 
 class Api:
 
-    def __init__(self, data):
+    def __init__(self, data, listen="0.0.0.0:8080"):
+        self.listen = listen
         self.data = data
 
     async def run(self):
@@ -199,8 +201,7 @@ class Api:
         runner = web.AppRunner(app)
         await runner.setup()
 
-        host = "0.0.0.0:8080"
-        host = host.split(":", 2)
+        host = self.listen.split(":", 2)
 
         site = web.TCPSite(runner, host[0], host[1])
         await site.start()
@@ -208,9 +209,21 @@ class Api:
         while True:
             await asyncio.sleep(1)
 
-data = open("vat-data.json").read()
+# Command-line argument parser
+parser = argparse.ArgumentParser(description="Gnucash to HMRC VAT API")
+parser.add_argument('--listen', '-l',
+		    default='localhost:8080',
+                    help='Host/port to listen on (default: localhost:8080)')
+parser.add_argument('--data', '-d',
+		    default='vat-data.json',
+                    help='Data file to load at init (default: vat-data.json)')
+
+# Parse arguments
+args = parser.parse_args(sys.argv[1:])
+
+data = open(args.data).read()
 v = VATData.from_json(data)
-a = Api(v)
+a = Api(v, args.listen)
 
 loop = asyncio.get_event_loop()
 loop.run_until_complete(a.run())

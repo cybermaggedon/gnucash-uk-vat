@@ -10,8 +10,8 @@ import json
 
 from . model import *
 
-# AuthCollector is a class which provides a temporary web service in order to
-# receive OAUTH credential tokens
+# AuthCollector is a class which provides a temporary web service in order
+# to receive OAUTH credential tokens
 class AuthCollector:
 
     # Constructor
@@ -24,7 +24,8 @@ class AuthCollector:
     # Main body coroutine
     async def run(self):
 
-        # Handler, there is only one endpoint, it receives credential tokens
+        # Handler, there is only one endpoint, it receives credential
+        # tokens
         async def handler(req):
 
             # Store result.  Debounce subsequent calls (shouldn't happen).
@@ -157,7 +158,8 @@ class Vat:
             "expires": expiry.isoformat()
         }
 
-    # Called to refresh credentials, re-issue auth request from refresh token
+    # Called to refresh credentials, re-issue auth request from refresh
+    # token
     def refresh_token(self, refresh):
         return asyncio.run(self.refresh_token_coro(refresh))
 
@@ -198,8 +200,8 @@ class Vat:
             "expires": expiry.isoformat()
         }
 
-    # Constructs HTTP headers which meet the Fraud API.  Most of this comes from
-    # config
+    # Constructs HTTP headers which meet the Fraud API.  Most of this
+    # comes from config
     def build_fraud_headers(self):
 
         mac = quote_plus(self.config.get("identity.mac-address"))
