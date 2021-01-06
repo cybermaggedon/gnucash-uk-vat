@@ -206,11 +206,12 @@ class Vat:
 
         mac = quote_plus(self.config.get("identity.mac-address"))
 
-        mfa = urlencode({
-            "type": "OTHER",
-            "timestamp": datetime.utcnow().strftime("%Y-%m-%dT%H:%M:%SZ"),
-            "unique-reference": self.config.get("identity.user")
-        })
+        # There is no authentication for which an MFA header would make sense
+#        mfa = urlencode({
+#            "type": "OTHER",
+#            "timestamp": datetime.utcnow().strftime("%Y-%m-%dT%H:%M:%SZ"),
+#            "unique-reference": self.config.get("identity.user")
+#        })
 
         # Return headers
         return {
@@ -221,9 +222,11 @@ class Vat:
             'Gov-Client-Local-IPs': self.config.get("identity.hostname"),
             'Gov-Client-MAC-Addresses': mac,
             'Gov-Client-User-Agent': self.config.get("identity.user-agent"),
-            'Gov-Client-Multi-Factor': mfa,
-            'Gov-Vendor-Version': 'gnucash-uk-vat=0.0.1',
-            'Gov-Vendor-License-IDs': 'gnu=eccbc87e4b5ce2fe28308fd9f2a7baf3',
+            # No MFA header
+#            'Gov-Client-Multi-Factor': mfa,
+            'Gov-Vendor-Version': 'gnucash-uk-vat=1.0',
+            # No licence, hence no licence ID.
+#            'Gov-Vendor-License-IDs': 'gnu=eccbc87e4b5ce2fe28308fd9f2a7baf3',
             'Authorization': 'Bearer %s' % self.auth.get("access_token"),
         }
 
