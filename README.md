@@ -42,6 +42,14 @@ you can help:
 pip3 install git+https://github.com/cybermaggedon/gnucash-uk-vat
 ```
 
+There is a dependency on the `gnucash` Python module, which cannot be installed
+from PyPI.  See <https://wiki.gnucash.org/wiki/Python_Bindings> for
+installation.  On Linux (Debian, Ubuntu, Fedora), the Python modules are
+available on package repositories.
+
+There are instructions for MacOS installation which I have not tested on the
+wiki page.
+
 ## Setting things up
 
 ### Create a configuration file
@@ -415,6 +423,19 @@ A sample account file is included at `accounts/accounts.gnucash`.  This
 account file contains some transactions dated in the 1Q17 quarter which match
 the test data in HMRC's Sandbox.  There are also some transactions in 2020
 which match the obligations in the `dummy-vat-service` data.
+
+# Licences, Compliance, etc.
+
+## Privacy
+
+`gnucash-uk-vat` is hosted by you.  It runs on your computer, accesses
+information from your accounts, and forwards data using the HMRC APIs.
+Everything is within your control.  No other network systems are used, and no
+information is transmitted to other parties.
+
+Additional data (configuration and credentials) is stored on your
+filesystem under your control and you should manage the credential
+files as you would any password or other secret.
 
 ## Licence
 
