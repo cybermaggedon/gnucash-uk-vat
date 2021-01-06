@@ -226,8 +226,6 @@ def show_vat_return(start, end, due, h, config):
     # Load the obligations to get the mapping
     obs = h.get_obligations(config.get("identity.vrn"), start, end)
 
-    print([v.due for v in  obs])
-
     # Iterate over obligations to find the period
     obl = None
     for v in obs:
