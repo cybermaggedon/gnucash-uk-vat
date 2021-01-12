@@ -1,0 +1,19 @@
+#!/usr/bin/env python3
+
+# This calls the Fraud API test endpoint on sandbox.  Only useful for developers.
+
+import gnucash_uk_vat.hmrc as hmrc
+from gnucash_uk_vat.config import Config
+from gnucash_uk_vat.auth import Auth
+
+# Loads default config and auth
+c = Config()
+a = Auth()
+
+# Use the sandbox service
+svc = hmrc.VatTest(c, a)
+
+# Call fraud API and dump out results.  This is gonna be a fail on lack of
+# gov-vendor-license-ids and gov-lient-multi-factor headers.
+print(svc.test_fraud_headers())
+
