@@ -5,6 +5,8 @@ import os
 import getpass
 import socket
 import sys
+from datetime import datetime
+from urllib.parse import urlencode
 
 # Configuration object, loads configuration from a JSON file, and then
 # supports path navigate with config.get("part1.part2.part3")
@@ -35,10 +37,18 @@ def initialise_config(config_file):
         # Fallback.
         mac = '00:00:00:00:00:00'
 
-    # Operating system information
+    # Operating system information, turn into a user-agent.  Can't get
+    # device-manufacturer without accessing /dev/mem on Linux (using
+    # e.g. using py-dmidecode).  Not appopriate to have this code running
+    # with those level of privileges.
     uname = os.uname()
-    ua = "%s/%s (%s/%s)" % (
-        uname.sysname, uname.release, "Python", uname.machine
+    ua = urlencode(
+        {
+            'os-family': uname.sysname,
+	    'os-version': uname.release,
+            'device-manufacturer': 'Python',
+            'device-model': uname.machine
+        }
     )
 
     config = {
@@ -78,7 +88,8 @@ def initialise_config(config_file):
             "user": getpass.getuser(),
             "hostname": socket.gethostbyname(socket.gethostname()),
             "mac-address": mac,
-            "user-agent": ua
+            "user-agent": ua,
+            "time": datetime.utcnow().isoformat()[:-3] + "Z"
         }
     }
 

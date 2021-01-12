@@ -213,18 +213,23 @@ class Vat:
 #            "unique-reference": self.config.get("identity.user")
 #        })
 
+        identity_time = self.config.get("identity.time")
+
         # Return headers
         return {
             'Gov-Client-Connection-Method': 'OTHER_DIRECT',
             'Gov-Client-Device-ID': self.config.get("identity.device"),
             'Gov-Client-User-Ids': 'os=%s' % self.config.get("identity.user"),
+            # Batch code, we're doing everything in UTC
             'Gov-Client-Timezone': 'UTC+00:00',
             'Gov-Client-Local-IPs': self.config.get("identity.hostname"),
+            'Gov-Client-Local-IPs-Timestamp': identity_time,
             'Gov-Client-MAC-Addresses': mac,
             'Gov-Client-User-Agent': self.config.get("identity.user-agent"),
             # No MFA header
 #            'Gov-Client-Multi-Factor': mfa,
             'Gov-Vendor-Version': 'gnucash-uk-vat=1.0',
+            'Gov-Vendor-Product-Name': 'gnucash-uk-vat',
             # No licence, hence no licence ID.
 #            'Gov-Vendor-License-IDs': 'gnu=eccbc87e4b5ce2fe28308fd9f2a7baf3',
             'Authorization': 'Bearer %s' % self.auth.get("access_token"),
