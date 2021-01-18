@@ -38,18 +38,7 @@ def initialise_config(config_file):
         # Fallback.
         mac = '00:00:00:00:00:00'
 
-    # Operating system information, turn into a user-agent.  Can't get
-    # device-manufacturer without accessing /dev/mem on Linux (using
-    # e.g. using py-dmidecode).  Not appopriate to have this code running
-    # with those level of privileges.
-    uname = os.uname()
-    di = {
-        'os-family': uname.sysname,
-        'os-version': uname.release,
-        'device-manufacturer': '',
-        'device-model': '',
-        'id': str(uuid.uuid1()),
-    }
+    di = get_device_config()
 
     config = {
         "accounts": {
@@ -97,16 +86,16 @@ def initialise_config(config_file):
 
     sys.stderr.write("Wrote %s.\n" % config_file)
 
-def initialise_device_config(config_file):
+def get_device_config():
 
     dmi = get_device()
     if dmi == None:
-        raise RuntimeError("Couldn't fetch device information, run sudo?")
-
-    config = Config(config_file)
+        err = "Couldn't fetch device information, install dmidecode?"
+        raise RuntimeError(err)
 
     uname = os.uname()
-    config.config['identity']['device'] = {
+
+    return {
         'os-family': uname.sysname,
 	'os-version': uname.release,
         'device-manufacturer': dmi["manufacturer"],
@@ -114,7 +103,3 @@ def initialise_device_config(config_file):
         'id': str(uuid.uuid1()),
     }
 
-    with open(config_file, "w") as cfg_file:
-        cfg_file.write(json.dumps(config.config, indent=4))
-
-    sys.stderr.write("Wrote %s.\n" % config_file)
