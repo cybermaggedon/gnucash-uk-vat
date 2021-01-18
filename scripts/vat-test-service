@@ -35,6 +35,21 @@ class Api:
 
             raise web.HTTPBadRequest()
 
+        def dump_headers(request):
+
+            for k in  request.headers:
+                print("%s: %s" % (k, request.headers[k]))
+            print()
+
+        async def get_fraud_validate(request):
+
+            dump_headers(request)
+
+            return web.Response(
+                body=json.dumps({}) + "\n",
+                content_type="application/json"
+            )
+
         async def get_obligations(request):
 
             start=None
@@ -192,10 +207,16 @@ class Api:
 
         app.router.add_get('/oauth/authorize', authorize)
         app.router.add_post('/oauth/token', get_token)
-        app.router.add_get('/organisations/vat/{vrn}/obligations', get_obligations)
-        app.router.add_get('/organisations/vat/{vrn}/liabilities', get_liabilities)
-        app.router.add_get('/organisations/vat/{vrn}/payments', get_payments)
-        app.router.add_get('/organisations/vat/{vrn}/returns/{periodKey}', get_return)
+        app.router.add_get('/test/fraud-prevention-headers/validate',
+                           get_fraud_validate)
+        app.router.add_get('/organisations/vat/{vrn}/obligations',
+                           get_obligations)
+        app.router.add_get('/organisations/vat/{vrn}/liabilities',
+                           get_liabilities)
+        app.router.add_get('/organisations/vat/{vrn}/payments',
+                           get_payments)
+        app.router.add_get('/organisations/vat/{vrn}/returns/{periodKey}',
+                           get_return)
         app.router.add_post('/organisations/vat/{vrn}/returns', submit_return)
 
         runner = web.AppRunner(app)

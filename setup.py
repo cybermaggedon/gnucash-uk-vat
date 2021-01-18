@@ -19,6 +19,11 @@ setuptools.setup(
         "Operating System :: OS Independent",
     ],
     python_requires='>=3.6',
+    install_requires=[
+        'aiohttp',
+        'dmidecode',
+        'requests'
+    ],
     scripts=[
         "scripts/gnucash-uk-vat",
         "scripts/vat-test-service"

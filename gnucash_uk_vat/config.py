@@ -6,7 +6,8 @@ import getpass
 import socket
 import sys
 from datetime import datetime
-from urllib.parse import urlencode
+
+from . device import get_device
 
 # Configuration object, loads configuration from a JSON file, and then
 # supports path navigate with config.get("part1.part2.part3")
@@ -37,19 +38,7 @@ def initialise_config(config_file):
         # Fallback.
         mac = '00:00:00:00:00:00'
 
-    # Operating system information, turn into a user-agent.  Can't get
-    # device-manufacturer without accessing /dev/mem on Linux (using
-    # e.g. using py-dmidecode).  Not appopriate to have this code running
-    # with those level of privileges.
-    uname = os.uname()
-    ua = urlencode(
-        {
-            'os-family': uname.sysname,
-	    'os-version': uname.release,
-            'device-manufacturer': 'Python',
-            'device-model': uname.machine
-        }
-    )
+    di = get_device_config()
 
     config = {
         "accounts": {
@@ -84,11 +73,10 @@ def initialise_config(config_file):
         },
         "identity": {
             "vrn": "<VRN>",
-            "device": str(uuid.uuid1()),
+            "device": di,
             "user": getpass.getuser(),
             "hostname": socket.gethostbyname(socket.gethostname()),
             "mac-address": mac,
-            "user-agent": ua,
             "time": datetime.utcnow().isoformat()[:-3] + "Z"
         }
     }
@@ -97,4 +85,21 @@ def initialise_config(config_file):
         cfg_file.write(json.dumps(config, indent=4))
 
     sys.stderr.write("Wrote %s.\n" % config_file)
+
+def get_device_config():
+
+    dmi = get_device()
+    if dmi == None:
+        err = "Couldn't fetch device information, install dmidecode?"
+        raise RuntimeError(err)
+
+    uname = os.uname()
+
+    return {
+        'os-family': uname.sysname,
+	'os-version': uname.release,
+        'device-manufacturer': dmi["manufacturer"],
+        'device-model': dmi["model"],
+        'id': str(uuid.uuid1()),
+    }
 
