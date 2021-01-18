@@ -5,7 +5,7 @@ import argparse
 import json
 from datetime import datetime, timedelta
 
-from gnucash_uk_vat.config import Config, initialise_config
+from gnucash_uk_vat.config import *
 from gnucash_uk_vat.auth import Auth
 from gnucash_uk_vat.operations import *
 
@@ -25,6 +25,8 @@ parser.add_argument('--auth', '-a',
                     help='File to store auth credentials (default: auth.json)')
 parser.add_argument('--init-config', action='store_true',
                     help='Initialise configuration file with template')
+parser.add_argument('--init-device-config', action='store_true',
+                    help='Initialise configuration file with device IDs')
 parser.add_argument('--authenticate', action='store_true',
                     help='Perform authentication process')
 parser.add_argument('--show-open-obligations', action='store_true',
@@ -58,39 +60,45 @@ parser.add_argument('--show-payments', action='store_true',
 # Parse arguments
 args = parser.parse_args(sys.argv[1:])
 
-# Initialise configuration operation.  This goes here as configuration
-# can be initialised if no auth has been performed
-if args.init_config:
-    initialise_config(args.config)
-    sys.exit(0)
-
-# Initialise config and auth.  
-config = Config(args.config)
-auth = Auth(args.auth)
-
-# Get profile
-prof = config.get("application.profile")
-
-# Initialise API client endpoint based on selected profile
-if prof == "prod":
-    h = hmrc.Vat(config, auth)
-elif prof == "test":
-    h = hmrc.VatTest(config, auth)
-elif prof == "local":
-    h = hmrc.VatLocalTest(config, auth)
-else:
-    sys.stderr.write("Profile '%s' is not known." % prof)
-
-# Authentication operation goes here.
-if args.authenticate:
-    authenticate(h, auth)
-    sys.exit(0)
-
-# All following operations require a valid token, so refresh token if expired.
-auth.maybe_refresh(h)
-
-# Call appropriate function to implement operations
 try:
+
+    # Initialise configuration operation.  This goes here as configuration
+    # can be initialised if no auth has been performed
+    if args.init_config:
+        initialise_config(args.config)
+        sys.exit(0)
+
+    if args.init_device_config:
+        initialise_device_config(args.config)
+        sys.exit(0)
+
+    # Initialise config and auth.  
+    config = Config(args.config)
+    auth = Auth(args.auth)
+
+    # Get profile
+    prof = config.get("application.profile")
+
+    # Initialise API client endpoint based on selected profile
+    if prof == "prod":
+        h = hmrc.Vat(config, auth)
+    elif prof == "test":
+        h = hmrc.VatTest(config, auth)
+    elif prof == "local":
+        h = hmrc.VatLocalTest(config, auth)
+    else:
+        sys.stderr.write("Profile '%s' is not known." % prof)
+
+    # Authentication operation goes here.
+    if args.authenticate:
+        authenticate(h, auth)
+        sys.exit(0)
+
+    # All following operations require a valid token, so refresh token if
+    # expired.
+    auth.maybe_refresh(h)
+
+    # Call appropriate function to implement operations
     if args.show_open_obligations:
         show_open_obligations(h, config)
         sys.exit(0)

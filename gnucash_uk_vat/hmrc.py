@@ -215,23 +215,43 @@ class Vat:
 
         identity_time = self.config.get("identity.time")
 
+        dev_os_fam = self.config.get("identity.device.os-family")
+        dev_os_version = self.config.get("identity.device.os-version")
+        dev_manuf = self.config.get("identity.device.device-manufacturer")
+        dev_model = self.config.get("identity.device.device-model")
+        dev_id = self.config.get("identity.device.id")
+
+        if dev_os_fam == "":
+            raise RuntimeError("identity.device.os-family not set")
+        if dev_os_version == "":
+            raise RuntimeError("identity.device.os-version not set")
+        if dev_manuf == "":
+            raise RuntimeError("identity.device.device-manufacturer not set")
+        if dev_model == "":
+            raise RuntimeError("identity.device.device-model not set")
+        if dev_id == "":
+            raise RuntimeError("identity.device.id not set")
+
+        ua = urlencode({
+            "os-family": dev_os_fam,
+            "os-version": dev_os_version,
+            "device-manufacturer": dev_manuf,
+            "device-model": dev_model
+        })
+
         # Return headers
         return {
             'Gov-Client-Connection-Method': 'OTHER_DIRECT',
-            'Gov-Client-Device-ID': self.config.get("identity.device"),
+            'Gov-Client-Device-ID': dev_id,
             'Gov-Client-User-Ids': 'os=%s' % self.config.get("identity.user"),
             # Batch code, we're doing everything in UTC
             'Gov-Client-Timezone': 'UTC+00:00',
             'Gov-Client-Local-IPs': self.config.get("identity.hostname"),
             'Gov-Client-Local-IPs-Timestamp': identity_time,
             'Gov-Client-MAC-Addresses': mac,
-            'Gov-Client-User-Agent': self.config.get("identity.user-agent"),
-            # No MFA header
-#            'Gov-Client-Multi-Factor': mfa,
+            'Gov-Client-User-Agent': ua,
             'Gov-Vendor-Version': 'gnucash-uk-vat=1.0',
             'Gov-Vendor-Product-Name': 'gnucash-uk-vat',
-            # No licence, hence no licence ID.
-#            'Gov-Vendor-License-IDs': 'gnu=eccbc87e4b5ce2fe28308fd9f2a7baf3',
             'Authorization': 'Bearer %s' % self.auth.get("access_token"),
         }
 

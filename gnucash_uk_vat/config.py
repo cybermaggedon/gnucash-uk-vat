@@ -6,7 +6,8 @@ import getpass
 import socket
 import sys
 from datetime import datetime
-from urllib.parse import urlencode
+
+from . device import get_device
 
 # Configuration object, loads configuration from a JSON file, and then
 # supports path navigate with config.get("part1.part2.part3")
@@ -42,14 +43,13 @@ def initialise_config(config_file):
     # e.g. using py-dmidecode).  Not appopriate to have this code running
     # with those level of privileges.
     uname = os.uname()
-    ua = urlencode(
-        {
-            'os-family': uname.sysname,
-	    'os-version': uname.release,
-            'device-manufacturer': 'Python',
-            'device-model': uname.machine
-        }
-    )
+    di = {
+        'os-family': uname.sysname,
+        'os-version': uname.release,
+        'device-manufacturer': '',
+        'device-model': '',
+        'id': str(uuid.uuid1()),
+    }
 
     config = {
         "accounts": {
@@ -84,11 +84,10 @@ def initialise_config(config_file):
         },
         "identity": {
             "vrn": "<VRN>",
-            "device": str(uuid.uuid1()),
+            "device": di,
             "user": getpass.getuser(),
             "hostname": socket.gethostbyname(socket.gethostname()),
             "mac-address": mac,
-            "user-agent": ua,
             "time": datetime.utcnow().isoformat()[:-3] + "Z"
         }
     }
@@ -98,3 +97,24 @@ def initialise_config(config_file):
 
     sys.stderr.write("Wrote %s.\n" % config_file)
 
+def initialise_device_config(config_file):
+
+    dmi = get_device()
+    if dmi == None:
+        raise RuntimeError("Couldn't fetch device information, run sudo?")
+
+    config = Config(config_file)
+
+    uname = os.uname()
+    config.config['identity']['device'] = {
+        'os-family': uname.sysname,
+	'os-version': uname.release,
+        'device-manufacturer': dmi["manufacturer"],
+        'device-model': dmi["model"],
+        'id': str(uuid.uuid1()),
+    }
+
+    with open(config_file, "w") as cfg_file:
+        cfg_file.write(json.dumps(config.config, indent=4))
+
+    sys.stderr.write("Wrote %s.\n" % config_file)
