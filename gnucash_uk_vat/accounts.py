@@ -138,7 +138,7 @@ class Accounts:
         vendors = []
 
         vnds = [
-            biz.Vendor(instance=result)
+            gnucash.gnucash_business.Vendor(instance=result)
             for result in query.run()
         ]
 
@@ -171,24 +171,22 @@ class Accounts:
     # Get our 'special' predefined vendor for VAT returns.
     def get_vat_vendor(self):
 
-        id = self.config.get("accounts.vendor.id")
-        gbp = self.get_currency(self.config.get("accounts.vendor.currency"))
-        name = self.config.get("accounts.vendor.name")
-        ad = self.config.get("accounts.vendor.address")
+        id = "hmrc-vat"
 
         # If vendor does not exist, create it
         vendor = self.get_vendor(id)
         if vendor == None:
+
+            gbp = self.get_currency("GBP")
+            name = "HM Revenue and Customs - VAT"
             vendor = self.create_vendor(id, gbp, name)
+
             address = vendor.GetAddr()
-            if len(ad) > 0:
-                address.SetAddr1(ad[0])
-            if len(ad) > 1:
-                address.SetAddr2(ad[1])
-            if len(ad) > 2:
-                address.SetAddr3(ad[2])
-            if len(ad) > 3:
-                address.SetAddr4(ad[3])
+            address.SetName("VAT Written Enquiries")
+            address.SetAddr1("123 St Vincent Street")
+            address.SetAddr2("Glasgow City")
+            address.SetAddr3("Glasgow G2 5EA")
+            address.SetAddr4("UK")
 
             self.save()
 

@@ -53,18 +53,7 @@ def initialise_config(config_file):
             "totalValueGoodsSuppliedExVAT": "Income:Sales:EU:Goods",
             "totalAcquisitionsExVAT": "Expenses:VAT Purchases:EU Reverse VAT",
             "liabilities": "VAT:Liabilities",
-            "bills": "Accounts Payable",
-            "vendor": {
-                "id": "hmrc-vat",
-                "currency": "GBP",
-                "name": "HM Revenue and Customs - VAT",
-                "address": [
-                    "123 St Vincent Street",
-                    "Glasgow City",
-                    "Glasgow G2 5EA",
-                    "UK"
-                ]
-            }
+            "bills": "Accounts Payable"
         },
         "application": {
             "profile": "test",

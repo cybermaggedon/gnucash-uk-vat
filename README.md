@@ -72,8 +72,7 @@ The configuration file looks something like this:
         "vatDueSales": "VAT:Output:Sales",
 	...
         "liabilities": "VAT:Liabilities",
-        "bills": "Accounts Payable",
-        
+        "bills": "Accounts Payable"
     },
     "application": {
         "profile": "test",
