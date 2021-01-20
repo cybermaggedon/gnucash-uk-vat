@@ -206,15 +206,6 @@ class Vat:
 
         mac = quote_plus(self.config.get("identity.mac-address"))
 
-        # There is no authentication for which an MFA header would make sense
-#        mfa = urlencode({
-#            "type": "OTHER",
-#            "timestamp": datetime.utcnow().strftime("%Y-%m-%dT%H:%M:%SZ"),
-#            "unique-reference": self.config.get("identity.user")
-#        })
-
-        identity_time = self.config.get("identity.time")
-
         dev_os_fam = self.config.get("identity.device.os-family")
         dev_os_version = self.config.get("identity.device.os-version")
         dev_manuf = self.config.get("identity.device.device-manufacturer")
@@ -246,8 +237,8 @@ class Vat:
             'Gov-Client-User-Ids': 'os=%s' % self.config.get("identity.user"),
             # Batch code, we're doing everything in UTC
             'Gov-Client-Timezone': 'UTC+00:00',
-            'Gov-Client-Local-IPs': self.config.get("identity.hostname"),
-            'Gov-Client-Local-IPs-Timestamp': identity_time,
+            'Gov-Client-Local-IPs': self.config.get("identity.local-ip"),
+            'Gov-Client-Local-IPs-Timestamp': self.config.get("identity.time"),
             'Gov-Client-MAC-Addresses': mac,
             'Gov-Client-User-Agent': ua,
             'Gov-Vendor-Version': 'gnucash-uk-vat=1.0',

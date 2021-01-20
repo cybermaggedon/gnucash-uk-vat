@@ -64,7 +64,7 @@ def initialise_config(config_file):
             "vrn": "<VRN>",
             "device": di,
             "user": getpass.getuser(),
-            "hostname": socket.gethostbyname(socket.gethostname()),
+            "local-ip": socket.gethostbyname(socket.gethostname()),
             "mac-address": mac,
             "time": datetime.utcnow().isoformat()[:-3] + "Z"
         }
