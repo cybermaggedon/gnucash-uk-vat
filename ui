@@ -2,13 +2,15 @@
 
 import gi
 gi.require_version("Gtk", "3.0")
-from gi.repository import Gtk, GLib, GObject
+from gi.repository import Gtk, GLib, GObject, Pango
 
 import gnucash_uk_vat.hmrc as hmrc
 from gnucash_uk_vat.auth import Auth
 from gnucash_uk_vat.config import Config
+import gnucash_uk_vat.accounts as accounts
 import asyncio
 import threading
+import gnucash_uk_vat.model as model
 
 class UI:
     def __init__(self):
@@ -38,7 +40,7 @@ class UI:
         textview.set_right_margin(10)
         textview.set_bottom_margin(10)
         textbuffer.set_text(
-            "** gnucash-uk-vat **\n\n" +
+            "gnucash-uk-vat\n\n" +
             "This dialogue will guide you through a VAT return submission. " +
             "You will begin by authenticating with the HMRC VAT API using " +
             "your account details. After entering your VAT Registration " +
@@ -50,6 +52,36 @@ class UI:
             "declaration that the information is true and complete. A false " +
             "declaration can result in prosecution."
         )
+        textview.set_wrap_mode(Gtk.WrapMode.WORD)
+        textview.set_editable(False)
+        textview.set_can_focus(False)
+        win.add(textview)
+
+        s = textbuffer.get_iter_at_line(0)
+        e = textbuffer.get_iter_at_line(1)
+
+        tag = textbuffer.create_tag("title", foreground="green",
+                                    weight=Pango.Weight.BOLD,
+                                    size_points=15)
+        textbuffer.apply_tag(tag, s, e)
+
+        return win
+
+    def create_accounts(self):
+
+        win = Gtk.ScrolledWindow()
+        win.set_hexpand(True)
+        win.set_vexpand(True)
+        win.set_min_content_width(480)
+        win.set_min_content_height(320)
+
+        textview = Gtk.TextView()
+        textbuffer = textview.get_buffer()
+        textview.set_top_margin(10)
+        textview.set_left_margin(10)
+        textview.set_right_margin(10)
+        textview.set_bottom_margin(10)
+        textbuffer.set_text("This is where you would set up GnuCash accounts")
         textview.set_wrap_mode(Gtk.WrapMode.WORD)
         textview.set_editable(False)
         textview.set_can_focus(False)
@@ -67,11 +99,11 @@ class UI:
 
         box = Gtk.Box.new(Gtk.Orientation.VERTICAL, 10)
 
-        label = Gtk.Label()
-        label.set_text(
+        self.auth_label = Gtk.Label()
+        self.auth_label.set_text(
             "Follow the link below to authenticate with the VAT service"
         )
-        box.add(label)
+        box.add(self.auth_label)
 
         self.auth_button = Gtk.LinkButton.new_with_label("", "Authenticate")
         box.add(self.auth_button)
@@ -93,7 +125,6 @@ class UI:
 
         entry = Gtk.Entry()
         entry.set_halign(Gtk.Align.START)
-        box.add(entry)
         box.pack_start(entry, False, False, 0)
 
         try:
@@ -102,9 +133,8 @@ class UI:
         except:
             pass
 
-        test = Gtk.Button.new_with_label("Test")
+        test = Gtk.Button.new_with_label("Check")
         test.set_halign(Gtk.Align.START)
-        box.add(test)
         box.pack_start(test, False, False, 0)
 
         status = Gtk.Label()
@@ -120,9 +150,9 @@ class UI:
                 obs = self.vat.get_open_obligations(vrn)
                 status.set_text("That VRN is correct.")
                 self.assistant.set_page_complete(self.vrn, True)
-                self.assistant.set_current_page(3)
             except:
                 status.set_text("VRN " + vrn + " is not valid.")
+                self.assistant.set_page_complete(self.vrn, False)
             
         test.connect("pressed", pressed)
 
@@ -131,33 +161,6 @@ class UI:
     def create_obligations(self):
 
         self.obl_box = Gtk.Box.new(Gtk.Orientation.VERTICAL, 10)
-
-        # self.obl_label = Gtk.Label()
-        # label.set_text(
-        #     "Select an open obligation"
-        # )
-        # label.set_halign(Gtk.Align.START)
-        # box.pack_start(label, False, False, 0)
-
-        # self.obl_selection = Gtk.RadioButton()
-        # self.obl_selection.set_halign(Gtk.Align.START)
-        # box.add(self.obl_selection)
-        # box.pack_start(self.obl_selection, False, False, 0)
-
-        # def pressed(x):
-        #     vrn = entry.get_text()
-        #     self.vat.config.set("identity.vrn", vrn)
-        #     self.vat.config.write()
-
-        #     try:
-        #         obs = self.vat.get_open_obligations(vrn)
-        #         status.set_text("That VRN is correct.")
-        #         self.assistant.set_page_complete(self.vrn, True)
-        #         self.assistant.set_current_page(3)
-        #     except:
-        #         status.set_text("VRN " + vrn + " is not valid.")
-            
-        # test.connect("pressed", pressed)
 
         return self.obl_box
 
@@ -216,6 +219,57 @@ class UI:
 
         self.auth_button.set_uri(url)
 
+    def create_vat_return(self):
+
+        box = Gtk.Box.new(Gtk.Orientation.VERTICAL, 10)
+
+        self.vat_return_textview = Gtk.TextView()
+        textbuffer = self.vat_return_textview.get_buffer()
+        self.vat_return_textview.set_top_margin(10)
+        self.vat_return_textview.set_left_margin(10)
+        self.vat_return_textview.set_right_margin(10)
+        self.vat_return_textview.set_bottom_margin(10)
+        self.vat_return_textview.set_editable(False)
+        self.vat_return_textview.set_can_focus(False)
+        box.pack_start(self.vat_return_textview, False, False, 0)
+
+        label = Gtk.Label()
+        label.set_text(
+            "When you submit this VAT information you are making a legal " +
+            "declaration that the information is true and complete. A false " +
+            "declaration can result in prosecution."
+        )
+        label.set_max_width_chars(30)
+        label.set_line_wrap(True)
+        box.pack_start(label, False, False, 0)
+
+        def submit_pressed(x):
+            try:
+                vrn = self.vat.config.get("identity.vrn")
+                resp = self.vat.submit_vat_return(vrn, self.vat_return)
+                self.submit_label.set_text("Submission successful.")
+                self.assistant.set_page_complete(self.vat_return_w, True)
+            except Exception as e:
+                self.submit_label.set_text(str(e))
+
+        submit = Gtk.Button.new_with_label("Submit VAT return")
+        box.pack_start(submit, False, False, 0)
+
+        self.submit_label = Gtk.Label()
+        box.pack_start(self.submit_label, False, False, 0)
+
+        submit.connect("pressed", submit_pressed)
+
+        self.monospace_tag = textbuffer.create_tag("monospace",
+                                                   font="Monospace",
+                                                   size_points=10)
+        self.monored_tag = textbuffer.create_tag("monospace_red",
+                                                 font="Monospace",
+                                                 foreground="red",
+                                                 size_points=10)
+
+        return box
+
     def create_assistant(self):
 
         self.assistant = Gtk.Assistant()
@@ -241,15 +295,16 @@ class UI:
         self.assistant.set_page_type(self.obligations, Gtk.AssistantPageType.CONTENT)
         self.assistant.set_page_title(self.obligations, "Obligations")
 
-        accounts = self.create_intro()
-        self.assistant.append_page(accounts)
-        self.assistant.set_page_type(accounts, Gtk.AssistantPageType.CONTENT)
-        self.assistant.set_page_title(accounts, "GnuCash accounts")
+        accounts_w = self.create_accounts()
+        self.assistant.append_page(accounts_w)
+        self.assistant.set_page_type(accounts_w, Gtk.AssistantPageType.CONTENT)
+        self.assistant.set_page_title(accounts_w, "GnuCash accounts")
 
-        vat_return = self.create_intro()
-        self.assistant.append_page(vat_return)
-        self.assistant.set_page_type(vat_return, Gtk.AssistantPageType.CONTENT)
-        self.assistant.set_page_title(vat_return, "VAT return")
+        self.vat_return_w = self.create_vat_return()
+        self.assistant.append_page(self.vat_return_w)
+        self.assistant.set_page_type(self.vat_return_w,
+                                     Gtk.AssistantPageType.CONTENT)
+        self.assistant.set_page_title(self.vat_return_w, "VAT return")
 
         bill = self.create_intro()
         self.assistant.append_page(bill)
@@ -268,11 +323,58 @@ class UI:
         def prepare(ass, page):
 
             if page == self.auth:
+                try:
+                    vrn = self.vat.config.get("identity.vrn")
+                    obs = self.vat.get_open_obligations(vrn)
+                    # Auth worked.  No need to auth
+                    self.auth_label.set_text(
+                        "You are already authenticated,  no need to re-auth."
+                    )
+                    self.assistant.set_page_complete(self.auth, True)
+                except:
+                    pass
                 url = self.vat.get_auth_url()
                 self.configure_auth(url)
 
             if page == self.obligations:
                 self.configure_obligations()
+
+            if page == accounts_w:
+                self.assistant.set_page_complete(accounts_w, True)
+
+            if page == self.vat_return_w:
+                s = self.selected_obligation.start
+                e = self.selected_obligation.end
+
+                acc = accounts.Accounts(self.vat.config)
+                vals = acc.get_vat(s, e)
+
+                # Build base of the VAT return
+                rtn = model.Return()
+                rtn.periodKey = self.selected_obligation.periodKey
+                rtn.finalised = True
+
+                # Add VAT values
+                for k in range(0, 9):
+                    valueName = model.vat_fields[k]
+                    setattr(rtn, valueName, vals[valueName]["total"])
+
+                self.vat_return = rtn
+
+                report = rtn.to_string()
+
+                textbuffer = self.vat_return_textview.get_buffer()
+                textbuffer.set_text(report)
+
+                s = textbuffer.get_start_iter()
+                e = textbuffer.get_end_iter()
+
+                textbuffer.apply_tag(self.monospace_tag, s, e)
+
+                s = textbuffer.get_iter_at_line(4)
+                e = textbuffer.get_iter_at_line(5)
+
+                textbuffer.apply_tag(self.monored_tag, s, e)
 
         self.assistant.connect("prepare", prepare)
 
@@ -286,8 +388,10 @@ async def run_collector(ui):
             break
         await asyncio.sleep(0.2)
     print(coll.result)
+
     def collect_auth(res):
         ui.collect_auth(res)
+
     GLib.idle_add(collect_auth, coll.result["code"])
     await coll.stop()
 
