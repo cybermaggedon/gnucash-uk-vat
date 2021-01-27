@@ -1,0 +1,314 @@
+#!/usr/bin/env python3
+
+import gi
+gi.require_version("Gtk", "3.0")
+from gi.repository import Gtk, GLib, GObject
+
+import gnucash_uk_vat.hmrc as hmrc
+from gnucash_uk_vat.auth import Auth
+from gnucash_uk_vat.config import Config
+import asyncio
+import threading
+
+class UI:
+    def __init__(self):
+        self.cfg = Config()
+        self.authz = Auth()
+        self.vat = hmrc.VatLocalTest(self.cfg, self.authz)
+
+    def collect_auth(self, code):
+        print(code)
+        self.vat.get_auth(code)
+        self.vat.auth.write()
+        self.assistant.set_page_complete(self.auth, True)
+        self.assistant.set_current_page(2)
+
+    def create_intro(self):
+
+        win = Gtk.ScrolledWindow()
+        win.set_hexpand(True)
+        win.set_vexpand(True)
+        win.set_min_content_width(480)
+        win.set_min_content_height(320)
+
+        textview = Gtk.TextView()
+        textbuffer = textview.get_buffer()
+        textview.set_top_margin(10)
+        textview.set_left_margin(10)
+        textview.set_right_margin(10)
+        textview.set_bottom_margin(10)
+        textbuffer.set_text(
+            "** gnucash-uk-vat **\n\n" +
+            "This dialogue will guide you through a VAT return submission. " +
+            "You will begin by authenticating with the HMRC VAT API using " +
+            "your account details. After entering your VAT Registration " +
+            "Number (VRN) you will be shown your relevant VAT Obligations. " +
+            "You will then be able to select an open obligation (if " +
+            "applicable) extract VAT records from GnuCash accounts, " +
+            "and submit a VAT return.\n\n" +
+            "When you submit this VAT information you are making a legal " +
+            "declaration that the information is true and complete. A false " +
+            "declaration can result in prosecution."
+        )
+        textview.set_wrap_mode(Gtk.WrapMode.WORD)
+        textview.set_editable(False)
+        textview.set_can_focus(False)
+        win.add(textview)
+
+        return win
+
+    def create_auth(self):
+
+        win = Gtk.ScrolledWindow()
+        win.set_hexpand(True)
+        win.set_vexpand(True)
+        win.set_min_content_width(480)
+        win.set_min_content_height(320)
+
+        box = Gtk.Box.new(Gtk.Orientation.VERTICAL, 10)
+
+        label = Gtk.Label()
+        label.set_text(
+            "Follow the link below to authenticate with the VAT service"
+        )
+        box.add(label)
+
+        self.auth_button = Gtk.LinkButton.new_with_label("", "Authenticate")
+        box.add(self.auth_button)
+
+        win.add(box)
+
+        return win
+
+    def create_vrn(self):
+
+        box = Gtk.Box.new(Gtk.Orientation.VERTICAL, 10)
+
+        label = Gtk.Label()
+        label.set_text(
+            "Enter your VRN"
+        )
+        label.set_halign(Gtk.Align.START)
+        box.pack_start(label, False, False, 0)
+
+        entry = Gtk.Entry()
+        entry.set_halign(Gtk.Align.START)
+        box.add(entry)
+        box.pack_start(entry, False, False, 0)
+
+        try:
+            vrn = self.vat.config.get("identity.vrn")
+            entry.set_text(vrn)
+        except:
+            pass
+
+        test = Gtk.Button.new_with_label("Test")
+        test.set_halign(Gtk.Align.START)
+        box.add(test)
+        box.pack_start(test, False, False, 0)
+
+        status = Gtk.Label()
+        status.set_halign(Gtk.Align.START)
+        box.pack_start(status, False, False, 0)
+
+        def pressed(x):
+            vrn = entry.get_text()
+            self.vat.config.set("identity.vrn", vrn)
+            self.vat.config.write()
+
+            try:
+                obs = self.vat.get_open_obligations(vrn)
+                status.set_text("That VRN is correct.")
+                self.assistant.set_page_complete(self.vrn, True)
+                self.assistant.set_current_page(3)
+            except:
+                status.set_text("VRN " + vrn + " is not valid.")
+            
+        test.connect("pressed", pressed)
+
+        return box
+
+    def create_obligations(self):
+
+        self.obl_box = Gtk.Box.new(Gtk.Orientation.VERTICAL, 10)
+
+        # self.obl_label = Gtk.Label()
+        # label.set_text(
+        #     "Select an open obligation"
+        # )
+        # label.set_halign(Gtk.Align.START)
+        # box.pack_start(label, False, False, 0)
+
+        # self.obl_selection = Gtk.RadioButton()
+        # self.obl_selection.set_halign(Gtk.Align.START)
+        # box.add(self.obl_selection)
+        # box.pack_start(self.obl_selection, False, False, 0)
+
+        # def pressed(x):
+        #     vrn = entry.get_text()
+        #     self.vat.config.set("identity.vrn", vrn)
+        #     self.vat.config.write()
+
+        #     try:
+        #         obs = self.vat.get_open_obligations(vrn)
+        #         status.set_text("That VRN is correct.")
+        #         self.assistant.set_page_complete(self.vrn, True)
+        #         self.assistant.set_current_page(3)
+        #     except:
+        #         status.set_text("VRN " + vrn + " is not valid.")
+            
+        # test.connect("pressed", pressed)
+
+        return self.obl_box
+
+    def select_obligation(self, ob):
+        self.selected_obligation = ob
+        print("SELECTED ", ob.due)
+        self.assistant.set_page_complete(self.obligations, True)
+
+    def configure_obligations(self):
+
+        try:
+            vrn = self.vat.config.get("identity.vrn")
+            obls = self.vat.get_open_obligations(vrn)
+            if len(obls) == 0:
+
+                # Just exception text goes into a label
+                raise RuntimeError("You have no open obligations.")
+
+            for child in self.obl_box.get_children():
+                self.obl_box.remove(child)
+
+            label = Gtk.Label()
+            label.set_text("Please selecet a VAT obligation by due date")
+            self.obl_box.pack_start(label, False, False, 0)
+
+            grp = None
+
+            def toggled(w, ob):
+                if w.get_active():
+                    self.select_obligation(ob)
+
+            for v in obls:
+                rb = Gtk.RadioButton.new_from_widget(grp)
+                if grp == None:
+                    grp = rb
+                    self.select_obligation(v)
+                rb.set_label("%s -  %s (due %s)" % (
+                    v.start, v.end, v.due
+                ))
+                rb.connect("toggled", toggled, v)
+                self.obl_box.pack_start(rb, False, False, 0)
+
+            self.obl_box.show_all()
+
+        except Exception as e:
+
+            for child in self.obl_box.get_children():
+                self.obl_box.remove(child)
+
+            label = Gtk.Label()
+            label.set_text(str(e))
+            self.obl_box.pack_start(label, False, False, 0)
+            self.obl_box.show_all()
+
+    def configure_auth(self, url):
+
+        self.auth_button.set_uri(url)
+
+    def create_assistant(self):
+
+        self.assistant = Gtk.Assistant()
+
+        intro = self.create_intro()
+        self.assistant.append_page(intro)
+        self.assistant.set_page_type(intro, Gtk.AssistantPageType.INTRO)
+        self.assistant.set_page_title(intro, "Introduction")
+        self.assistant.set_page_complete(intro, True)
+
+        self.auth = self.create_auth()
+        self.assistant.append_page(self.auth)
+        self.assistant.set_page_type(self.auth, Gtk.AssistantPageType.CONTENT)
+        self.assistant.set_page_title(self.auth, "Authentication")
+
+        self.vrn = self.create_vrn()
+        self.assistant.append_page(self.vrn)
+        self.assistant.set_page_type(self.vrn, Gtk.AssistantPageType.CONTENT)
+        self.assistant.set_page_title(self.vrn, "VRN")
+
+        self.obligations = self.create_obligations()
+        self.assistant.append_page(self.obligations)
+        self.assistant.set_page_type(self.obligations, Gtk.AssistantPageType.CONTENT)
+        self.assistant.set_page_title(self.obligations, "Obligations")
+
+        accounts = self.create_intro()
+        self.assistant.append_page(accounts)
+        self.assistant.set_page_type(accounts, Gtk.AssistantPageType.CONTENT)
+        self.assistant.set_page_title(accounts, "GnuCash accounts")
+
+        vat_return = self.create_intro()
+        self.assistant.append_page(vat_return)
+        self.assistant.set_page_type(vat_return, Gtk.AssistantPageType.CONTENT)
+        self.assistant.set_page_title(vat_return, "VAT return")
+
+        bill = self.create_intro()
+        self.assistant.append_page(bill)
+        self.assistant.set_page_type(bill, Gtk.AssistantPageType.CONTENT)
+        self.assistant.set_page_title(bill, "Post VAT bill")
+
+        summary = self.create_intro()
+        self.assistant.append_page(summary)
+        self.assistant.set_page_type(summary, Gtk.AssistantPageType.SUMMARY)
+        self.assistant.set_page_title(summary, "Summary")
+
+        self.assistant.connect("destroy", Gtk.main_quit)
+        self.assistant.connect("cancel", Gtk.main_quit)
+        self.assistant.connect("close", Gtk.main_quit)
+
+        def prepare(ass, page):
+
+            if page == self.auth:
+                url = self.vat.get_auth_url()
+                self.configure_auth(url)
+
+            if page == self.obligations:
+                self.configure_obligations()
+
+        self.assistant.connect("prepare", prepare)
+
+        self.assistant.show_all()
+
+async def run_collector(ui):
+    coll = hmrc.AuthCollector("localhost", 9876)
+    await coll.start()
+    while True:
+        if coll.result != None:
+            break
+        await asyncio.sleep(0.2)
+    print(coll.result)
+    def collect_auth(res):
+        ui.collect_auth(res)
+    GLib.idle_add(collect_auth, coll.result["code"])
+    await coll.stop()
+
+ui = UI()
+
+def run_collector_thread():
+    loop = asyncio.new_event_loop()
+    asyncio.set_event_loop(loop)
+
+    loop.run_until_complete(run_collector(ui))
+    print("HERE")
+
+thr = threading.Thread(target=run_collector_thread)
+thr.start()
+
+def run():
+    ui.create_assistant()
+    Gtk.main()
+    
+run()
+print("DONE")
+#thr.cancel()
+
+#asyncio.run_until_complete(run())

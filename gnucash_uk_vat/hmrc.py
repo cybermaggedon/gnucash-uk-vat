@@ -22,7 +22,7 @@ class AuthCollector:
         self.result = None
 
     # Main body coroutine
-    async def run(self):
+    async def start(self):
 
         # Handler, there is only one endpoint, it receives credential
         # tokens
@@ -45,19 +45,27 @@ class AuthCollector:
             )
 
         # Start web server
-        server = aiohttp.web.Server(handler)
-        runner = aiohttp.web.ServerRunner(server)
-        await runner.setup()
-        site = aiohttp.web.TCPSite(runner, self.host, self.port)
-        await site.start()
+        self.server = aiohttp.web.Server(handler)
+        self.runner = aiohttp.web.ServerRunner(self.server)
+        await self.runner.setup()
+        self.site = aiohttp.web.TCPSite(self.runner, self.host, self.port)
+        await self.site.start()
+
+    async def stop(self):
+
+        # Close web server
+        await self.site.stop()
+        await self.runner.cleanup()
+
+    async def run(self):
+
+        await self.start()
 
         # Sleep until we have a result
         while self.running:
             await asyncio.sleep(0.2)
 
-        # Close web server
-        await site.stop()
-        await runner.cleanup()
+        await self.stop()
 
         # Return the response we received (or an error)
         return self.result
@@ -78,8 +86,7 @@ class Vat:
     def get_code(self):
         return asyncio.run(self.get_code_coro())
 
-    # Co-routine implementation
-    async def get_code_coro(self):
+    def get_auth_url(self):
 
         # Build request to OAUTH endpoint
         url = self.oauth_base + '/oauth/authorize'
@@ -93,8 +100,13 @@ class Vat:
             }
         )
 
-        url = url + "?" + params
+        return url + "?" + params
 
+    # Co-routine implementation
+    async def get_code_coro(self):
+
+        url = self.get_auth_url()
+        
         # Send user to the URL
         print("Please visit the following URL and authenticate:")
         print(url)
@@ -308,7 +320,13 @@ class Vat:
         return obligations
 
     # API request, fetch obligations which are in a time period.
-    def get_obligations(self, vrn, start, end):
+    def get_obligations(self, vrn, start=None, end=None):
+
+        if start == None:
+            start = datetime.utcnow() - timedelta(days=(2 * 356))
+
+        if end == None:
+            end = datetime.utcnow()
 
         headers = self.build_fraud_headers()
         headers['Accept'] = 'application/vnd.hmrc.1.0+json'

@@ -13,13 +13,23 @@ from . device import get_device
 # supports path navigate with config.get("part1.part2.part3")
 class Config:
     def __init__(self, file="config.json"):
+        self.file = file
         self.config = json.loads(open(file).read())
     def get(self, key):
         cfg = self.config
         for v in key.split("."):
             cfg = cfg[v]
         return cfg
-
+    def set(self, key, value):
+        cfg = self.config
+        keys = key.split(".")
+        for v in keys[:-1]:
+            cfg = cfg[v]
+        cfg[keys[-1]] = value
+    # Write back to file
+    def write(self):
+        with open(self.file, "w") as config_file:
+            config_file.write(json.dumps(self.config, indent=4))
 
 # Initialise configuration file with some (mainly) static values.  Also,
 # collate personal information for the Fraud API.
