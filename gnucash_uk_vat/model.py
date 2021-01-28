@@ -269,7 +269,7 @@ class VATUser:
             "liabilities": [v.to_dict() for v in self.liabilities ]
         }
     def add_return(self, rtn):
-
+        
         key = rtn.periodKey
 
         obl = None
@@ -279,8 +279,8 @@ class VATUser:
         if obl == None:
             raise RuntimeError("periodKey does not match an open obligation")
 
-        v.received = datetime.utcnow().date()
-        v.status = 'F'
+        obl.received = datetime.utcnow().date()
+        obl.status = 'F'
 
         due =  obl.end + timedelta(days=30)
 
