@@ -13,20 +13,17 @@ owing, and posted to an Accounts Payable account.
 ## Status
 
 This is a command-line utility.  At the time of writing, this code is
-immature - it has only been tested against the Sandbox APIs.  It is not known
-whether this open source project will be able achieve signoff to use
-production HMRC APIs.   I am in the process submitting for production
-credentials.
-
-Anyone can register an HMRC developer test/sandbox account and run this code
-against the sandbox.
+immature - it has been tested against the Sandbox APIs.  You may be the
+first person to submit a production VAT return. :)  Email me,
+mark AT cyberapocalypse DOT co DOT uk, and I'll support you through the
+process.
 
 If you're an HMRC VAT user, and you use GnuCash, here are some ways
 you can help:
 
-- Try the `gnucash-uk-vat` in read-only mode.  Options `--show-obligations`,
+- Try the `gnucash-uk-vat` options `--show-obligations`,
   `--show-open-obligations`, `--show-payments`, `--show-liabilities` and
-  `--show-vat-return` interact with the VAT API.
+  `--show-vat-return` options.
   Feedback on their successful operation would be appreciated.
 - Try the `--show-account-data` mode.  Again, this is read-only, but interacts
   with the VAT API and your GnuCash accounts.  For all open VAT obligations, the
@@ -75,9 +72,8 @@ The configuration file looks something like this:
         "bills": "Accounts Payable"
     },
     "application": {
-        "profile": "test",
-        "client-id": "<CLIENTID>",
-        "client-secret": "<CLIENTSECRET>"
+        "profile": "prod",
+        ...
     },
     "identity": {
         "vrn": "<VRN>",
@@ -94,17 +90,16 @@ To continue you need to edit some things:
   describe accounts to debit/credit the VAT bill to if you want to use the
   `--post-vat-bill` option.
 - The `application` block provides information authenticating
-  `gnucash-uk-vat` to the HMRC APIs.  The `client-id` and `client-secret`
-  values can only be obtained by registering the application with HMRC using
-  a developer account.  The `profile` element can be `test` or `production`
-  to determine which API to talk to.  Or `local` to talk to my test VAT
+  `gnucash-uk-vat` to the HMRC APIs.
+  The `profile` element can be `test` (Sandbox) or `prod` (production)
+  to determine which HMRC API to talk to.  Or `local` to talk to my test VAT
   service (see below).
 - The `identity` block contains information about you.  The `vrn` elements
   contains your VAT registration number.  The other elements are *legally
   required* by HMRC's fraud API, but are difficult to gather.  So, you
   should ensure the information is correct and accurate because you are
   *legally required* to do so in order to use the HMRC VAT APIs.
- 
+
 ### Authentication
 
 Once you have the configuration set up, you can proceed to authenticate using
