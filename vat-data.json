@@ -47,18 +47,6 @@
                 "totalValuePurchasesExVAT": 1200,
                 "totalValueGoodsSuppliedExVAT": 50,
                 "totalAcquisitionsExVAT": 30
-            },
-            {
-                "periodKey": "#001",
-                "vatDueSales": 100,
-                "vatDueAcquisitions": 120,
-                "totalVatDue": 220,
-                "vatReclaimedCurrPeriod": 30,
-                "netVatDue": 180,
-                "totalValueSalesExVAT": 1000,
-                "totalValuePurchasesExVAT": 1200,
-                "totalValueGoodsSuppliedExVAT": 50,
-                "totalAcquisitionsExVAT": 30
             }
         ],
         "obligations": [
@@ -66,15 +54,15 @@
                 "status": "F",
                 "periodKey": "#000",
                 "start": "2020-02-29",
-                "end": "2020-05-29",
+                "end": "2020-05-28",
                 "received": "2020-06-28",
                 "due": "2020-06-28"
             },
             {
-                "status": "F",
+                "status": "O",
                 "periodKey": "#001",
                 "start": "2020-05-29",
-                "end": "2020-08-27",
+                "end": "2020-08-26",
                 "received": "2020-09-26",
                 "due": "2020-09-26"
             },
