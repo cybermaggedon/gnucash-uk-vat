@@ -382,39 +382,45 @@ class UI:
 
         self.assistant.show_all()
 
-async def run_collector(ui):
-    coll = hmrc.AuthCollector("localhost", 9876)
-    await coll.start()
-    while True:
-        if coll.result != None:
-            break
-        await asyncio.sleep(0.2)
-    print(coll.result)
+class Collector(threading.Thread):
 
-    def collect_auth(res):
-        ui.collect_auth(res)
+    def __init__(self, ui, port=9876):
+        super().__init__()
+        self.ui = ui
+        self.daemon = True
+        self.coll = hmrc.AuthCollector("localhost", port)
+        self.running = True
 
-    GLib.idle_add(collect_auth, coll.result["code"])
-    await coll.stop()
+    async def collect(self):
+        
+        await self.coll.start()
+        while True:
+
+            if not self.running: return
+
+            if self.coll.result != None:
+                break
+
+            await asyncio.sleep(0.2)
+
+        GLib.idle_add(ui.collect_auth, self.coll.result["code"])
+        await self.coll.stop()
+
+    def run(self):
+        loop = asyncio.new_event_loop()
+        asyncio.set_event_loop(loop)
+        loop.run_until_complete(self.collect())
+
+    def stop(self):
+        self.running = False
 
 ui = UI()
+coll = Collector(ui)
+coll.start()
 
-def run_collector_thread():
-    loop = asyncio.new_event_loop()
-    asyncio.set_event_loop(loop)
+ui.create_assistant()
 
-    loop.run_until_complete(run_collector(ui))
-    print("HERE")
+Gtk.main()
+coll.stop()
 
-thr = threading.Thread(target=run_collector_thread)
-thr.start()
 
-def run():
-    ui.create_assistant()
-    Gtk.main()
-    
-run()
-print("DONE")
-#thr.cancel()
-
-#asyncio.run_until_complete(run())
