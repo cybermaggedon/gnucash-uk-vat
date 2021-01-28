@@ -56,9 +56,9 @@ def initialise_config(config_file):
             "bills": "Accounts Payable"
         },
         "application": {
-            "profile": "test",
-            "client-id": "<CLIENTID>",
-            "client-secret": "<CLIENTSECRET>"
+            "profile": "prod",
+            "client-id": "HRdqhoRdscPqdmpRI1uReuVKUE53",
+            "client-secret": "aab66839-358b-474b-b533-b31be8245bd3"
         },
         "identity": {
             "vrn": "<VRN>",
