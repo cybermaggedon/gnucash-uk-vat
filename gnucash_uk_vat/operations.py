@@ -151,7 +151,7 @@ def post_vat_bill(start, end, due, h, config):
     # from end of accounting period
     accts.post_vat_bill(
         str(due),
-        datetime.utcnow().date(),
+        end,
         end + timedelta(days=28) + timedelta(days=7),
         rtn,
         rtn.to_string(indent=False),
