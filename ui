@@ -12,26 +12,14 @@ import asyncio
 import threading
 import gnucash_uk_vat.model as model
 
-class UI:
+class Intro:
     def __init__(self):
-        self.cfg = Config()
-        self.authz = Auth()
-        self.vat = hmrc.VatLocalTest(self.cfg, self.authz)
 
-    def collect_auth(self, code):
-        print(code)
-        self.vat.get_auth(code)
-        self.vat.auth.write()
-        self.assistant.set_page_complete(self.auth, True)
-        self.assistant.set_current_page(2)
-
-    def create_intro(self):
-
-        win = Gtk.ScrolledWindow()
-        win.set_hexpand(True)
-        win.set_vexpand(True)
-        win.set_min_content_width(480)
-        win.set_min_content_height(320)
+        widget = Gtk.ScrolledWindow()
+        widget.set_hexpand(True)
+        widget.set_vexpand(True)
+        widget.set_min_content_width(480)
+        widget.set_min_content_height(320)
 
         textview = Gtk.TextView()
         textbuffer = textview.get_buffer()
@@ -55,7 +43,7 @@ class UI:
         textview.set_wrap_mode(Gtk.WrapMode.WORD)
         textview.set_editable(False)
         textview.set_can_focus(False)
-        win.add(textview)
+        widget.add(textview)
 
         s = textbuffer.get_iter_at_line(0)
         e = textbuffer.get_iter_at_line(1)
@@ -65,7 +53,20 @@ class UI:
                                     size_points=15)
         textbuffer.apply_tag(tag, s, e)
 
-        return win
+        self.widget = widget
+        
+class UI:
+    def __init__(self):
+        self.cfg = Config()
+        self.authz = Auth()
+        self.vat = hmrc.VatLocalTest(self.cfg, self.authz)
+
+    def collect_auth(self, code):
+        print(code)
+        self.vat.get_auth(code)
+        self.vat.auth.write()
+        self.assistant.set_page_complete(self.auth, True)
+        self.assistant.set_current_page(2)
 
     def create_accounts(self):
 
@@ -276,11 +277,11 @@ class UI:
 
         self.assistant = Gtk.Assistant()
 
-        intro = self.create_intro()
-        self.assistant.append_page(intro)
-        self.assistant.set_page_type(intro, Gtk.AssistantPageType.INTRO)
-        self.assistant.set_page_title(intro, "Introduction")
-        self.assistant.set_page_complete(intro, True)
+        intro = Intro()
+        self.assistant.append_page(intro.widget)
+        self.assistant.set_page_type(intro.widget, Gtk.AssistantPageType.INTRO)
+        self.assistant.set_page_title(intro.widget, "Introduction")
+        self.assistant.set_page_complete(intro.widget, True)
 
         self.auth = self.create_auth()
         self.assistant.append_page(self.auth)
@@ -308,15 +309,16 @@ class UI:
                                      Gtk.AssistantPageType.CONTENT)
         self.assistant.set_page_title(self.vat_return_w, "VAT return")
 
-        bill = self.create_intro()
-        self.assistant.append_page(bill)
-        self.assistant.set_page_type(bill, Gtk.AssistantPageType.CONTENT)
-        self.assistant.set_page_title(bill, "Post VAT bill")
+        bill = Intro()
+        self.assistant.append_page(bill.widget)
+        self.assistant.set_page_type(bill.widget, Gtk.AssistantPageType.CONTENT)
+        self.assistant.set_page_title(bill.widget, "Post VAT bill")
 
-        summary = self.create_intro()
-        self.assistant.append_page(summary)
-        self.assistant.set_page_type(summary, Gtk.AssistantPageType.SUMMARY)
-        self.assistant.set_page_title(summary, "Summary")
+        summary = Intro()
+        self.assistant.append_page(summary.widget)
+        self.assistant.set_page_type(summary.widget,
+                                     Gtk.AssistantPageType.SUMMARY)
+        self.assistant.set_page_title(summary.widget, "Summary")
 
         self.assistant.connect("destroy", Gtk.main_quit)
         self.assistant.connect("cancel", Gtk.main_quit)
