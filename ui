@@ -412,9 +412,7 @@ class UI:
 
         self.assistant.set_page_complete(self.post_bill_w.widget, True)
 
-        self.summary.write("Posted bill for period due %s\n\n" % str(due))
-
-        print(self.summary.getvalue())
+        self.summary.write("Posted bill for period, due %s\n\n" % str(due))
         
     def collect_auth(self, code):
         self.vat.get_auth(code)
