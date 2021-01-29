@@ -13,7 +13,7 @@ import threading
 import gnucash_uk_vat.model as model
 
 class Intro:
-    def __init__(self):
+    def __init__(self, ui):
 
         widget = Gtk.ScrolledWindow()
         widget.set_hexpand(True)
@@ -53,28 +53,45 @@ class Intro:
                                     size_points=15)
         textbuffer.apply_tag(tag, s, e)
 
+        self.ui = ui
         self.widget = widget
-        
-class UI:
-    def __init__(self):
-        self.cfg = Config()
-        self.authz = Auth()
-        self.vat = hmrc.VatLocalTest(self.cfg, self.authz)
 
-    def collect_auth(self, code):
-        print(code)
-        self.vat.get_auth(code)
-        self.vat.auth.write()
-        self.assistant.set_page_complete(self.auth, True)
-        self.assistant.set_current_page(2)
+class Authentication:
+    def __init__(self, ui):
 
-    def create_accounts(self):
+        widget = Gtk.ScrolledWindow()
+        widget.set_hexpand(True)
+        widget.set_vexpand(True)
+        widget.set_min_content_width(480)
+        widget.set_min_content_height(320)
 
-        win = Gtk.ScrolledWindow()
-        win.set_hexpand(True)
-        win.set_vexpand(True)
-        win.set_min_content_width(480)
-        win.set_min_content_height(320)
+        box = Gtk.Box.new(Gtk.Orientation.VERTICAL, 10)
+
+        self.label = Gtk.Label()
+        self.label.set_text(
+            "Follow the link below to authenticate with the VAT service"
+        )
+        box.add(self.label)
+
+        self.button = Gtk.LinkButton.new_with_label("", "Authenticate")
+        box.add(self.button)
+
+        widget.add(box)
+
+        self.ui = ui
+        self.widget = widget
+
+    def configure(self, url):
+        self.button.set_uri(url)
+
+class Accounts:
+    def __init__(self, ui):
+
+        widget = Gtk.ScrolledWindow()
+        widget.set_hexpand(True)
+        widget.set_vexpand(True)
+        widget.set_min_content_width(480)
+        widget.set_min_content_height(320)
 
         textview = Gtk.TextView()
         textbuffer = textview.get_buffer()
@@ -86,32 +103,94 @@ class UI:
         textview.set_wrap_mode(Gtk.WrapMode.WORD)
         textview.set_editable(False)
         textview.set_can_focus(False)
-        win.add(textview)
+        widget.add(textview)
 
-        return win
+        self.ui = ui
+        self.widget = widget
 
-    def create_auth(self):
-
-        win = Gtk.ScrolledWindow()
-        win.set_hexpand(True)
-        win.set_vexpand(True)
-        win.set_min_content_width(480)
-        win.set_min_content_height(320)
+class VatReturnSubmission:
+    def __init__(self, ui):
 
         box = Gtk.Box.new(Gtk.Orientation.VERTICAL, 10)
 
-        self.auth_label = Gtk.Label()
-        self.auth_label.set_text(
-            "Follow the link below to authenticate with the VAT service"
+        self.textview = Gtk.TextView()
+        textbuffer = self.textview.get_buffer()
+        self.textview.set_top_margin(10)
+        self.textview.set_left_margin(10)
+        self.textview.set_right_margin(10)
+        self.textview.set_bottom_margin(10)
+        self.textview.set_editable(False)
+        self.textview.set_can_focus(False)
+        box.pack_start(self.textview, False, False, 0)
+
+        label = Gtk.Label()
+        label.set_text(
+            "When you submit this VAT information you are making a legal " +
+            "declaration that the information is true and complete. A false " +
+            "declaration can result in prosecution."
         )
-        box.add(self.auth_label)
+        label.set_max_width_chars(30)
+        label.set_line_wrap(True)
+        box.pack_start(label, False, False, 0)
 
-        self.auth_button = Gtk.LinkButton.new_with_label("", "Authenticate")
-        box.add(self.auth_button)
+        def submitted(x):
+            try:
+                self.ui.submit_return()
+                self.button.set_sensitive(False)
+                self.label.set_text("Submission successful.")
+            except Exception as e:
+                self.label.set_text(str(e))
 
-        win.add(box)
+        self.button = Gtk.Button.new_with_label("Submit VAT return")
+        box.pack_start(self.button, False, False, 0)
 
-        return win
+        self.label = Gtk.Label()
+        box.pack_start(self.label, False, False, 0)
+
+        self.button.connect("pressed", submitted)
+
+        self.mono_tag = textbuffer.create_tag("monospace", font="Monospace",
+                                              size_points=10)
+        self.red_tag = textbuffer.create_tag("monospace_red", font="Monospace",
+                                             foreground="red", size_points=10)
+
+        self.ui = ui
+        self.widget = box
+
+    def show(self, rtn):
+
+        report = rtn.to_string()
+
+        textbuffer = self.textview.get_buffer()
+        textbuffer.set_text(report)
+
+        s = textbuffer.get_start_iter()
+        e = textbuffer.get_end_iter()
+
+        textbuffer.apply_tag(self.mono_tag, s, e)
+
+        s = textbuffer.get_iter_at_line(4)
+        e = textbuffer.get_iter_at_line(5)
+
+        textbuffer.apply_tag(self.red_tag, s, e)
+
+class UI:
+    def __init__(self):
+        self.cfg = Config()
+        self.authz = Auth()
+        self.vat = hmrc.VatLocalTest(self.cfg, self.authz)
+
+    def submit_return(self):
+        vrn = self.vat.config.get("identity.vrn")
+        resp = self.vat.submit_vat_return(vrn, self.vat_return)
+        self.assistant.set_page_complete(self.vat_return_w.widget, True)
+        
+    def collect_auth(self, code):
+        print(code)
+        self.vat.get_auth(code)
+        self.vat.auth.write()
+        self.assistant.set_page_complete(self.auth.widget, True)
+        self.assistant.set_current_page(2)
 
     def create_vrn(self):
 
@@ -218,75 +297,21 @@ class UI:
 
             self.assistant.set_page_complete(self.obligations, False)
 
-    def configure_auth(self, url):
-
-        self.auth_button.set_uri(url)
-
-    def create_vat_return(self):
-
-        box = Gtk.Box.new(Gtk.Orientation.VERTICAL, 10)
-
-        self.vat_return_textview = Gtk.TextView()
-        textbuffer = self.vat_return_textview.get_buffer()
-        self.vat_return_textview.set_top_margin(10)
-        self.vat_return_textview.set_left_margin(10)
-        self.vat_return_textview.set_right_margin(10)
-        self.vat_return_textview.set_bottom_margin(10)
-        self.vat_return_textview.set_editable(False)
-        self.vat_return_textview.set_can_focus(False)
-        box.pack_start(self.vat_return_textview, False, False, 0)
-
-        label = Gtk.Label()
-        label.set_text(
-            "When you submit this VAT information you are making a legal " +
-            "declaration that the information is true and complete. A false " +
-            "declaration can result in prosecution."
-        )
-        label.set_max_width_chars(30)
-        label.set_line_wrap(True)
-        box.pack_start(label, False, False, 0)
-
-        def submit_pressed(x):
-            try:
-                vrn = self.vat.config.get("identity.vrn")
-                resp = self.vat.submit_vat_return(vrn, self.vat_return)
-                self.submit_label.set_text("Submission successful.")
-                self.assistant.set_page_complete(self.vat_return_w, True)
-            except Exception as e:
-                self.submit_label.set_text(str(e))
-
-        submit = Gtk.Button.new_with_label("Submit VAT return")
-        box.pack_start(submit, False, False, 0)
-
-        self.submit_label = Gtk.Label()
-        box.pack_start(self.submit_label, False, False, 0)
-
-        submit.connect("pressed", submit_pressed)
-
-        self.monospace_tag = textbuffer.create_tag("monospace",
-                                                   font="Monospace",
-                                                   size_points=10)
-        self.monored_tag = textbuffer.create_tag("monospace_red",
-                                                 font="Monospace",
-                                                 foreground="red",
-                                                 size_points=10)
-
-        return box
-
     def create_assistant(self):
 
         self.assistant = Gtk.Assistant()
 
-        intro = Intro()
+        intro = Intro(self)
         self.assistant.append_page(intro.widget)
         self.assistant.set_page_type(intro.widget, Gtk.AssistantPageType.INTRO)
         self.assistant.set_page_title(intro.widget, "Introduction")
         self.assistant.set_page_complete(intro.widget, True)
 
-        self.auth = self.create_auth()
-        self.assistant.append_page(self.auth)
-        self.assistant.set_page_type(self.auth, Gtk.AssistantPageType.CONTENT)
-        self.assistant.set_page_title(self.auth, "Authentication")
+        self.auth = Authentication(self)
+        self.assistant.append_page(self.auth.widget)
+        self.assistant.set_page_type(self.auth.widget,
+                                     Gtk.AssistantPageType.CONTENT)
+        self.assistant.set_page_title(self.auth.widget, "Authentication")
 
         self.vrn = self.create_vrn()
         self.assistant.append_page(self.vrn)
@@ -298,23 +323,24 @@ class UI:
         self.assistant.set_page_type(self.obligations, Gtk.AssistantPageType.CONTENT)
         self.assistant.set_page_title(self.obligations, "Obligations")
 
-        accounts_w = self.create_accounts()
-        self.assistant.append_page(accounts_w)
-        self.assistant.set_page_type(accounts_w, Gtk.AssistantPageType.CONTENT)
-        self.assistant.set_page_title(accounts_w, "GnuCash accounts")
-
-        self.vat_return_w = self.create_vat_return()
-        self.assistant.append_page(self.vat_return_w)
-        self.assistant.set_page_type(self.vat_return_w,
+        acc_setup = Accounts(self)
+        self.assistant.append_page(acc_setup.widget)
+        self.assistant.set_page_type(acc_setup.widget,
                                      Gtk.AssistantPageType.CONTENT)
-        self.assistant.set_page_title(self.vat_return_w, "VAT return")
+        self.assistant.set_page_title(acc_setup.widget, "GnuCash accounts")
 
-        bill = Intro()
+        self.vat_return_w = VatReturnSubmission(self)
+        self.assistant.append_page(self.vat_return_w.widget)
+        self.assistant.set_page_type(self.vat_return_w.widget,
+                                     Gtk.AssistantPageType.CONTENT)
+        self.assistant.set_page_title(self.vat_return_w.widget, "VAT return")
+
+        bill = Intro(self)
         self.assistant.append_page(bill.widget)
         self.assistant.set_page_type(bill.widget, Gtk.AssistantPageType.CONTENT)
         self.assistant.set_page_title(bill.widget, "Post VAT bill")
 
-        summary = Intro()
+        summary = Intro(self)
         self.assistant.append_page(summary.widget)
         self.assistant.set_page_type(summary.widget,
                                      Gtk.AssistantPageType.SUMMARY)
@@ -326,27 +352,28 @@ class UI:
 
         def prepare(ass, page):
 
-            if page == self.auth:
+            if page == self.auth.widget:
+
                 try:
                     vrn = self.vat.config.get("identity.vrn")
                     obs = self.vat.get_open_obligations(vrn)
                     # Auth worked.  No need to auth
-                    self.auth_label.set_text(
+                    self.auth.label.set_text(
                         "You are already authenticated,  no need to re-auth."
                     )
-                    self.assistant.set_page_complete(self.auth, True)
+                    self.assistant.set_page_complete(self.auth.widget, True)
                 except:
                     pass
                 url = self.vat.get_auth_url()
-                self.configure_auth(url)
+                self.auth.configure(url)
 
             if page == self.obligations:
                 self.configure_obligations()
 
-            if page == accounts_w:
-                self.assistant.set_page_complete(accounts_w, True)
+            if page == acc_setup.widget:
+                self.assistant.set_page_complete(acc_setup.widget, True)
 
-            if page == self.vat_return_w:
+            if page == self.vat_return_w.widget:
                 s = self.selected_obligation.start
                 e = self.selected_obligation.end
 
@@ -365,20 +392,7 @@ class UI:
 
                 self.vat_return = rtn
 
-                report = rtn.to_string()
-
-                textbuffer = self.vat_return_textview.get_buffer()
-                textbuffer.set_text(report)
-
-                s = textbuffer.get_start_iter()
-                e = textbuffer.get_end_iter()
-
-                textbuffer.apply_tag(self.monospace_tag, s, e)
-
-                s = textbuffer.get_iter_at_line(4)
-                e = textbuffer.get_iter_at_line(5)
-
-                textbuffer.apply_tag(self.monored_tag, s, e)
+                self.vat_return_w.show(rtn)
 
         self.assistant.connect("prepare", prepare)
 
