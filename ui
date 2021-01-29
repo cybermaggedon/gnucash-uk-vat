@@ -150,7 +150,7 @@ class SelectObligation:
             return
 
         label = Gtk.Label()
-        label.set_text("Please select a VAT obligation by due date")
+        label.set_text("Please select a VAT obligation period")
         self.widget.pack_start(label, False, False, 0)
 
         grp = None
@@ -523,7 +523,8 @@ class UI:
                     obs = self.vat.get_open_obligations(vrn)
                     # Auth worked.  No need to auth
                     self.auth.label.set_text(
-                        "You are already authenticated,  no need to re-auth."
+                        "You are already authenticated. " +
+                        "You do not need to re-authenticate."
                     )
                     self.assistant.set_page_complete(self.auth.widget, True)
                 except:
