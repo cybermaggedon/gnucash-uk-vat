@@ -84,7 +84,93 @@ class Authentication:
     def configure(self, url):
         self.button.set_uri(url)
 
-class Accounts:
+class VrnEntry:
+    def __init__(self, ui):
+
+        self.ui = ui
+
+        box = Gtk.Box.new(Gtk.Orientation.VERTICAL, 10)
+
+        label = Gtk.Label()
+        label.set_text(
+            "Enter your VRN"
+        )
+        label.set_halign(Gtk.Align.START)
+        box.pack_start(label, False, False, 0)
+
+        entry = Gtk.Entry()
+        entry.set_halign(Gtk.Align.START)
+        box.pack_start(entry, False, False, 0)
+
+        try:
+            vrn = self.ui.vat.config.get("identity.vrn")
+            entry.set_text(vrn)
+        except:
+            pass
+
+        test = Gtk.Button.new_with_label("Check")
+        test.set_halign(Gtk.Align.START)
+        box.pack_start(test, False, False, 0)
+
+        status = Gtk.Label()
+        status.set_halign(Gtk.Align.START)
+        box.pack_start(status, False, False, 0)
+
+        def pressed(x):
+            vrn = entry.get_text()
+            try:
+                self.ui.select_vrn(vrn)
+                status.set_text("VRN accepted.")
+            except Exception as e:
+                status.set_text("VRN " + vrn + " is not valid.")
+            
+        test.connect("pressed", pressed)
+
+        self.widget = box
+
+class SelectObligation:
+    def __init__(self, ui):
+        box = Gtk.Box.new(Gtk.Orientation.VERTICAL, 10)
+        self.ui = ui
+        self.widget = box
+
+    def configure(self, obls):
+
+        for child in self.widget.get_children():
+            self.widget.remove(child)
+
+        if len(obls) == 0:
+            label = Gtk.Label()
+            label.set_text("You have no open obligations.")
+            self.ui.select_obligation(None)
+            self.widget.pack_start(label, False, False, 0)
+            self.widget.show_all()
+            return
+
+        label = Gtk.Label()
+        label.set_text("Please select a VAT obligation by due date")
+        self.widget.pack_start(label, False, False, 0)
+
+        grp = None
+
+        def toggled(w, ob):
+            if w.get_active():
+                self.ui.select_obligation(ob)
+
+        for v in obls:
+            rb = Gtk.RadioButton.new_from_widget(grp)
+            if grp == None:
+                grp = rb
+                self.ui.select_obligation(v)
+            rb.set_label("%s -  %s (due %s)" % (
+                v.start, v.end, v.due
+            ))
+            rb.connect("toggled", toggled, v)
+            self.widget.pack_start(rb, False, False, 0)
+
+        self.widget.show_all()
+
+class AccountsSetup:
     def __init__(self, ui):
 
         widget = Gtk.ScrolledWindow()
@@ -159,6 +245,9 @@ class VatReturnSubmission:
 
     def show(self, rtn):
 
+        # FIXME: State is dependendent on holding an open obligation?
+        self.button.set_sensitive(True)
+
         report = rtn.to_string()
 
         textbuffer = self.textview.get_buffer()
@@ -173,50 +262,6 @@ class VatReturnSubmission:
         e = textbuffer.get_iter_at_line(5)
 
         textbuffer.apply_tag(self.red_tag, s, e)
-
-class VrnEntry:
-    def __init__(self, ui):
-
-        self.ui = ui
-
-        box = Gtk.Box.new(Gtk.Orientation.VERTICAL, 10)
-
-        label = Gtk.Label()
-        label.set_text(
-            "Enter your VRN"
-        )
-        label.set_halign(Gtk.Align.START)
-        box.pack_start(label, False, False, 0)
-
-        entry = Gtk.Entry()
-        entry.set_halign(Gtk.Align.START)
-        box.pack_start(entry, False, False, 0)
-
-        try:
-            vrn = self.ui.vat.config.get("identity.vrn")
-            entry.set_text(vrn)
-        except:
-            pass
-
-        test = Gtk.Button.new_with_label("Check")
-        test.set_halign(Gtk.Align.START)
-        box.pack_start(test, False, False, 0)
-
-        status = Gtk.Label()
-        status.set_halign(Gtk.Align.START)
-        box.pack_start(status, False, False, 0)
-
-        def pressed(x):
-            vrn = entry.get_text()
-            try:
-                self.ui.select_vrn(vrn)
-                status.set_text("VRN accepted.")
-            except Exception as e:
-                status.set_text("VRN " + vrn + " is not valid.")
-            
-        test.connect("pressed", pressed)
-
-        self.widget = box
         
 class UI:
     def __init__(self):
@@ -247,63 +292,22 @@ class UI:
         self.assistant.set_page_complete(self.auth.widget, True)
         self.assistant.set_current_page(2)
 
-    def create_obligations(self):
-
-        self.obl_box = Gtk.Box.new(Gtk.Orientation.VERTICAL, 10)
-
-        return self.obl_box
-
     def select_obligation(self, ob):
         self.selected_obligation = ob
-        self.assistant.set_page_complete(self.obligations, True)
+        if ob != None:
+            self.assistant.set_page_complete(self.obligations.widget, True)
+        else:
+            self.assistant.set_page_complete(self.obligations.widget, False)
 
     def configure_obligations(self):
-
         try:
             vrn = self.vat.config.get("identity.vrn")
             obls = self.vat.get_open_obligations(vrn)
-            if len(obls) == 0:
-
-                # Just exception text goes into a label
-                raise RuntimeError("You have no open obligations.")
-
-            for child in self.obl_box.get_children():
-                self.obl_box.remove(child)
-
-            label = Gtk.Label()
-            label.set_text("Please selecet a VAT obligation by due date")
-            self.obl_box.pack_start(label, False, False, 0)
-
-            grp = None
-
-            def toggled(w, ob):
-                if w.get_active():
-                    self.select_obligation(ob)
-
-            for v in obls:
-                rb = Gtk.RadioButton.new_from_widget(grp)
-                if grp == None:
-                    grp = rb
-                    self.select_obligation(v)
-                rb.set_label("%s -  %s (due %s)" % (
-                    v.start, v.end, v.due
-                ))
-                rb.connect("toggled", toggled, v)
-                self.obl_box.pack_start(rb, False, False, 0)
-
-            self.obl_box.show_all()
-
+            self.obligations.configure(obls)
+            self.assistant.set_page_complete(self.obligations.widget, True)
         except Exception as e:
-
-            for child in self.obl_box.get_children():
-                self.obl_box.remove(child)
-
-            label = Gtk.Label()
-            label.set_text(str(e))
-            self.obl_box.pack_start(label, False, False, 0)
-            self.obl_box.show_all()
-
-            self.assistant.set_page_complete(self.obligations, False)
+            print(e)
+            self.assistant.set_page_complete(self.obligations.widget, False)
 
     def create_assistant(self):
 
@@ -327,12 +331,13 @@ class UI:
                                      Gtk.AssistantPageType.CONTENT)
         self.assistant.set_page_title(self.vrn.widget, "VRN")
 
-        self.obligations = self.create_obligations()
-        self.assistant.append_page(self.obligations)
-        self.assistant.set_page_type(self.obligations, Gtk.AssistantPageType.CONTENT)
-        self.assistant.set_page_title(self.obligations, "Obligations")
+        self.obligations = SelectObligation(self)
+        self.assistant.append_page(self.obligations.widget)
+        self.assistant.set_page_type(self.obligations.widget,
+                                     Gtk.AssistantPageType.CONTENT)
+        self.assistant.set_page_title(self.obligations.widget, "Obligations")
 
-        acc_setup = Accounts(self)
+        acc_setup = AccountsSetup(self)
         self.assistant.append_page(acc_setup.widget)
         self.assistant.set_page_type(acc_setup.widget,
                                      Gtk.AssistantPageType.CONTENT)
@@ -376,7 +381,7 @@ class UI:
                 url = self.vat.get_auth_url()
                 self.auth.configure(url)
 
-            if page == self.obligations:
+            if page == self.obligations.widget:
                 self.configure_obligations()
 
             if page == acc_setup.widget:
