@@ -12,6 +12,7 @@ import asyncio
 import threading
 import gnucash_uk_vat.model as model
 from datetime import timedelta
+import io
 
 class Intro:
     def __init__(self, ui):
@@ -325,14 +326,50 @@ class BillPosting:
         e = textbuffer.get_iter_at_line(5)
 
         textbuffer.apply_tag(self.red_tag, s, e)
+
+class Summary:
+
+    def __init__(self, ui):
+        self.ui = ui
+
+        box = Gtk.Box.new(Gtk.Orientation.VERTICAL, 10)
+
+        self.textview = Gtk.TextView()
+        textbuffer = self.textview.get_buffer()
+        self.textview.set_top_margin(10)
+        self.textview.set_left_margin(10)
+        self.textview.set_right_margin(10)
+        self.textview.set_bottom_margin(10)
+        self.textview.set_editable(False)
+        self.textview.set_can_focus(False)
+        box.pack_start(self.textview, False, False, 0)
+
+        self.mono_tag = textbuffer.create_tag("monospace", font="Monospace",
+                                              size_points=10)
+
+        self.widget = box
+
+    def show(self, summary):
+
+        textbuffer = self.textview.get_buffer()
+        textbuffer.set_text(summary)
+
+        s = textbuffer.get_start_iter()
+        e = textbuffer.get_end_iter()
+
+        textbuffer.apply_tag(self.mono_tag, s, e)
         
 class UI:
     def __init__(self):
         self.cfg = Config()
         self.authz = Auth()
         self.vat = hmrc.VatLocalTest(self.cfg, self.authz)
+        self.summary = io.StringIO()
 
     def select_vrn(self, vrn):
+
+        self.summary.write("Selected VRN: %s\n\n" % vrn)
+
         self.vat.config.set("identity.vrn", vrn)
         self.vat.config.write()
 
@@ -348,6 +385,12 @@ class UI:
         vrn = self.vat.config.get("identity.vrn")
         resp = self.vat.submit_vat_return(vrn, self.vat_return)
         self.assistant.set_page_complete(self.vat_return_w.widget, True)
+
+        self.summary.write("Submitted return for period %s - %s:\n%s\n" % (
+            self.selected_obligation.start,
+            self.selected_obligation.end,
+            self.vat_return.to_string()
+        ))
 
     def post_bill(self):
 
@@ -368,6 +411,10 @@ class UI:
         )
 
         self.assistant.set_page_complete(self.post_bill_w.widget, True)
+
+        self.summary.write("Posted bill for period due %s\n\n" % str(due))
+
+        print(self.summary.getvalue())
         
     def collect_auth(self, code):
         self.vat.get_auth(code)
@@ -459,11 +506,11 @@ class UI:
                                      Gtk.AssistantPageType.CONTENT)
         self.assistant.set_page_title(self.post_bill_w.widget, "Post VAT bill")
 
-        summary = Intro(self)
-        self.assistant.append_page(summary.widget)
-        self.assistant.set_page_type(summary.widget,
+        self.summary_w = Summary(self)
+        self.assistant.append_page(self.summary_w.widget)
+        self.assistant.set_page_type(self.summary_w.widget,
                                      Gtk.AssistantPageType.SUMMARY)
-        self.assistant.set_page_title(summary.widget, "Summary")
+        self.assistant.set_page_title(self.summary_w.widget, "Summary")
 
         self.assistant.connect("destroy", Gtk.main_quit)
         self.assistant.connect("cancel", Gtk.main_quit)
@@ -497,6 +544,9 @@ class UI:
 
             if page == self.post_bill_w.widget:
                 self.post_bill_w.configure(self.vat_return)
+
+            if page == self.summary_w.widget:
+                self.summary_w.show(self.summary.getvalue())
 
         self.assistant.connect("prepare", prepare)
 
