@@ -174,25 +174,10 @@ class VatReturnSubmission:
 
         textbuffer.apply_tag(self.red_tag, s, e)
 
-class UI:
-    def __init__(self):
-        self.cfg = Config()
-        self.authz = Auth()
-        self.vat = hmrc.VatLocalTest(self.cfg, self.authz)
+class VrnEntry:
+    def __init__(self, ui):
 
-    def submit_return(self):
-        vrn = self.vat.config.get("identity.vrn")
-        resp = self.vat.submit_vat_return(vrn, self.vat_return)
-        self.assistant.set_page_complete(self.vat_return_w.widget, True)
-        
-    def collect_auth(self, code):
-        print(code)
-        self.vat.get_auth(code)
-        self.vat.auth.write()
-        self.assistant.set_page_complete(self.auth.widget, True)
-        self.assistant.set_current_page(2)
-
-    def create_vrn(self):
+        self.ui = ui
 
         box = Gtk.Box.new(Gtk.Orientation.VERTICAL, 10)
 
@@ -208,7 +193,7 @@ class UI:
         box.pack_start(entry, False, False, 0)
 
         try:
-            vrn = self.vat.config.get("identity.vrn")
+            vrn = self.ui.vat.config.get("identity.vrn")
             entry.set_text(vrn)
         except:
             pass
@@ -223,20 +208,44 @@ class UI:
 
         def pressed(x):
             vrn = entry.get_text()
-            self.vat.config.set("identity.vrn", vrn)
-            self.vat.config.write()
-
             try:
-                obs = self.vat.get_open_obligations(vrn)
-                status.set_text("That VRN is correct.")
-                self.assistant.set_page_complete(self.vrn, True)
-            except:
+                self.ui.select_vrn(vrn)
+                status.set_text("VRN accepted.")
+            except Exception as e:
                 status.set_text("VRN " + vrn + " is not valid.")
-                self.assistant.set_page_complete(self.vrn, False)
             
         test.connect("pressed", pressed)
 
-        return box
+        self.widget = box
+        
+class UI:
+    def __init__(self):
+        self.cfg = Config()
+        self.authz = Auth()
+        self.vat = hmrc.VatLocalTest(self.cfg, self.authz)
+
+    def select_vrn(self, vrn):
+        self.vat.config.set("identity.vrn", vrn)
+        self.vat.config.write()
+
+        try:
+            obs = self.vat.get_open_obligations(vrn)
+            self.assistant.set_page_complete(self.vrn.widget, True)
+        except Exception as e:
+            self.assistant.set_page_complete(self.vrn.widget,
+                                                False)
+            raise e
+            
+    def submit_return(self):
+        vrn = self.vat.config.get("identity.vrn")
+        resp = self.vat.submit_vat_return(vrn, self.vat_return)
+        self.assistant.set_page_complete(self.vat_return_w.widget, True)
+        
+    def collect_auth(self, code):
+        self.vat.get_auth(code)
+        self.vat.auth.write()
+        self.assistant.set_page_complete(self.auth.widget, True)
+        self.assistant.set_current_page(2)
 
     def create_obligations(self):
 
@@ -246,7 +255,6 @@ class UI:
 
     def select_obligation(self, ob):
         self.selected_obligation = ob
-        print("SELECTED ", ob.due)
         self.assistant.set_page_complete(self.obligations, True)
 
     def configure_obligations(self):
@@ -313,10 +321,11 @@ class UI:
                                      Gtk.AssistantPageType.CONTENT)
         self.assistant.set_page_title(self.auth.widget, "Authentication")
 
-        self.vrn = self.create_vrn()
-        self.assistant.append_page(self.vrn)
-        self.assistant.set_page_type(self.vrn, Gtk.AssistantPageType.CONTENT)
-        self.assistant.set_page_title(self.vrn, "VRN")
+        self.vrn = VrnEntry(self)
+        self.assistant.append_page(self.vrn.widget)
+        self.assistant.set_page_type(self.vrn.widget,
+                                     Gtk.AssistantPageType.CONTENT)
+        self.assistant.set_page_title(self.vrn.widget, "VRN")
 
         self.obligations = self.create_obligations()
         self.assistant.append_page(self.obligations)
