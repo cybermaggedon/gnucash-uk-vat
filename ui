@@ -6,7 +6,7 @@ from gi.repository import Gtk, GLib, GObject, Pango
 
 import gnucash_uk_vat.hmrc as hmrc
 from gnucash_uk_vat.auth import Auth
-from gnucash_uk_vat.config import Config
+from gnucash_uk_vat.config import Config, initialise_config
 import gnucash_uk_vat.accounts as accounts
 import asyncio
 import threading
@@ -175,26 +175,39 @@ class SelectObligation:
 class AccountsSetup:
     def __init__(self, ui):
 
-        widget = Gtk.ScrolledWindow()
-        widget.set_hexpand(True)
-        widget.set_vexpand(True)
-        widget.set_min_content_width(480)
-        widget.set_min_content_height(320)
-
-        textview = Gtk.TextView()
-        textbuffer = textview.get_buffer()
-        textview.set_top_margin(10)
-        textview.set_left_margin(10)
-        textview.set_right_margin(10)
-        textview.set_bottom_margin(10)
-        textbuffer.set_text("This is where you would set up GnuCash accounts")
-        textview.set_wrap_mode(Gtk.WrapMode.WORD)
-        textview.set_editable(False)
-        textview.set_can_focus(False)
-        widget.add(textview)
-
         self.ui = ui
-        self.widget = widget
+
+        box = Gtk.Box.new(Gtk.Orientation.VERTICAL, 10)
+
+        btn = Gtk.FileChooserButton()
+        btn.set_current_folder(".")
+        
+        def select(w):
+            f = w.get_filename()
+            self.ui.vat.config.set("accounts.file", f)
+            print(f)
+            self.ui.check_accounts()
+
+        btn.connect("file-set", select)
+        box.pack_start(btn, False, False, 0)
+
+        try:
+            acct_file = self.ui.vat.config.get("accounts.file")
+            btn.set_filename(acct_file)
+        except Exception as e:
+            print(e)
+            pass
+
+        self.store = Gtk.ListStore(str)
+
+        self.accts = [
+            Gtk.ComboBox.new_with_model_and_entry(self.store)
+        ]
+
+        self.accts[0].set_entry_text_column(0)
+        box.pack_start(self.accts[0], False, False, 0)
+
+        self.widget = box
 
 class VatReturnSubmission:
     def __init__(self, ui):
@@ -361,7 +374,11 @@ class Summary:
         
 class UI:
     def __init__(self):
-        self.cfg = Config()
+        try:
+            self.cfg = Config()
+        except:
+            initialise_config("config.json")
+            self.cfg = Config()
         self.authz = Auth()
         self.vat = hmrc.VatLocalTest(self.cfg, self.authz)
         self.summary = io.StringIO()
@@ -457,6 +474,37 @@ class UI:
         self.vat_return = rtn
 
         self.vat_return_w.show(rtn)
+
+    def check_accounts(self):
+
+        try:
+            ac_file = self.vat.config.get("accounts.file")
+            print("Accounts file is", ac_file)
+            accts =  accounts.Accounts(self.vat.config)
+            print("Accounts opens")
+            self.assistant.set_page_complete(self.acc_setup.widget, True)
+
+            acct_list = accts.get_accounts()
+            print(acct_list)
+
+            a0 = self.vat.config.get("accounts.vatDueSales")
+
+            self.acc_setup.store.clear()
+            pos = 0
+            for acct in acct_list:
+                self.acc_setup.store.append([acct])
+                if acct == a0:
+                    self.acc_setup.accts[0].set_active(pos)
+                pos += 1
+
+            print("a0", a0)
+
+            print("ACCOUNTS ARE GOOD")
+            
+        except Exception as e:
+            self.assistant.set_page_complete(self.acc_setup.widget, False)
+            print(">>", e)
+            
         
     def create_assistant(self):
 
@@ -467,6 +515,12 @@ class UI:
         self.assistant.set_page_type(intro.widget, Gtk.AssistantPageType.INTRO)
         self.assistant.set_page_title(intro.widget, "Introduction")
         self.assistant.set_page_complete(intro.widget, True)
+
+        self.acc_setup = AccountsSetup(self)
+        self.assistant.append_page(self.acc_setup.widget)
+        self.assistant.set_page_type(self.acc_setup.widget,
+                                     Gtk.AssistantPageType.CONTENT)
+        self.assistant.set_page_title(self.acc_setup.widget, "GnuCash accounts")
 
         self.auth = Authentication(self)
         self.assistant.append_page(self.auth.widget)
@@ -485,12 +539,6 @@ class UI:
         self.assistant.set_page_type(self.obligations.widget,
                                      Gtk.AssistantPageType.CONTENT)
         self.assistant.set_page_title(self.obligations.widget, "Obligations")
-
-        acc_setup = AccountsSetup(self)
-        self.assistant.append_page(acc_setup.widget)
-        self.assistant.set_page_type(acc_setup.widget,
-                                     Gtk.AssistantPageType.CONTENT)
-        self.assistant.set_page_title(acc_setup.widget, "GnuCash accounts")
 
         self.vat_return_w = VatReturnSubmission(self)
         self.assistant.append_page(self.vat_return_w.widget)
@@ -535,8 +583,8 @@ class UI:
             if page == self.obligations.widget:
                 self.configure_obligations()
 
-            if page == acc_setup.widget:
-                self.assistant.set_page_complete(acc_setup.widget, True)
+            if page == self.acc_setup.widget:
+                self.check_accounts()
 
             if page == self.vat_return_w.widget:
                 self.configure_vat_return()

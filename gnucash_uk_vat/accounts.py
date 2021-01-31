@@ -24,6 +24,7 @@ class Accounts:
     # to support config.get("key.name") method.
     def __init__(self, config, rw=False):
         self.config = config
+        self.session = None
         file = config.get("accounts.file")
         if rw:
             self.session = self.open_session(file)
@@ -33,7 +34,8 @@ class Accounts:
         self.root = self.book.get_root_account()
 
     def __del__(self):
-        self.session.destroy()
+        if self.session != None:
+            self.session.destroy()
 
     def save(self):
         self.session.save()
@@ -88,6 +90,23 @@ class Accounts:
             if acct == None:
                 raise RuntimeError("Can't locate account '%s'" % locator)
         return acct
+
+    def get_accounts(self, acct=None, pfx=""):
+
+        if acct == None: acct = self.root
+
+        ch = acct.get_children()
+        if ch == None:
+            return []
+        
+        res = []
+
+        for v in acct.get_children():
+            res.append(pfx + v.name)
+            res.extend(
+                self.get_accounts(v, pfx + v.name + ":")
+            )
+        return res
 
     # Return VAT return for the defined period.  Makes use of the
     # configuration object to describe which accounts to analyse.
