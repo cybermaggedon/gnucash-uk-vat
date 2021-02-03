@@ -172,7 +172,7 @@ class SelectObligation:
 
         self.widget.show_all()
 
-class AccountsSetup:
+class FileSelection:
     def __init__(self, ui):
 
         self.ui = ui
@@ -181,21 +181,46 @@ class AccountsSetup:
 
         btn = Gtk.FileChooserButton()
         btn.set_current_folder(".")
-        
+
         def select(w):
-            f = w.get_filename()
-            self.ui.vat.config.set("accounts.file", f)
-            print(f)
-            self.ui.check_accounts()
+            self.check(w)
 
         btn.connect("file-set", select)
         box.pack_start(btn, False, False, 0)
+
+        self.label = Gtk.Label()
+        box.pack_start(self.label, False, False, 0)
 
         try:
             acct_file = self.ui.vat.config.get("accounts.file")
             btn.set_filename(acct_file)
         except Exception as e:
             print(e)
+            pass
+
+        self.widget = box
+
+    def check(self, w):
+        f = w.get_filename()
+        self.ui.vat.config.set("accounts.file", f)
+        self.ui.vat.config.write()
+        try:
+            self.ui.check_file()
+            self.label.set_text("File OK.")
+        except Exception as e:
+            self.label.set_text(str(e))
+        
+
+class AccountsSetup:
+    def __init__(self, ui):
+
+        self.ui = ui
+
+        box = Gtk.Box.new(Gtk.Orientation.VERTICAL, 10)
+
+        try:
+            acct_file = self.ui.vat.config.get("accounts.file")
+        except Exception as e:
             pass
 
         self.store = Gtk.ListStore(str)
@@ -475,6 +500,17 @@ class UI:
 
         self.vat_return_w.show(rtn)
 
+    def check_file(self):
+
+        try:
+            ac_file = self.vat.config.get("accounts.file")
+            accts =  accounts.Accounts(self.vat.config)
+            self.assistant.set_page_complete(self.file_sel.widget, True)
+
+        except Exception as e:
+            self.assistant.set_page_complete(self.file_sel.widget, False)
+            raise e
+
     def check_accounts(self):
 
         try:
@@ -482,7 +518,6 @@ class UI:
             print("Accounts file is", ac_file)
             accts =  accounts.Accounts(self.vat.config)
             print("Accounts opens")
-            self.assistant.set_page_complete(self.acc_setup.widget, True)
 
             acct_list = accts.get_accounts()
             print(acct_list)
@@ -500,11 +535,12 @@ class UI:
             print("a0", a0)
 
             print("ACCOUNTS ARE GOOD")
+
+            self.assistant.set_page_complete(self.acc_setup.widget, True)
             
         except Exception as e:
             self.assistant.set_page_complete(self.acc_setup.widget, False)
             print(">>", e)
-            
         
     def create_assistant(self):
 
@@ -515,6 +551,12 @@ class UI:
         self.assistant.set_page_type(intro.widget, Gtk.AssistantPageType.INTRO)
         self.assistant.set_page_title(intro.widget, "Introduction")
         self.assistant.set_page_complete(intro.widget, True)
+
+        self.file_sel = FileSelection(self)
+        self.assistant.append_page(self.file_sel.widget)
+        self.assistant.set_page_type(self.file_sel.widget,
+                                     Gtk.AssistantPageType.CONTENT)
+        self.assistant.set_page_title(self.file_sel.widget, "GnuCash file")
 
         self.acc_setup = AccountsSetup(self)
         self.assistant.append_page(self.acc_setup.widget)
@@ -583,6 +625,9 @@ class UI:
             if page == self.obligations.widget:
                 self.configure_obligations()
 
+            if page == self.file_sel.widget:
+                self.check_file()
+                
             if page == self.acc_setup.widget:
                 self.check_accounts()
 
