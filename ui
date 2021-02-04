@@ -216,17 +216,16 @@ class AccountsSetup:
 
         self.ui = ui
 
-        box = Gtk.Box.new(Gtk.Orientation.VERTICAL, 10)
+        grid = Gtk.Grid()
 
         self.store = Gtk.ListStore(str)
 
         self.accts = [
             Gtk.ComboBox.new_with_model(self.store)
+            for v in range(0, 11)
         ]
 
         def changed(w):
-
-            print("CHANGED")
 
             a0_iter = self.accts[0].get_active_iter()
             if a0_iter is not None:
@@ -238,13 +237,28 @@ class AccountsSetup:
 
             self.ui.check_accounts()
 
+        lbl = Gtk.Label()
+        lbl.set_text("VAT due on sales:")
+        grid.attach(lbl, 0, 0, 1, 1)
+
         self.accts[0].connect("changed", changed)
         cell = Gtk.CellRendererText()
         self.accts[0].pack_start(cell, False)
         self.accts[0].add_attribute(cell, 'text', 0)
-        box.pack_start(self.accts[0], False, False, 0)
+        grid.attach_next_to(self.accts[0], lbl, Gtk.PositionType.RIGHT, 1, 1)
 
-        self.widget = box
+        ###
+        lbl = Gtk.Label()
+        lbl.set_text("VAT due on acquisitions:")
+        grid.attach(lbl, 0, 1, 1, 1)
+
+        self.accts[1].connect("changed", changed)
+        cell = Gtk.CellRendererText()
+        self.accts[1].pack_start(cell, False)
+        self.accts[1].add_attribute(cell, 'text', 0)
+        grid.attach_next_to(self.accts[1], lbl, Gtk.PositionType.RIGHT, 1, 1)
+
+        self.widget = grid
 
     def configure(self):
 
@@ -261,7 +275,6 @@ class AccountsSetup:
         for acct in acct_list:
             self.store.append([acct])
             if acct == a0:
-                print("Set to ", pos)
                 self.accts[0].set_active(pos)
             pos += 1
 
@@ -546,22 +559,30 @@ class UI:
 
         try:
             ac_file = self.vat.config.get("accounts.file")
-            print("Accounts file is", ac_file)
 
             accts = accounts.Accounts(self.vat.config)
-            print("Accounts opens")
 
             acct_list = set(accts.get_accounts())
 
-            a0 = self.vat.config.get("accounts.vatDueSales")
+            conf = [
+                self.vat.config.get("accounts.vatDueSales"),
+                self.vat.config.get("accounts.vatDueAcquisitions"),
+                self.vat.config.get("accounts.totalVatDue"),
+                self.vat.config.get("accounts.vatReclaimedCurrPeriod"),
+                self.vat.config.get("accounts.netVatDue"),
+                self.vat.config.get("accounts.totalValueSalesExVAT"),
+                self.vat.config.get("accounts.totalValuePurchasesExVAT"),
+                self.vat.config.get("accounts.totalValueGoodsSuppliedExVAT"),
+                self.vat.config.get("accounts.totalAcquisitionsExVAT"),
+                self.vat.config.get("accounts.liabilities"),
+                self.vat.config.get("accounts.bills"),
+            ]
 
-            print("a0 is ", a0)
+            for c in conf:
+                if c not in acct_list:
+                    raise RuntimeError("Account %s not valid" % c)
 
-            if a0 not in acct_list:
-                raise RuntimeError("Account not valid.")
-
-            print("ACCOUNTS ARE GOOD")
-
+            print("Accounts are good.")
             self.assistant.set_page_complete(self.acc_setup.widget, True)
             
         except Exception as e:
