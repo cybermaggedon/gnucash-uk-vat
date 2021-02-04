@@ -218,11 +218,6 @@ class AccountsSetup:
 
         box = Gtk.Box.new(Gtk.Orientation.VERTICAL, 10)
 
-        try:
-            acct_file = self.ui.vat.config.get("accounts.file")
-        except Exception as e:
-            pass
-
         self.store = Gtk.ListStore(str)
 
         self.accts = [
@@ -230,18 +225,23 @@ class AccountsSetup:
         ]
 
         def changed(w):
+
             print("CHANGED")
+
             a0_iter = self.accts[0].get_active_iter()
-            print(a0_iter)
             if a0_iter is not None:
                 val = self.store[a0_iter][0]
-                self.ui.vat.config.set("accounts.vatDueSales", val)
-                print("Selected: %s" % val)
-                self.ui.vat.config.write()
+            else:
+                val = ""
+            self.ui.vat.config.set("accounts.vatDueSales", val)
+            self.ui.vat.config.write()
+
             self.ui.check_accounts()
 
-        self.accts[0].set_entry_text_column(0)
         self.accts[0].connect("changed", changed)
+        cell = Gtk.CellRendererText()
+        self.accts[0].pack_start(cell, False)
+        self.accts[0].add_attribute(cell, 'text', 0)
         box.pack_start(self.accts[0], False, False, 0)
 
         self.widget = box
@@ -249,13 +249,11 @@ class AccountsSetup:
     def configure(self):
 
         ac_file = self.ui.vat.config.get("accounts.file")
-        print("Accounts file is", ac_file)
-        accts =  accounts.Accounts(self.ui.vat.config)
-        print("Accounts opens")
+        accts = accounts.Accounts(self.ui.vat.config)
 
         acct_list = accts.get_accounts()
-#        print(acct_list)
-            
+        del accts
+
         a0 = self.ui.vat.config.get("accounts.vatDueSales")
 
         self.store.clear()
@@ -263,6 +261,7 @@ class AccountsSetup:
         for acct in acct_list:
             self.store.append([acct])
             if acct == a0:
+                print("Set to ", pos)
                 self.accts[0].set_active(pos)
             pos += 1
 
@@ -548,15 +547,15 @@ class UI:
         try:
             ac_file = self.vat.config.get("accounts.file")
             print("Accounts file is", ac_file)
-            accts =  accounts.Accounts(self.vat.config)
+
+            accts = accounts.Accounts(self.vat.config)
             print("Accounts opens")
 
             acct_list = set(accts.get_accounts())
-#            print(acct_list)
 
             a0 = self.vat.config.get("accounts.vatDueSales")
 
-            print("a0", a0)
+            print("a0 is ", a0)
 
             if a0 not in acct_list:
                 raise RuntimeError("Account not valid.")
@@ -657,7 +656,9 @@ class UI:
                 
             if page == self.acc_setup.widget:
                 self.acc_setup.configure()
-                # Maybe enables next button
+                # Maybe enables next button.  Don't think this is needed,
+                # as configure calls check_accounts as a result of
+                # change handling kicking in
                 self.check_accounts()
 
             if page == self.vat_return_w.widget:
