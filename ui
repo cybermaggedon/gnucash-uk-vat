@@ -261,7 +261,7 @@ class AccountsSetup:
         for acct in acct_list:
             self.store.append([acct])
             if acct == a0:
-                print("Set to ", pos)
+                print("Set to", pos)
                 self.accts[0].set_active(pos)
             pos += 1
 
@@ -491,7 +491,7 @@ class UI:
         self.vat.get_auth(code)
         self.vat.auth.write()
         self.assistant.set_page_complete(self.auth.widget, True)
-        self.assistant.set_current_page(2)
+#        self.assistant.set_current_page(2)
 
     def select_obligation(self, ob):
         self.selected_obligation = ob
@@ -659,7 +659,7 @@ class UI:
                 # Maybe enables next button.  Don't think this is needed,
                 # as configure calls check_accounts as a result of
                 # change handling kicking in
-                self.check_accounts()
+#                self.check_accounts()
 
             if page == self.vat_return_w.widget:
                 self.configure_vat_return()
