@@ -100,39 +100,40 @@ class VrnEntry:
         label.set_halign(Gtk.Align.START)
         box.pack_start(label, False, False, 0)
 
-        entry = Gtk.Entry()
-        entry.set_halign(Gtk.Align.START)
-        box.pack_start(entry, False, False, 0)
+        self.entry = Gtk.Entry()
+        self.entry.set_halign(Gtk.Align.START)
+        box.pack_start(self.entry, False, False, 0)
 
         def pressed(x):
-            vrn = entry.get_text()
-            try:
-                self.ui.select_vrn(vrn)
-                status.set_text("VRN accepted.")
-            except Exception as e:
-                status.set_text("VRN " + vrn + " is not valid.")
-            
-        try:
-            vrn = self.ui.vat.config.get("identity.vrn")
-            entry.set_text(vrn)
-            print("BUNCHY")
-            self.ui.select_vrn(vrn)
-            print("BUNCHY2")
-            status.set_text("VRN accepted.")
-        except Exception as e:
-            print(">>", e)
+            self.check()
 
         test = Gtk.Button.new_with_label("Check")
         test.set_halign(Gtk.Align.START)
         box.pack_start(test, False, False, 0)
 
-        status = Gtk.Label()
-        status.set_halign(Gtk.Align.START)
-        box.pack_start(status, False, False, 0)
+        self.status = Gtk.Label()
+        self.status.set_halign(Gtk.Align.START)
+        box.pack_start(self.status, False, False, 0)
+
+        try:
+            vrn = self.ui.vat.config.get("identity.vrn")
+            self.entry.set_text(vrn)
+        except Exception as e:
+            print(e)
+            pass
 
         test.connect("pressed", pressed)
 
         self.widget = box
+
+    def check(self):
+        vrn = self.entry.get_text()
+        try:
+            self.ui.select_vrn(vrn)
+            self.status.set_text("VRN is valid.")
+        except Exception as e:
+            print(e)
+            self.status.set_text("VRN " + vrn + " is not valid.")
 
 class SelectObligation:
     def __init__(self, ui):
@@ -241,21 +242,6 @@ class AccountsSetup:
             for v in range(0, 11)
         ]
 
-        def changed(w):
-
-            for i in range(0, 9):
-                fld = model.vat_fields[i]
-            
-                iter = self.accts[i].get_active_iter()
-                if iter is not None:
-                    val = self.store[iter][0]
-                else:
-                    val = ""
-
-                self.ui.vat.config.set("accounts." + fld, val)
-            self.ui.vat.config.write()
-            self.ui.check_accounts()
-
         self.handlers = []
 
         for i in range(0, 9):
@@ -268,7 +254,7 @@ class AccountsSetup:
             lbl.set_halign(Gtk.Align.END)
             grid.attach(lbl, 0, i + 1, 1, 1)
 
-            self.handlers.append(self.accts[i].connect("changed", changed))
+#            self.handlers.append(self.accts[i].connect("changed", changed))
             cell = Gtk.CellRendererText()
             self.accts[i].pack_start(cell, False)
             self.accts[i].add_attribute(cell, 'text', 0)
@@ -277,7 +263,27 @@ class AccountsSetup:
 
         self.widget = grid
 
+    def changed(self, w):
+
+        for i in range(0, 9):
+            fld = model.vat_fields[i]
+
+            iter = self.accts[i].get_active_iter()
+            if iter is not None:
+                val = self.store[iter][0]
+            else:
+                val = ""
+
+            self.ui.vat.config.set("accounts." + fld, val)
+        self.ui.vat.config.write()
+        self.ui.check_accounts()
+
     def configure(self):
+
+        if len(self.handlers) > 0:
+            for i in range(0, 9):
+                self.accts[i].disconnect(self.handlers[i])
+            self.handlers = []
 
         ac_file = self.ui.vat.config.get("accounts.file")
         accts = accounts.Accounts(self.ui.vat.config)
@@ -300,9 +306,11 @@ class AccountsSetup:
             self.store.append([acct])
             for i in range(0, 9):
                 if acct == acct_sel[i]:
-                    with self.accts[i].handler_block(self.handlers[i]):
-                        self.accts[i].set_active(pos)
+                    self.accts[i].set_active(pos)
             pos += 1
+
+        for i in range(0, 9):
+            self.handlers.append(self.accts[i].connect("changed", self.changed))
 
 class VatReturnSubmission:
     def __init__(self, ui):
@@ -490,7 +498,7 @@ class UI:
             self.assistant.set_page_complete(self.vrn.widget, True)
         except Exception as e:
             self.assistant.set_page_complete(self.vrn.widget,
-                                                False)
+                                             False)
             raise e
             
     def submit_return(self):
@@ -546,7 +554,6 @@ class UI:
             self.obligations.configure(obls)
             self.assistant.set_page_complete(self.obligations.widget, True)
         except Exception as e:
-            print(e)
             self.assistant.set_page_complete(self.obligations.widget, False)
 
     def configure_vat_return(self):
@@ -608,12 +615,10 @@ class UI:
                 if c not in acct_list:
                     raise RuntimeError("Account %s not valid" % c)
 
-            print("Accounts are good.")
             self.assistant.set_page_complete(self.acc_setup.widget, True)
             
         except Exception as e:
             self.assistant.set_page_complete(self.acc_setup.widget, False)
-            print(">>", e)
         
     def create_assistant(self):
 
@@ -700,10 +705,11 @@ class UI:
 
             if page == self.file_sel.widget:
                 self.check_file()
+
+            if page == self.vrn.widget:
+                self.vrn.check()
                 
             if page == self.acc_setup.widget:
-
-
                 self.acc_setup.configure()
 
                 # Maybe enables next button.
