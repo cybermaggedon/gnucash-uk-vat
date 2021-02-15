@@ -25,7 +25,7 @@ The second screen allows you to select the filename of your GnuCash accounts.
 ![alt text](screen2.png)
 
 The third screen allows you to select the particular GnuCash accounts
-containing VAT records.  See [GnuCash accounts structure](README.md#gnucash-accounts-structure).
+containing VAT records.  See [GnuCash accounts structure](accounts.md).
 
 ![alt text](screen3.png)
 
