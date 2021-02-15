@@ -44,7 +44,7 @@ you can help:
 pip3 install git+https://github.com/cybermaggedon/gnucash-uk-vat
 ```
 
-See [Installing](docs/install.md).
+See [Installing](docs/installation.md).
 
 ## Usage
 
