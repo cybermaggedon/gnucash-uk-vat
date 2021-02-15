@@ -14,6 +14,7 @@ import gnucash_uk_vat.model as model
 from datetime import timedelta
 import io
 
+# This widget presents an introduction to the dialog process
 class Intro:
     def __init__(self, ui):
 
@@ -58,129 +59,7 @@ class Intro:
         self.ui = ui
         self.widget = widget
 
-class Authentication:
-    def __init__(self, ui):
-
-        widget = Gtk.ScrolledWindow()
-        widget.set_hexpand(True)
-        widget.set_vexpand(True)
-        widget.set_min_content_width(480)
-        widget.set_min_content_height(320)
-
-        box = Gtk.Box.new(Gtk.Orientation.VERTICAL, 10)
-
-        self.label = Gtk.Label()
-        self.label.set_text(
-            "Follow the link below to authenticate with the VAT service. " +
-            "This will open a browser window.  Once you are authenticated, " +
-            "return to this application to continue."
-        )
-        self.label.set_max_width_chars(30)
-        self.label.set_line_wrap(True)
-        box.add(self.label)
-
-        self.button = Gtk.LinkButton.new_with_label("", "Authenticate")
-        box.add(self.button)
-
-        widget.add(box)
-
-        self.ui = ui
-        self.widget = widget
-
-    def configure(self, url):
-        self.button.set_uri(url)
-
-class VrnEntry:
-    def __init__(self, ui):
-
-        self.ui = ui
-
-        box = Gtk.Box.new(Gtk.Orientation.VERTICAL, 10)
-
-        label = Gtk.Label()
-        label.set_text(
-            "Enter your VRN"
-        )
-        label.set_halign(Gtk.Align.START)
-        box.pack_start(label, False, False, 0)
-
-        self.entry = Gtk.Entry()
-        self.entry.set_halign(Gtk.Align.START)
-        box.pack_start(self.entry, False, False, 0)
-
-        def pressed(x):
-            self.check()
-
-        test = Gtk.Button.new_with_label("Check")
-        test.set_halign(Gtk.Align.START)
-        box.pack_start(test, False, False, 0)
-
-        self.status = Gtk.Label()
-        self.status.set_halign(Gtk.Align.START)
-        box.pack_start(self.status, False, False, 0)
-
-        try:
-            vrn = self.ui.vat.config.get("identity.vrn")
-            self.entry.set_text(vrn)
-        except Exception as e:
-            print(e)
-            pass
-
-        test.connect("pressed", pressed)
-
-        self.widget = box
-
-    def check(self):
-        vrn = self.entry.get_text()
-        try:
-            self.ui.select_vrn(vrn)
-            self.status.set_text("VRN is valid.")
-        except Exception as e:
-            print(e)
-            self.status.set_text("VRN " + vrn + " is not valid.")
-
-class SelectObligation:
-    def __init__(self, ui):
-        box = Gtk.Box.new(Gtk.Orientation.VERTICAL, 10)
-        self.ui = ui
-        self.widget = box
-
-    def configure(self, obls):
-
-        for child in self.widget.get_children():
-            self.widget.remove(child)
-
-        if len(obls) == 0:
-            label = Gtk.Label()
-            label.set_text("You have no open obligations.")
-            self.ui.select_obligation(None)
-            self.widget.pack_start(label, False, False, 0)
-            self.widget.show_all()
-            return
-
-        label = Gtk.Label()
-        label.set_text("Please select a VAT obligation period")
-        self.widget.pack_start(label, False, False, 0)
-
-        grp = None
-
-        def toggled(w, ob):
-            if w.get_active():
-                self.ui.select_obligation(ob)
-
-        for v in obls:
-            rb = Gtk.RadioButton.new_from_widget(grp)
-            if grp == None:
-                grp = rb
-                self.ui.select_obligation(v)
-            rb.set_label("%s -  %s (due %s)" % (
-                v.start, v.end, v.due
-            ))
-            rb.connect("toggled", toggled, v)
-            self.widget.pack_start(rb, False, False, 0)
-
-        self.widget.show_all()
-
+# Widget supports selection of accounts file
 class FileSelection:
     def __init__(self, ui):
 
@@ -209,7 +88,6 @@ class FileSelection:
             acct_file = self.ui.vat.config.get("accounts.file")
             btn.set_filename(acct_file)
         except Exception as e:
-            print(e)
             pass
 
         self.widget = box
@@ -223,8 +101,8 @@ class FileSelection:
             self.label.set_text("File OK.")
         except Exception as e:
             self.label.set_text(str(e))
-        
 
+# Widget supports selection of the 9 VAT accounts
 class AccountsSetup:
     def __init__(self, ui):
 
@@ -258,7 +136,6 @@ class AccountsSetup:
             lbl.set_halign(Gtk.Align.END)
             grid.attach(lbl, 0, i + 1, 1, 1)
 
-#            self.handlers.append(self.accts[i].connect("changed", changed))
             cell = Gtk.CellRendererText()
             self.accts[i].pack_start(cell, False)
             self.accts[i].add_attribute(cell, 'text', 0)
@@ -316,6 +193,132 @@ class AccountsSetup:
         for i in range(0, 9):
             self.handlers.append(self.accts[i].connect("changed", self.changed))
 
+# Drives the authentication process, presents a link which launches a
+# browser, and then catches the auth token on successful authentication.
+class Authentication:
+    def __init__(self, ui):
+
+        widget = Gtk.ScrolledWindow()
+        widget.set_hexpand(True)
+        widget.set_vexpand(True)
+        widget.set_min_content_width(480)
+        widget.set_min_content_height(320)
+
+        box = Gtk.Box.new(Gtk.Orientation.VERTICAL, 10)
+
+        self.label = Gtk.Label()
+        self.label.set_text(
+            "Follow the link below to authenticate with the VAT service. " +
+            "This will open a browser window.  Once you are authenticated, " +
+            "return to this application to continue."
+        )
+        self.label.set_max_width_chars(30)
+        self.label.set_line_wrap(True)
+        box.add(self.label)
+
+        self.button = Gtk.LinkButton.new_with_label("", "Authenticate")
+        box.add(self.button)
+
+        widget.add(box)
+
+        self.ui = ui
+        self.widget = widget
+
+    def configure(self, url):
+        self.button.set_uri(url)
+
+# Dialogue which allows for VRN entry
+class VrnEntry:
+    def __init__(self, ui):
+
+        self.ui = ui
+
+        box = Gtk.Box.new(Gtk.Orientation.VERTICAL, 10)
+
+        label = Gtk.Label()
+        label.set_text(
+            "Enter your VRN"
+        )
+        label.set_halign(Gtk.Align.START)
+        box.pack_start(label, False, False, 0)
+
+        self.entry = Gtk.Entry()
+        self.entry.set_halign(Gtk.Align.START)
+        box.pack_start(self.entry, False, False, 0)
+
+        def pressed(x):
+            self.check()
+
+        test = Gtk.Button.new_with_label("Check")
+        test.set_halign(Gtk.Align.START)
+        box.pack_start(test, False, False, 0)
+
+        self.status = Gtk.Label()
+        self.status.set_halign(Gtk.Align.START)
+        box.pack_start(self.status, False, False, 0)
+
+        try:
+            vrn = self.ui.vat.config.get("identity.vrn")
+            self.entry.set_text(vrn)
+        except Exception as e:
+            pass
+
+        test.connect("pressed", pressed)
+
+        self.widget = box
+
+    def check(self):
+        vrn = self.entry.get_text()
+        try:
+            self.ui.select_vrn(vrn)
+            self.status.set_text("VRN is valid.")
+        except Exception as e:
+            self.status.set_text("VRN " + vrn + " is not valid.")
+
+# Widget supports selection of VAT obligation period
+class SelectObligation:
+    def __init__(self, ui):
+        box = Gtk.Box.new(Gtk.Orientation.VERTICAL, 10)
+        self.ui = ui
+        self.widget = box
+
+    def configure(self, obls):
+
+        for child in self.widget.get_children():
+            self.widget.remove(child)
+
+        if len(obls) == 0:
+            label = Gtk.Label()
+            label.set_text("You have no open obligations.")
+            self.ui.select_obligation(None)
+            self.widget.pack_start(label, False, False, 0)
+            self.widget.show_all()
+            return
+
+        label = Gtk.Label()
+        label.set_text("Please select a VAT obligation period")
+        self.widget.pack_start(label, False, False, 0)
+
+        grp = None
+
+        def toggled(w, ob):
+            if w.get_active():
+                self.ui.select_obligation(ob)
+
+        for v in obls:
+            rb = Gtk.RadioButton.new_from_widget(grp)
+            if grp == None:
+                grp = rb
+                self.ui.select_obligation(v)
+            rb.set_label("%s -  %s (due %s)" % (
+                v.start, v.end, v.due
+            ))
+            rb.connect("toggled", toggled, v)
+            self.widget.pack_start(rb, False, False, 0)
+
+        self.widget.show_all()
+
+# Widget supports the VAT return submission step
 class VatReturnSubmission:
     def __init__(self, ui):
 
@@ -385,6 +388,7 @@ class VatReturnSubmission:
 
         textbuffer.apply_tag(self.red_tag, s, e)
 
+# Widget supports the submission of VAT bill
 class BillPosting:
     def __init__(self, ui):
         self.ui = ui
@@ -447,8 +451,8 @@ class BillPosting:
 
         textbuffer.apply_tag(self.red_tag, s, e)
 
+# Widget supports final step, display of a summary
 class Summary:
-
     def __init__(self, ui):
         self.ui = ui
 
@@ -478,7 +482,8 @@ class Summary:
         e = textbuffer.get_end_iter()
 
         textbuffer.apply_tag(self.mono_tag, s, e)
-        
+
+# Overarching UI class, runs the assist dialogue
 class UI:
     def __init__(self):
         try:
@@ -543,7 +548,6 @@ class UI:
         self.vat.get_auth(code)
         self.vat.auth.write()
         self.assistant.set_page_complete(self.auth.widget, True)
-#        self.assistant.set_current_page(2)
 
     def select_obligation(self, ob):
         self.selected_obligation = ob
@@ -557,7 +561,10 @@ class UI:
             vrn = self.vat.config.get("identity.vrn")
             obls = self.vat.get_open_obligations(vrn)
             self.obligations.configure(obls)
-            self.assistant.set_page_complete(self.obligations.widget, True)
+            if len(obls) == 0:
+                self.assistant.set_page_complete(self.obligations.widget, False)
+            else:
+                self.assistant.set_page_complete(self.obligations.widget, True)
         except Exception as e:
             self.assistant.set_page_complete(self.obligations.widget, False)
 
@@ -733,6 +740,7 @@ class UI:
 
         self.assistant.show_all()
 
+# Class, provides an embedded web server to catch OAUTH2 token acquisition
 class Collector(threading.Thread):
 
     def __init__(self, ui, port=9876):
@@ -765,6 +773,7 @@ class Collector(threading.Thread):
     def stop(self):
         self.running = False
 
+# Entry point, runs the assist
 def run():
     ui = UI()
     coll = Collector(ui)
