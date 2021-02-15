@@ -54,11 +54,20 @@ parser.add_argument('--show-liabilities', action='store_true',
                     help='Show VAT liabilities')
 parser.add_argument('--show-payments', action='store_true',
                     help='Show VAT payments')
+parser.add_argument('--assist', action='store_true',
+                    help='Launch assistant')
 
 # Parse arguments
 args = parser.parse_args(sys.argv[1:])
 
 try:
+
+    if args.assist:
+        # Doing the import here so that command-line stuff still works if
+        # GTK is not installed.
+        import gnucash_uk_vat.assist as assist
+        assist.run()
+        sys.exit(0)
 
     # Initialise configuration operation.  This goes here as configuration
     # can be initialised if no auth has been performed
@@ -70,18 +79,7 @@ try:
     config = Config(args.config)
     auth = Auth(args.auth)
 
-    # Get profile
-    prof = config.get("application.profile")
-
-    # Initialise API client endpoint based on selected profile
-    if prof == "prod":
-        h = hmrc.Vat(config, auth)
-    elif prof == "test":
-        h = hmrc.VatTest(config, auth)
-    elif prof == "local":
-        h = hmrc.VatLocalTest(config, auth)
-    else:
-        sys.stderr.write("Profile '%s' is not known." % prof)
+    h = hmrc.create(config, auth)
 
     # Authentication operation goes here.
     if args.authenticate:
@@ -134,7 +132,7 @@ try:
         show_payments(start, end, h, config)
         sys.exit(0)
     else:
-        raise RuntimeError("No operation specified.")
+        raise RuntimeError("No operation specified.  Try --assist option.")
 except Exception as e:
     sys.stderr.write("Exception: %s\n" % e)
     sys.exit(1)
