@@ -71,8 +71,12 @@ class Authentication:
 
         self.label = Gtk.Label()
         self.label.set_text(
-            "Follow the link below to authenticate with the VAT service"
+            "Follow the link below to authenticate with the VAT service. " +
+            "This will open a browser window.  Once you are authenticated, " +
+            "return to this application to continue."
         )
+        self.label.set_max_width_chars(30)
+        self.label.set_line_wrap(True)
         box.add(self.label)
 
         self.button = Gtk.LinkButton.new_with_label("", "Authenticate")
