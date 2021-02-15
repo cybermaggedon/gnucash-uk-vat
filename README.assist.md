@@ -14,7 +14,7 @@ CLI uses.
 gnucash-uk-vat --assist
 ```
 
-!()[screen1.png]
+![alt text](screen1.png)
 !()[screen2.png]
 !()[screen3.png]
 !()[screen4.png]
