@@ -15,12 +15,12 @@ gnucash-uk-vat --assist
 ```
 
 ![alt text](screen1.png)
-!()[screen2.png]
-!()[screen3.png]
-!()[screen4.png]
-!()[screen5.png]
-!()[screen6.png]
-!()[screen7.png]
-!()[screen8.png]
-!()[screen9.png]
+![alt text](screen2.png)
+![alt text](screen3.png)
+![alt text](screen4.png)
+![alt text](screen5.png)
+![alt text](screen6.png)
+![alt text](screen7.png)
+![alt text](screen8.png)
+![alt text](screen9.png)
 
