@@ -104,11 +104,23 @@ class VrnEntry:
         entry.set_halign(Gtk.Align.START)
         box.pack_start(entry, False, False, 0)
 
+        def pressed(x):
+            vrn = entry.get_text()
+            try:
+                self.ui.select_vrn(vrn)
+                status.set_text("VRN accepted.")
+            except Exception as e:
+                status.set_text("VRN " + vrn + " is not valid.")
+            
         try:
             vrn = self.ui.vat.config.get("identity.vrn")
             entry.set_text(vrn)
-        except:
-            pass
+            print("BUNCHY")
+            self.ui.select_vrn(vrn)
+            print("BUNCHY2")
+            status.set_text("VRN accepted.")
+        except Exception as e:
+            print(">>", e)
 
         test = Gtk.Button.new_with_label("Check")
         test.set_halign(Gtk.Align.START)
@@ -118,14 +130,6 @@ class VrnEntry:
         status.set_halign(Gtk.Align.START)
         box.pack_start(status, False, False, 0)
 
-        def pressed(x):
-            vrn = entry.get_text()
-            try:
-                self.ui.select_vrn(vrn)
-                status.set_text("VRN accepted.")
-            except Exception as e:
-                status.set_text("VRN " + vrn + " is not valid.")
-            
         test.connect("pressed", pressed)
 
         self.widget = box
@@ -179,6 +183,11 @@ class FileSelection:
 
         box = Gtk.Box.new(Gtk.Orientation.VERTICAL, 10)
 
+        lbl = Gtk.Label()
+        lbl.set_text("Select the GnuCash file used for accounts")
+        lbl.set_halign(Gtk.Align.START)
+        box.pack_start(lbl, False, False, 0)
+
         btn = Gtk.FileChooserButton()
         btn.set_current_folder(".")
 
@@ -217,6 +226,13 @@ class AccountsSetup:
         self.ui = ui
 
         grid = Gtk.Grid()
+        grid.set_column_spacing(6)
+        grid.set_row_spacing(2)
+
+        lbl = Gtk.Label()
+        lbl.set_text("Select the GnuCash accounts used for 9 VAT boxes")
+        lbl.set_halign(Gtk.Align.START)
+        grid.attach(lbl, 0, 0, 2, 1)
 
         self.store = Gtk.ListStore(str)
 
@@ -227,36 +243,37 @@ class AccountsSetup:
 
         def changed(w):
 
-            a0_iter = self.accts[0].get_active_iter()
-            if a0_iter is not None:
-                val = self.store[a0_iter][0]
-            else:
-                val = ""
-            self.ui.vat.config.set("accounts.vatDueSales", val)
-            self.ui.vat.config.write()
+            for i in range(0, 9):
+                fld = model.vat_fields[i]
+            
+                iter = self.accts[i].get_active_iter()
+                if iter is not None:
+                    val = self.store[iter][0]
+                else:
+                    val = ""
 
+                self.ui.vat.config.set("accounts." + fld, val)
+            self.ui.vat.config.write()
             self.ui.check_accounts()
 
-        lbl = Gtk.Label()
-        lbl.set_text("VAT due on sales:")
-        grid.attach(lbl, 0, 0, 1, 1)
+        self.handlers = []
 
-        self.accts[0].connect("changed", changed)
-        cell = Gtk.CellRendererText()
-        self.accts[0].pack_start(cell, False)
-        self.accts[0].add_attribute(cell, 'text', 0)
-        grid.attach_next_to(self.accts[0], lbl, Gtk.PositionType.RIGHT, 1, 1)
+        for i in range(0, 9):
 
-        ###
-        lbl = Gtk.Label()
-        lbl.set_text("VAT due on acquisitions:")
-        grid.attach(lbl, 0, 1, 1, 1)
+            fld = model.vat_fields[i]
+            desc = model.vat_descriptions[fld]
+            
+            lbl = Gtk.Label()
+            lbl.set_text(desc + ":")
+            lbl.set_halign(Gtk.Align.END)
+            grid.attach(lbl, 0, i + 1, 1, 1)
 
-        self.accts[1].connect("changed", changed)
-        cell = Gtk.CellRendererText()
-        self.accts[1].pack_start(cell, False)
-        self.accts[1].add_attribute(cell, 'text', 0)
-        grid.attach_next_to(self.accts[1], lbl, Gtk.PositionType.RIGHT, 1, 1)
+            self.handlers.append(self.accts[i].connect("changed", changed))
+            cell = Gtk.CellRendererText()
+            self.accts[i].pack_start(cell, False)
+            self.accts[i].add_attribute(cell, 'text', 0)
+            grid.attach_next_to(self.accts[i], lbl, Gtk.PositionType.RIGHT,
+                                1, 1)
 
         self.widget = grid
 
@@ -268,14 +285,23 @@ class AccountsSetup:
         acct_list = accts.get_accounts()
         del accts
 
-        a0 = self.ui.vat.config.get("accounts.vatDueSales")
+        acct_sel = []
+        for i in range(0, 9):
+            try:
+                fld = model.vat_fields[i]
+                sel = self.ui.vat.config.get("accounts." + fld)
+                acct_sel.append(sel)
+            except:
+                acct_sel.append("")
 
         self.store.clear()
         pos = 0
         for acct in acct_list:
             self.store.append([acct])
-            if acct == a0:
-                self.accts[0].set_active(pos)
+            for i in range(0, 9):
+                if acct == acct_sel[i]:
+                    with self.accts[i].handler_block(self.handlers[i]):
+                        self.accts[i].set_active(pos)
             pos += 1
 
 class VatReturnSubmission:
@@ -676,11 +702,12 @@ class UI:
                 self.check_file()
                 
             if page == self.acc_setup.widget:
+
+
                 self.acc_setup.configure()
-                # Maybe enables next button.  Don't think this is needed,
-                # as configure calls check_accounts as a result of
-                # change handling kicking in
-#                self.check_accounts()
+
+                # Maybe enables next button.
+                self.check_accounts()
 
             if page == self.vat_return_w.widget:
                 self.configure_vat_return()
@@ -716,7 +743,7 @@ class Collector(threading.Thread):
 
             await asyncio.sleep(0.2)
 
-        GLib.idle_add(ui.collect_auth, self.coll.result["code"])
+        GLib.idle_add(self.ui.collect_auth, self.coll.result["code"])
         await self.coll.stop()
 
     def run(self):
