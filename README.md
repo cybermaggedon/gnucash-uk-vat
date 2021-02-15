@@ -54,6 +54,17 @@ There are two modes:
 - [CLI mode](docs/cli.md), which is purely CLI-based and has no
   dependency on PyGTK.
 
+## GnuCash accounts structure
+
+See [Accounts](docs/accounts.md).
+
+## Local test service
+
+There is a local test service which allows you to emulate the HMRC VAT
+service with test data under your control.
+
+See [local test](docs/local-test.md).
+
 ## Sample accounts
 
 A sample account file is included at `accounts/accounts.gnucash`.  This
