@@ -12,11 +12,12 @@ owing, and posted to an Accounts Payable account.
 
 ## Status
 
-This is a command-line utility.  At the time of writing, this code is
-immature - it has been tested against the Sandbox APIs.  You may be the
-first person to submit a production VAT return. :)  Email me,
-mark AT cyberapocalypse DOT co DOT uk, and I'll support you through the
-process.
+This is a command-line utility, with a GTK-based dialog mode which removes
+the need to know about configuration files or command-line options.  At the
+time of writing, this code is immature - it has been tested against the
+Sandbox APIs.  You may be the first person to submit a production VAT
+return. :) Email me, mark AT cyberapocalypse DOT co DOT uk, and I'll support
+you through the process.
 
 It has only been tested with Linux. In theory, it should work with GnuCash
 Python modules on any platform, but Python modules aren't included with Windows
