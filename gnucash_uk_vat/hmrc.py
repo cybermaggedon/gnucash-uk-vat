@@ -482,3 +482,18 @@ class VatLocalTest(Vat):
         self.oauth_base = 'http://localhost:8080'
         self.api_base = 'http://localhost:8080'
 
+def create(config, auth):
+
+    # Get profile
+    prof = config.get("application.profile")
+
+    # Initialise API client endpoint based on selected profile
+    if prof == "prod":
+        return Vat(config, auth)
+    elif prof == "test":
+        return VatTest(config, auth)
+    elif prof == "local":
+        return VatLocalTest(config, auth)
+    else:
+        raise RuntimeError("Profile '%s' is not known." % prof)
+

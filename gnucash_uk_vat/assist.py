@@ -487,7 +487,8 @@ class UI:
             initialise_config("config.json")
             self.cfg = Config()
         self.authz = Auth()
-        self.vat = hmrc.VatLocalTest(self.cfg, self.authz)
+
+        self.vat = hmrc.create(self.cfg, self.authz)
         self.summary = io.StringIO()
 
     def select_vrn(self, vrn):
@@ -764,13 +765,13 @@ class Collector(threading.Thread):
     def stop(self):
         self.running = False
 
-ui = UI()
-coll = Collector(ui)
-coll.start()
+def run():
+    ui = UI()
+    coll = Collector(ui)
+    coll.start()
 
-ui.create_assistant()
+    ui.create_assistant()
 
-Gtk.main()
-coll.stop()
-
+    Gtk.main()
+    coll.stop()
 
