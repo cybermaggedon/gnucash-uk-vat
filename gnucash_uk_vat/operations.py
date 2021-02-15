@@ -20,6 +20,10 @@ def show_open_obligations(h, config):
 
     obs = h.get_open_obligations(config.get("identity.vrn"))
 
+    if len(obs) == 0:
+        print("No obligations matched.")
+        return
+
     tbl = [
         [v.start, v.end, v.due, v.status]
         for v in obs
@@ -32,6 +36,10 @@ def show_open_obligations(h, config):
 def show_obligations(start, end, h, config):
 
     obs = h.get_obligations(config.get("identity.vrn"), start, end)
+
+    if len(obs) == 0:
+        print("No obligations matched.")
+        return
 
     tbl = [
         [v.start, v.end, v.due, v.received, v.status]
@@ -161,63 +169,70 @@ def post_vat_bill(start, end, due, h, config):
     print("Bill posted.")
 
 # Show GnuCash information relating to open VAT obligations
-def show_account_data(h, config, detail=False):
+def show_account_data(h, config, due, detail=False):
 
     # Get open obligations
     obs = h.get_open_obligations(config.get("identity.vrn"))
 
+    # Iterate over obligations to find the period
+    obl = None
+    for v in obs:
+        if v.due == due:
+            obl = v
+
+    # Not found
+    if obl == None:
+        raise RuntimeError("Due date '%s' does not match any obligations" % due)
+
     # Get accounts
     accts = accounts.Accounts(config)
 
-    # Iterate over obligations
-    for v in obs:
+    # Write out obligation header
+    print("VAT due: %-10s    Start: %-10s     End: %-10s" % (
+        obl.due, obl.start, obl.end
+    ))
+    print()
 
-        # Write out obligation header
-        print("VAT due: %-10s    Start: %-10s     End: %-10s" % (
-            v.due, v.start, v.end
-        ))
+    # Get VAT values for this period from accounts
+    vals = accts.get_vat(obl.start, obl.end)
+
+    # Loop over 9 boxes (0 .. 8 in this loop)
+    for k in range(0, 9):
+
+        # Get the name of the VAT value
+        valueName = model.vat_fields[k]
+
+        valueDesc = model.vat_descriptions.get(valueName, valueName)
+
+        # Output the value
+        print("    %s: %.2f" % (valueDesc, vals[valueName]["total"]))
+
+        # In detail mode, transactions are shown, otherwise skip that part
+        if not detail: continue
+
         print()
 
-        # Get VAT values for this period from accounts
-        vals = accts.get_vat(v.start, v.end)
+        # Dump out all contributing transactions
+        if len(vals[valueName]["splits"]) > 0:
 
-        # Loop over 9 boxes (0 .. 8 in this loop)
-        for k in range(0, 9):
+            # Construct a transaction table
+            tbl = []
 
-            # Get the name of the VAT value
-            valueName = model.vat_fields[k]
+            # Add transactions to table
+            for w in vals[valueName]["splits"]:
+                tbl.append([
+                    w["date"], "%.2f" % w["amount"], w["description"][0:60]
+                ])
 
-            valueDesc = model.vat_descriptions.get(valueName, valueName)
+            # Create table
+            tbl = tabulate(tbl, tablefmt="pretty",
+                           colalign=("left", "right","left"))
 
-            # Output the value
-            print("    %s: %.2f" % (valueDesc, vals[valueName]["total"]))
-
-            # In detail mode, transactions are shown, otherwise skip that part
-            if not detail: continue
+            # Indent table by 8 characters
+            tbl = "        " + tbl.replace("\n", "\n        ")
+            print(tbl)
 
             print()
-
-            # Dump out all contributing transactions
-            if len(vals[valueName]["splits"]) > 0:
-
-                # Construct a transaction table
-                tbl = []
-
-                # Add transactions to table
-                for w in vals[valueName]["splits"]:
-                    tbl.append([
-                        w["date"], "%.2f" % w["amount"], w["description"][0:60]
-                    ])
-
-                # Create table
-                tbl = tabulate(tbl, tablefmt="pretty",
-                               colalign=("left", "right","left"))
-
-                # Indent table by 8 characters
-                tbl = "        " + tbl.replace("\n", "\n        ")
-                print(tbl)
-
-                print()
 
 # Dump out a VAT return
 def show_vat_return(start, end, due, h, config):

@@ -132,7 +132,7 @@ The output below shows what happens when HMRC's test interface meets the
 sample GnuCash file which is bundled with the code:
 
 ```
-[user@machine mtd]$ gnucash-uk-vat --show-account-detail
+[user@machine mtd]$ gnucash-uk-vat --show-account-detail --due-date 2017-05-07
 VAT due: 2017-05-07    Start: 2017-01-01     End: 2017-03-31
 
     VAT due on sales: 1914.60

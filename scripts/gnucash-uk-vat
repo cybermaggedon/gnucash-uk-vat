@@ -100,24 +100,36 @@ try:
         show_obligations(start, end, h, config)
         sys.exit(0)
     elif args.submit_vat_return:
+        if args.due_date == None:
+            raise RuntimeError("--due-date must be specified")
         due = datetime.fromisoformat(args.due_date).date()
         submit_vat_return(due, h, config)
         sys.exit(0)
     elif args.post_vat_bill:
         start = datetime.fromisoformat(args.start).date()
         end = datetime.fromisoformat(args.end).date()
+        if args.due_date == None:
+            raise RuntimeError("--due-date must be specified")
         due = datetime.fromisoformat(args.due_date).date()
         post_vat_bill(start, end, due, h, config)
         sys.exit(0)
     elif args.show_account_detail:
-        show_account_data(h, config, detail=True)
+        if args.due_date == None:
+            raise RuntimeError("--due-date must be specified")
+        due = datetime.fromisoformat(args.due_date).date()
+        show_account_data(h, config, due, detail=True)
         sys.exit(0)
     elif args.show_account_summary:
-        show_account_data(h, config)
+        if args.due_date == None:
+            raise RuntimeError("--due-date must be specified")
+        due = datetime.fromisoformat(args.due_date).date()
+        show_account_data(h, config, due)
         sys.exit(0)
     elif args.show_vat_return:
         start = datetime.fromisoformat(args.start).date()
         end = datetime.fromisoformat(args.end).date()
+        if args.due_date == None:
+            raise RuntimeError("--due-date must be specified")
         due = datetime.fromisoformat(args.due_date).date()
         show_vat_return(start, end, due, h, config)
         sys.exit(0)
