@@ -7,21 +7,53 @@ This is a utility which manages HMRC (UK) VAT returns in accordance with
 HMRC MTD directives for users of the GnuCash accounting system.  It can
 study your GnuCash accounts, compare this with your HMRC VAT obligations,
 and produce the VAT return to meet your obligations.  As an optional step,
-once the VAT return is filed, a bill can be created describing the VAT
+once the VAT return is filed, a bill can be posted describing the VAT
 owing, and posted to an Accounts Payable account.
 
 ## Status
 
-This is a command-line utility, with a GTK-based dialog mode which removes
-the need to know about configuration files or command-line options.  At the
-time of writing, this code is immature - it has been tested against the
-Sandbox APIs.  You may be the first person to submit a production VAT
-return. :) Email me, mark AT cyberapocalypse DOT co DOT uk, and I'll support
-you through the process.
-
-It has only been tested with Linux. In theory, it should work with GnuCash
+This has only been tested with Linux. In theory, it should work with GnuCash
 Python modules on any platform, but Python modules aren't included with Windows
 or MacOS builds.
+
+This is a command-line utility, with a GTK-based dialog mode which removes
+the need to know about configuration files or command-line options.  At
+the time of writing, this code has been tested against the Sandbox APIs.
+You may be the first person to submit a production VAT return. :) Email
+me, mark AT cyberapocalypse DOT co DOT uk, and I'll support you through
+the process.
+
+## Credentials
+
+In order to use this, you need production credentials (client ID and secret)
+for the VAT submission API.  HMRC does not permit these credentials to be
+shared publicly:
+
+> We have checked with our colleagues who look after HMRC’s API
+> Platform. They have advised that this is not allowed and would be likely
+> to result in your Developer Hub application being blocked. We recommend
+> that instead of sharing these credentials that you inform your users how
+> they can register for their own Developer Hub application and use its
+> credentials with your code.
+
+You can either apply for production credentials using
+the HMRC developer portal (you need to register), or contact me as I can
+share a few credentials privately.
+
+Developer hub: 
+https://developer.service.hmrc.gov.uk/api-documentation/docs/using-the-hub
+
+You click 'Get production credentials' and enter details about the
+application.  I call this application `gnucash-uk-vat`.  When you apply for
+credentials, HMRC will contact you to fill in an application.  You could
+mention that the application has already been approved for production
+credentials, and the application headers verified by testing on the
+sandbox under the application identifier `d865cdd5-2aae-4630-9d2a-7c26ad797b2e`.
+
+Once you have credentials, you should put them in the `config.json` file in
+the `application` section placeholders.
+
+## Help with this project
 
 If you're an HMRC VAT user, and you use GnuCash, here are some ways
 you can help:
