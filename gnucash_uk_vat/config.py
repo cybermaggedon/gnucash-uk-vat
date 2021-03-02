@@ -67,8 +67,8 @@ def initialise_config(config_file):
         },
         "application": {
             "profile": "prod",
-            "client-id": "HRdqhoRdscPqdmpRI1uReuVKUE53",
-            "client-secret": "aab66839-358b-474b-b533-b31be8245bd3"
+            "client-id": "<CLIENT ID>",
+            "client-secret": "<SECRET>"
         },
         "identity": {
             "vrn": "<VRN>",
