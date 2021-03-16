@@ -108,6 +108,12 @@ class Accounts:
             )
         return res
 
+    def is_debit(self, tp):
+        if tp == gnucash.ACCT_TYPE_LIABILITY: return True
+        if tp == gnucash.ACCT_TYPE_PAYABLE: return True
+        if tp == gnucash.ACCT_TYPE_INCOME: return True
+        return False
+
     # Return VAT return for the defined period.  Makes use of the
     # configuration object to describe which accounts to analyse.
     def get_vat(self, start, end):
@@ -120,27 +126,40 @@ class Accounts:
             valueName = model.vat_fields[v]
 
             locator = self.config.get("accounts").get(valueName)
-            acct = self.get_account(self.root, locator)
 
-            splits = self.get_splits(acct, start, end)
+            if isinstance(locator, str):
+                acct = self.get_account(self.root, locator)
+                tp = acct.GetType()
+                all_splits = self.get_splits(acct, start, end)
+                if self.is_debit(tp):
+                    for spl in all_splits:
+                        spl["amount"] *= -1
+            elif isinstance(locator, list):
+                all_splits = []
+                for elt in locator:
+                    acct = self.get_account(self.root, elt)
+                    tp = acct.GetType()
+                    splits = self.get_splits(acct, start, end)
+                    if self.is_debit(tp):
+                        for spl in splits:
+                            spl["amount"] *= -1
+                    all_splits.extend(splits)
+            else:
+                raise RuntimeError("Accounts should be strings or lists")
 
             vat[valueName] = {
-                "splits": splits,
-                "total": sum([v["amount"] for v in splits])
+                "splits": all_splits,
+                "total": sum([v["amount"] for v in all_splits])
             }
-
-            # Some boxes need sign reversal, I think this is mapping whether
-            # the account is asset or liability type.
-            # FIXME: Should be user-configurable?
-            # FIXME: Should be able to work this out from account type?
-            if v in [0, 1, 2, 4, 5, 7]:
-                vat[valueName]["total"] *= -1
-                for w in vat[valueName]["splits"]:
-                    w["amount"] *= -1
 
             # Some boxes are pounds only, round off the pence.
             if v in [5, 6, 7, 8]:
                 vat[valueName]["total"] = round(vat[valueName]["total"])
+
+            # VAT value is always positive, boxes 3 and 4 are studied to
+            # determine refund vs payment
+            if v == 4:
+                vat[valueName]["total"] = abs(vat[valueName]["total"])
 
         return vat
 
