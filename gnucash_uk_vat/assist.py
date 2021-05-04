@@ -117,54 +117,65 @@ class AccountsSetup:
         lbl.set_halign(Gtk.Align.START)
         grid.attach(lbl, 0, 0, 2, 1)
 
-        self.store = Gtk.ListStore(str)
+        tps = [str]
+        tps.extend([bool] * 9)
+        self.store = Gtk.ListStore(*tps)
 
-        self.accts = [
-            Gtk.ComboBox.new_with_model(self.store)
-            for v in range(0, 11)
-        ]
+        self.scrollable = Gtk.ScrolledWindow()
+        self.scrollable.set_vexpand(True)
+        self.scrollable.set_min_content_width(680)
 
-        self.handlers = []
+        self.treeview = Gtk.TreeView(model=self.store)
+        self.treeview.get_selection().set_mode(Gtk.SelectionMode.NONE)
+
+        renderer_acct = Gtk.CellRendererText()
+        column_acct = Gtk.TreeViewColumn("Account", renderer_acct, text=0)
+        self.treeview.append_column(column_acct)
+
+        self.toggle_map = {}
 
         for i in range(0, 9):
+            renderer_box = Gtk.CellRendererToggle()
+            renderer_box.connect("toggled", self.changed)
+            column_box = Gtk.TreeViewColumn(str(i + 1), renderer_box,
+                                            active=(i + 1))
+            self.treeview.append_column(column_box)
+            self.toggle_map[renderer_box] = i
 
-            fld = model.vat_fields[i]
-            desc = model.vat_descriptions[fld]
-            
-            lbl = Gtk.Label()
-            lbl.set_text(desc + ":")
-            lbl.set_halign(Gtk.Align.END)
-            grid.attach(lbl, 0, i + 1, 1, 1)
-
-            cell = Gtk.CellRendererText()
-            self.accts[i].pack_start(cell, False)
-            self.accts[i].add_attribute(cell, 'text', 0)
-            grid.attach_next_to(self.accts[i], lbl, Gtk.PositionType.RIGHT,
-                                1, 1)
+        self.scrollable.add(self.treeview)
+        grid.attach(self.scrollable, 0, 1, 1, 1)
 
         self.widget = grid
 
-    def changed(self, w):
+    def changed(self, w, row):
 
-        for i in range(0, 9):
-            fld = model.vat_fields[i]
+        box = self.toggle_map[w]
+        fld = model.vat_fields[box]
+        acct = self.store[row][0]
 
-            iter = self.accts[i].get_active_iter()
-            if iter is not None:
-                val = self.store[iter][0]
-            else:
-                val = ""
+        val = not self.store[row][box+1]
+        self.store[row][box+1] = val
 
-            self.ui.vat.config.set("accounts." + fld, val)
+        sel = self.ui.vat.config.get("accounts." + fld)
+        if isinstance(sel, str):
+            sel = set([sel])
+        else:
+            sel = set(sel)
+
+        if val:
+            sel.add(acct)
+        else:
+            try:
+                sel.remove(acct)
+            except:
+                pass
+
+        self.ui.vat.config.set("accounts." + fld, list(sel))
+
         self.ui.vat.config.write()
         self.ui.check_accounts()
 
     def configure(self):
-
-        if len(self.handlers) > 0:
-            for i in range(0, 9):
-                self.accts[i].disconnect(self.handlers[i])
-            self.handlers = []
 
         ac_file = self.ui.vat.config.get("accounts.file")
         accts = accounts.Accounts(self.ui.vat.config)
@@ -177,21 +188,23 @@ class AccountsSetup:
             try:
                 fld = model.vat_fields[i]
                 sel = self.ui.vat.config.get("accounts." + fld)
-                acct_sel.append(sel)
+                if isinstance(sel, str):
+                    acct_sel.append(set([sel]))
+                else:
+                    acct_sel.append(set(sel))
             except:
-                acct_sel.append("")
+                acct_sel.append([])
 
         self.store.clear()
-        pos = 0
         for acct in acct_list:
-            self.store.append([acct])
-            for i in range(0, 9):
-                if acct == acct_sel[i]:
-                    self.accts[i].set_active(pos)
-            pos += 1
 
-        for i in range(0, 9):
-            self.handlers.append(self.accts[i].connect("changed", self.changed))
+            row = [acct]
+
+            for i in range(0, 9):
+                if acct in acct_sel[i]:
+                    row.append(True)
+                else:
+                    row.append(False)
 
 # Drives the authentication process, presents a link which launches a
 # browser, and then catches the auth token on successful authentication.
@@ -602,33 +615,9 @@ class UI:
 
     def check_accounts(self):
 
+        # No checking done
         try:
-            ac_file = self.vat.config.get("accounts.file")
-
-            accts = accounts.Accounts(self.vat.config)
-
-            acct_list = set(accts.get_accounts())
-
-            conf = [
-                self.vat.config.get("accounts.vatDueSales"),
-                self.vat.config.get("accounts.vatDueAcquisitions"),
-                self.vat.config.get("accounts.totalVatDue"),
-                self.vat.config.get("accounts.vatReclaimedCurrPeriod"),
-                self.vat.config.get("accounts.netVatDue"),
-                self.vat.config.get("accounts.totalValueSalesExVAT"),
-                self.vat.config.get("accounts.totalValuePurchasesExVAT"),
-                self.vat.config.get("accounts.totalValueGoodsSuppliedExVAT"),
-                self.vat.config.get("accounts.totalAcquisitionsExVAT"),
-                self.vat.config.get("accounts.liabilities"),
-                self.vat.config.get("accounts.bills"),
-            ]
-
-            for c in conf:
-                if c not in acct_list:
-                    raise RuntimeError("Account %s not valid" % c)
-
             self.assistant.set_page_complete(self.acc_setup.widget, True)
-            
         except Exception as e:
             self.assistant.set_page_complete(self.acc_setup.widget, False)
         
