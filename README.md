@@ -17,11 +17,10 @@ Python modules on any platform, but Python modules aren't included with Windows
 or MacOS builds.
 
 This is a command-line utility, with a GTK-based dialog mode which removes
-the need to know about configuration files or command-line options.  At
-the time of writing, this code has been tested against the Sandbox APIs.
-You may be the first person to submit a production VAT return. :) Email
-me, mark AT cyberapocalypse DOT co DOT uk, and I'll support you through
-the process.
+the need to know about configuration files or command-line options.
+I have used this to submit my own VAT returns.  If you want to join the
+party email me, mark AT cyberapocalypse DOT co DOT uk, and I'll support you
+through the process.
 
 ## Credentials
 
