@@ -152,6 +152,11 @@ class Accounts:
                 "total": sum([v["amount"] for v in all_splits])
             }
 
+            # These boxes accept pence.  Numbers do need to be 2
+            # decimal places, though.
+            if v in [0, 1, 2, 3, 4]:
+                vat[valueName]["total"] = round(vat[valueName]["total"], 2)
+
             # Some boxes are pounds only, round off the pence.
             if v in [5, 6, 7, 8]:
                 vat[valueName]["total"] = round(vat[valueName]["total"])
