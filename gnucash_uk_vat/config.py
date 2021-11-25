@@ -52,6 +52,7 @@ def initialise_config(config_file):
 
     config = {
         "accounts": {
+            "kind": "piecash",
 	    "file": "accounts/accounts.gnucash",
             "vatDueSales": "VAT:Output:Sales",
             "vatDueAcquisitions": "VAT:Output:EU",
