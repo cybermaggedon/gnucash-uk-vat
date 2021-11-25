@@ -14,7 +14,7 @@ def get_vat(accounts, config, start, end):
         locator = config.get("accounts").get(valueName)
 
         if isinstance(locator, str):
-            acct = accounts.get_account(accounts.root, locator)
+            acct = accounts.get_account(None, locator)
             all_splits = accounts.get_splits(acct, start, end)
             if accounts.is_debit(acct):
                 for spl in all_splits:
@@ -22,7 +22,7 @@ def get_vat(accounts, config, start, end):
         elif isinstance(locator, list):
             all_splits = []
             for elt in locator:
-                acct = accounts.get_account(accounts.root, elt)
+                acct = accounts.get_account(None, elt)
                 splits = accounts.get_splits(acct, start, end)
                 if accounts.is_debit(acct):
                     for spl in splits:

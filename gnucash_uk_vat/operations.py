@@ -73,7 +73,8 @@ def submit_vat_return(due, h, config):
     end = obl.end
 
     # Open GnuCash accounts, and get VAT records for the period
-    accts = accounts.Accounts(config.get("accounts.file"))
+    cls = accounts.get_class(config.get("accounts.kind"))
+    accts = cls(config.get("accounts.file"))
     vals = vat.get_vat(accts, config, start, end)
 
     # Build base of the VAT return
@@ -140,7 +141,8 @@ def post_vat_bill(start, end, due, h, config):
     end = obl.end
 
     # Open GnuCash accounts, and get VAT records for the period
-    accts = accounts.Accounts(config.get("accounts.file"))
+    cls = accounts.get_class(config.get("accounts.kind"))
+    accts = cls(config.get("accounts.file"))
     vals = vat.get_vat(accts, config, start, end)
 
     # Build base of the VAT return
@@ -187,7 +189,8 @@ def show_account_data(h, config, due, detail=False):
         raise RuntimeError("Due date '%s' does not match any obligations" % due)
 
     # Get accounts
-    accts = accounts.Accounts(config.get("accounts.file"))
+    cls = accounts.get_class(config.get("accounts.kind"))
+    accts = cls(config.get("accounts.file"))
 
     # Write out obligation header
     print("VAT due: %-10s    Start: %-10s     End: %-10s" % (
