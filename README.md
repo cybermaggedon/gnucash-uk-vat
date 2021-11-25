@@ -10,11 +10,17 @@ and produce the VAT return to meet your obligations.  As an optional step,
 once the VAT return is filed, a bill can be posted describing the VAT
 owing, and posted to an Accounts Payable account.
 
-## Status
+## GnuCash backends
 
-This has only been tested with Linux. In theory, it should work with GnuCash
-Python modules on any platform, but Python modules aren't included with Windows
-or MacOS builds.
+Two ways of interacting with your GnuCash accounts are supported:
+- The `gnucash` module is bundled only with Linux GnuCash packages, and can
+  only by used on Linux.
+- The `piecash` module is pure Python and can be obtained from package
+  repositories.  This module only supports GnuCash files saved in
+  Sqlite files or a Postgres database.  You can convert a GnuCash XML file into
+  Sqlite by using the "Save As..." option in GnuCash.
+
+## Status
 
 This is a command-line utility, with a GTK-based dialog mode which removes
 the need to know about configuration files or command-line options.
@@ -47,27 +53,11 @@ application.  I call this application `gnucash-uk-vat`.  When you apply for
 credentials, HMRC will contact you to fill in an application.  You could
 mention that the application has already been approved for production
 credentials, and the application headers verified by testing on the
-sandbox under the application identifier `d865cdd5-2aae-4630-9d2a-7c26ad797b2e`.
+sandbox under the application identifier
+`d865cdd5-2aae-4630-9d2a-7c26ad797b2e`.
 
 Once you have credentials, you should put them in the `config.json` file in
 the `application` section placeholders.
-
-## Help with this project
-
-If you're an HMRC VAT user, and you use GnuCash, here are some ways
-you can help:
-
-- Try the `gnucash-uk-vat` options `--show-obligations`,
-  `--show-open-obligations`, `--show-payments`, `--show-liabilities` and
-  `--show-vat-return` options.
-  Feedback on their successful operation would be appreciated.
-- Try the `--show-account-data` mode.  Again, this is read-only, but interacts
-  with the VAT API and your GnuCash accounts.  For all open VAT obligations, the
-  output shows the 9 VAT return totals for the time period, along with
-  individual account records   that combine to make these values.
-  Feedback that the right data is returned.   I am not a VAT accountant.
-- If you have been using GnuCash to keep VAT accounts, you can provide feedback
-  on good ways to do this.
 
 ## Installing
 

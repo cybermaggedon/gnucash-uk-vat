@@ -23,6 +23,7 @@ The configuration file looks something like this:
 ```
 {
     "accounts": {
+        "kind": "gnucash",
         "file": "accounts/accounts.gnucash",
         "vatDueSales": "VAT:Output:Sales",
 	...
@@ -41,7 +42,10 @@ The configuration file looks something like this:
 ```
 
 To continue you need to edit some things:
-- The `accounts` block describes your GnuCash setup.  The `file` element has
+- The `accounts` block describes your GnuCash setup.  The `kind` element
+  specifies whether to use `gnucash` or `piecash` backends to access your
+  accounts.  `gnucash` only works on Linux, `piecash` only works with Sqlite
+  or Postgres storage.  The `file` element has
   the filename of your accounts.  The next 9 elements map the 9 VAT return
   boxes to GnuCash account names.  The default names map to common ways of
   setting up GnuCash to manage VAT returns.  The `liabilities` and `bills`
