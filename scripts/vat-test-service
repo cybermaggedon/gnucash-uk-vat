@@ -168,8 +168,10 @@ class Api:
                 "chargeRefNumber": str(uuid.uuid1()),
             }
 
+            print(resp)
+
             raise web.HTTPCreated(
-                body=json.dumps(resp, indent=4),
+                body=json.dumps(resp, indent=4).encode("utf-8"),
                 content_type="application/json"
             )
 
