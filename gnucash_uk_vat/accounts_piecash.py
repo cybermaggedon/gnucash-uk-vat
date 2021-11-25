@@ -105,7 +105,10 @@ class Accounts:
 
     # Get vendor by vendor ID, returns Vendor object
     def get_vendor(self, id):
-        return self.book.VendorLookupByID(id)
+        try:
+            return self.book.get(piecash.Vendor, id=id)
+        except:
+            return None
 
     # Get list of all vendors, list of Vendor objects
     def get_vendors(self):
@@ -124,92 +127,38 @@ class Accounts:
 
         return vnds
 
+    def set_address(self, vendor, name, addr1, addr2, addr3, addr4):
+        vendor.address = piecash.Address(
+            name=name,
+            addr1=addr1,
+            addr2=addr2,
+            addr3=addr3,
+            addr4=addr4
+        )
+
     # Create a vendor
     def create_vendor(self, id, currency, name):
-        return gnucash.gnucash_business.Vendor(self.book, id, currency, name)
+        print("WARTS")
+        return piecash.Vendor(
+            id=id,
+            name=name,
+            currency=currency,
+        )
 
     # Get a currency given the mnemonic.  Returns a Commodity object.
     def get_currency(self, mn):
-        return self.book.get_table().lookup("CURRENCY", mn)
+#        return self.book.get_table().lookup("CURRENCY", mn)
+        return self.book.get(piecash.Commodity, mnemonic=mn)
 
     # Get next bill ID given vendor
     def next_bill_id(self, vendor):
+        print(1/0)
         return self.book.BillNextID(vendor)
 
     # Createa a bill
-    def create_bill(self, id, currency, vendor, date_opened):
-        return gnucash.gnucash_business.Bill(self.book, id, currency, vendor,
-                                             date_opened)
+    def create_bill(self, id, vendor, date_opened, notes):
+        raise RuntimeError("Not implemented for the piecash backend.")
 
     # Add a bill entry to a bill
     def create_bill_entry(self, bill, date_opened):
-        entry = gnucash.gnucash_business.Entry(self.book, bill, date_opened)
-        return entry
-
-    # Get our 'special' predefined vendor for VAT returns.
-    def get_vat_vendor(self):
-
-        id = "hmrc-vat"
-
-        # If vendor does not exist, create it
-        vendor = self.get_vendor(id)
-        if vendor == None:
-
-            gbp = self.get_currency("GBP")
-            name = "HM Revenue and Customs - VAT"
-            vendor = self.create_vendor(id, gbp, name)
-
-            address = vendor.GetAddr()
-            address.SetName("VAT Written Enquiries")
-            address.SetAddr1("123 St Vincent Street")
-            address.SetAddr2("Glasgow City")
-            address.SetAddr3("Glasgow G2 5EA")
-            address.SetAddr4("UK")
-
-            self.save()
-
-        return vendor
-
-    # Post the VAT bill to a liability account.
-    def post_vat_bill(self, billing_id, bill_date, due_date, vat, notes, memo):
-
-        # Get the VAT vendor (HMRC)
-        vendor = self.get_vat_vendor()
-
-        bill_id  = self.next_bill_id(vendor)
-        bill = self.create_bill(bill_id, vendor.GetCurrency(), vendor,
-                                bill_date)
-
-        vat_due = vat.totalVatDue
-        vat_rebate = vat.vatReclaimedCurrPeriod
-        bill.SetNotes(notes)
-        bill.SetBillingID(billing_id)
-
-        liability_account_name = self.config.get("accounts.liabilities")
-        liability_acct = self.get_account(
-            self.book.root_account, liability_account_name
-        )
-
-        bill_account_name = self.config.get("accounts.bills")
-        bill_acct = self.get_account(
-            self.book.root_account, bill_account_name
-        )
-
-        description = "VAT from sales and acquisitions"
-        ent = self.create_bill_entry(bill, bill_date)
-        ent.SetDescription(description)
-        ent.SetBillAccount(liability_acct)
-        ent.SetQuantity(gnucash.GncNumeric(1.0))
-        ent.SetBillPrice(gnucash.GncNumeric(round(100 * vat_due), 100))
-
-        description = "VAT rebate on acquisitions"
-        ent = self.create_bill_entry(bill, bill_date)
-        ent.SetDescription(description)
-        ent.SetBillAccount(liability_acct)
-        ent.SetQuantity(gnucash.GncNumeric(1.0))
-        ent.SetBillPrice(gnucash.GncNumeric(-round(100 * vat_rebate), 100))
-
-        bill.PostToAccount(bill_acct, bill_date, due_date, memo, False, False)
-
-        self.save()
-
+        raise RuntimeError("Not implemented for the piecash backend.")

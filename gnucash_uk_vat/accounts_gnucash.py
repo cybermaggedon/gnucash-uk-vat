@@ -147,6 +147,14 @@ class Accounts:
     def create_vendor(self, id, currency, name):
         return gnucash.gnucash_business.Vendor(self.book, id, currency, name)
 
+    def set_address(self, vendor, name, addr1, addr2, addr3, addr4):
+        addr = vendor.GetAddr()
+        addr.SetName(name)
+        addr.SetAddr1(addr1)
+        addr.SetAddr2(addr2)
+        addr.SetAddr3(addr3)
+        addr.SetAddr4(addr4)
+
     # Get a currency given the mnemonic.  Returns a Commodity object.
     def get_currency(self, mn):
         return self.book.get_table().lookup("CURRENCY", mn)
@@ -156,9 +164,18 @@ class Accounts:
         return self.book.BillNextID(vendor)
 
     # Createa a bill
-    def create_bill(self, id, currency, vendor, date_opened):
-        return gnucash.gnucash_business.Bill(self.book, id, currency, vendor,
+    def create_bill(self, id, vendor, date_opened, notes):
+        if id == None:
+            id  = self.next_bill_id(vendor)
+        bill = gnucash.gnucash_business.Bill(self.book, id,
+                                             vendor.GetCurrency(), vendor,
                                              date_opened)
+        bill.SetBillingID(id)
+        bill.SetNotes(notes)
+        return bill
+
+    def post_bill(sell, bill, bill_acct, bill_date, due_date, memo):
+        bill.PostToAccount(bill_acct, bill_date, due_date, memo, False, False)
 
     # Add a bill entry to a bill
     def create_bill_entry(self, bill, date_opened, description,

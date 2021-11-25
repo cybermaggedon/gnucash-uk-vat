@@ -59,14 +59,11 @@ def post_vat_bill(accounts, config, billing_id, bill_date, due_date, vat,
     # Get the VAT vendor (HMRC)
     vendor = get_vat_vendor(accounts)
 
-    bill_id  = accounts.next_bill_id(vendor)
-    bill = accounts.create_bill(bill_id, vendor.GetCurrency(), vendor,
-                            bill_date)
+    bill = accounts.create_bill(None, vendor,
+                                bill_date, notes)
 
     vat_due = vat.totalVatDue
     vat_rebate = vat.vatReclaimedCurrPeriod
-    bill.SetNotes(notes)
-    bill.SetBillingID(billing_id)
 
     liability_account_name = config.get("accounts.liabilities")
     liability_acct = accounts.get_account(accounts.root, liability_account_name)
@@ -82,7 +79,7 @@ def post_vat_bill(accounts, config, billing_id, bill_date, due_date, vat,
     ent = accounts.create_bill_entry(bill, bill_date, description,
                                      liability_acct, 1.0, -vat_rebate)
 
-    bill.PostToAccount(bill_acct, bill_date, due_date, memo, False, False)
+    accounts.post_bill(bill, bill_acct, bill_date, due_date, memo)
 
     accounts.save()
 
@@ -100,12 +97,14 @@ def get_vat_vendor(accounts):
         name = "HM Revenue and Customs - VAT"
         vendor = accounts.create_vendor(id, gbp, name)
 
-        address = vendor.GetAddr()
-        address.SetName("VAT Written Enquiries")
-        address.SetAddr1("123 St Vincent Street")
-        address.SetAddr2("Glasgow City")
-        address.SetAddr3("Glasgow G2 5EA")
-        address.SetAddr4("UK")
+        accounts.set_address(
+            vendor,
+            "VAT Written Enquiries",
+            "123 St Vincent Street",
+            "Glasgow City",
+            "Glasgow G2 5EA",
+            "UK"
+        )
 
         accounts.save()
 
