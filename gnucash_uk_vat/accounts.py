@@ -1,4 +1,3 @@
-#!/usr/bin/env python3
 
 #
 # Wrapper for GnuCash Python API, extracts account structure, splits, and
@@ -15,17 +14,14 @@ import gnucash
 import json
 import math
 
-from . import model
-
 # Wrapper for GnuCash accounts.
 class Accounts:
 
     # Opens a GnuCash book.  Config object provides configuration, needs
     # to support config.get("key.name") method.
-    def __init__(self, config, rw=False):
-        self.config = config
+    def __init__(self, file, rw=False):
+        self.file = file
         self.session = None
-        file = config.get("accounts.file")
         if rw:
             self.session = self.open_session(file)
         else:
@@ -114,60 +110,6 @@ class Accounts:
         if tp == gnucash.ACCT_TYPE_INCOME: return True
         return False
 
-    # Return VAT return for the defined period.  Makes use of the
-    # configuration object to describe which accounts to analyse.
-    def get_vat(self, start, end):
-
-        vat = {}
-
-        # Boxes 1 to 9, are referred to as 0 to 8 in this loop.
-        for v in range(0, 9):
-
-            valueName = model.vat_fields[v]
-
-            locator = self.config.get("accounts").get(valueName)
-
-            if isinstance(locator, str):
-                acct = self.get_account(self.root, locator)
-                tp = acct.GetType()
-                all_splits = self.get_splits(acct, start, end)
-                if self.is_debit(tp):
-                    for spl in all_splits:
-                        spl["amount"] *= -1
-            elif isinstance(locator, list):
-                all_splits = []
-                for elt in locator:
-                    acct = self.get_account(self.root, elt)
-                    tp = acct.GetType()
-                    splits = self.get_splits(acct, start, end)
-                    if self.is_debit(tp):
-                        for spl in splits:
-                            spl["amount"] *= -1
-                    all_splits.extend(splits)
-            else:
-                raise RuntimeError("Accounts should be strings or lists")
-
-            vat[valueName] = {
-                "splits": all_splits,
-                "total": sum([v["amount"] for v in all_splits])
-            }
-
-            # These boxes accept pence.  Numbers do need to be 2
-            # decimal places, though.
-            if v in [0, 1, 2, 3, 4]:
-                vat[valueName]["total"] = round(vat[valueName]["total"], 2)
-
-            # Some boxes are pounds only, round off the pence.
-            if v in [5, 6, 7, 8]:
-                vat[valueName]["total"] = round(vat[valueName]["total"])
-
-            # VAT value is always positive, boxes 3 and 4 are studied to
-            # determine refund vs payment
-            if v == 4:
-                vat[valueName]["total"] = abs(vat[valueName]["total"])
-
-        return vat
-
     # Get vendor by vendor ID, returns Vendor object
     def get_vendor(self, id):
         return self.book.VendorLookupByID(id)
@@ -207,70 +149,11 @@ class Accounts:
                                              date_opened)
 
     # Add a bill entry to a bill
-    def create_bill_entry(self, bill, date_opened):
-        entry = gnucash.gnucash_business.Entry(self.book, bill, date_opened)
-        return entry
-
-    # Get our 'special' predefined vendor for VAT returns.
-    def get_vat_vendor(self):
-
-        id = "hmrc-vat"
-
-        # If vendor does not exist, create it
-        vendor = self.get_vendor(id)
-        if vendor == None:
-
-            gbp = self.get_currency("GBP")
-            name = "HM Revenue and Customs - VAT"
-            vendor = self.create_vendor(id, gbp, name)
-
-            address = vendor.GetAddr()
-            address.SetName("VAT Written Enquiries")
-            address.SetAddr1("123 St Vincent Street")
-            address.SetAddr2("Glasgow City")
-            address.SetAddr3("Glasgow G2 5EA")
-            address.SetAddr4("UK")
-
-            self.save()
-
-        return vendor
-
-    # Post the VAT bill to a liability account.
-    def post_vat_bill(self, billing_id, bill_date, due_date, vat, notes, memo):
-
-        # Get the VAT vendor (HMRC)
-        vendor = self.get_vat_vendor()
-
-        bill_id  = self.next_bill_id(vendor)
-        bill = self.create_bill(bill_id, vendor.GetCurrency(), vendor,
-                                bill_date)
-
-        vat_due = vat.totalVatDue
-        vat_rebate = vat.vatReclaimedCurrPeriod
-        bill.SetNotes(notes)
-        bill.SetBillingID(billing_id)
-
-        liability_account_name = self.config.get("accounts.liabilities")
-        liability_acct = self.get_account(self.root, liability_account_name)
-
-        bill_account_name = self.config.get("accounts.bills")
-        bill_acct = self.get_account(self.root, bill_account_name)
-
-        description = "VAT from sales and acquisitions"
-        ent = self.create_bill_entry(bill, bill_date)
+    def create_bill_entry(self, bill, date_opened, description,
+                          liability_acct, quantity, price):
+        ent = gnucash.gnucash_business.Entry(self.book, bill, date_opened)
         ent.SetDescription(description)
         ent.SetBillAccount(liability_acct)
-        ent.SetQuantity(gnucash.GncNumeric(1.0))
-        ent.SetBillPrice(gnucash.GncNumeric(round(100 * vat_due), 100))
-
-        description = "VAT rebate on acquisitions"
-        ent = self.create_bill_entry(bill, bill_date)
-        ent.SetDescription(description)
-        ent.SetBillAccount(liability_acct)
-        ent.SetQuantity(gnucash.GncNumeric(1.0))
-        ent.SetBillPrice(gnucash.GncNumeric(-round(100 * vat_rebate), 100))
-
-        bill.PostToAccount(bill_acct, bill_date, due_date, memo, False, False)
-
-        self.save()
-
+        ent.SetQuantity(gnucash.GncNumeric(quantity))
+        ent.SetBillPrice(gnucash.GncNumeric(round(100 * price), 100))
+        return ent

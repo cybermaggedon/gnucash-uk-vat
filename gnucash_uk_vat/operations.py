@@ -5,6 +5,7 @@ from datetime import datetime, timedelta
 
 from . import accounts
 from . import model
+from . import vat
 
 # Perform authentication operation
 def authenticate(h, auth):
@@ -72,8 +73,8 @@ def submit_vat_return(due, h, config):
     end = obl.end
 
     # Open GnuCash accounts, and get VAT records for the period
-    accts = accounts.Accounts(config)
-    vals = accts.get_vat(start, end)
+    accts = accounts.Accounts(config.get("accounts.file"))
+    vals = vat.get_vat(accts, config, start, end)
 
     # Build base of the VAT return
     rtn = model.Return()
@@ -139,8 +140,8 @@ def post_vat_bill(start, end, due, h, config):
     end = obl.end
 
     # Open GnuCash accounts, and get VAT records for the period
-    accts = accounts.Accounts(config)
-    vals = accts.get_vat(start, end)
+    accts = accounts.Accounts(config.get("accounts.file"))
+    vals = vat.get_vat(accts, config, start, end)
 
     # Build base of the VAT return
     rtn = model.Return()
@@ -157,7 +158,8 @@ def post_vat_bill(start, end, due, h, config):
 
     # FIXME: How to work out due date?  Online says 1 cal month plus 7 days
     # from end of accounting period
-    accts.post_vat_bill(
+    vat.post_vat_bill(
+        accts, config,
         str(due),
         end,
         end + timedelta(days=28) + timedelta(days=7),
@@ -185,7 +187,7 @@ def show_account_data(h, config, due, detail=False):
         raise RuntimeError("Due date '%s' does not match any obligations" % due)
 
     # Get accounts
-    accts = accounts.Accounts(config)
+    accts = accounts.Accounts(config.get("accounts.file"))
 
     # Write out obligation header
     print("VAT due: %-10s    Start: %-10s     End: %-10s" % (
@@ -194,7 +196,7 @@ def show_account_data(h, config, due, detail=False):
     print()
 
     # Get VAT values for this period from accounts
-    vals = accts.get_vat(obl.start, obl.end)
+    vals = vat.get_vat(accts, config, obl.start, obl.end)
 
     # Loop over 9 boxes (0 .. 8 in this loop)
     for k in range(0, 9):
