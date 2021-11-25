@@ -51,7 +51,7 @@ class Accounts:
 
     # Given a root account and start/end points return all matching splits
     # recorded against that account and any child accounts.
-    def get_splits(self, acct, start, end):
+    def get_splits(self, acct, start, end, endinclusive=True):
 
         splits = []
 
@@ -66,7 +66,15 @@ class Accounts:
             tx = spl.parent
             dt = tx.GetDate().date()
 
-            if dt >= start and dt < end:
+            inperiod=False
+
+            if endinclusive and dt >= start and dt <= end:
+                inperiod=True
+
+            if (not endinclusive) and dt >= start and dt < end:
+                inperiod=True
+
+            if inperiod:
                 splits.append(
                     {
                         "date": dt,
@@ -80,7 +88,10 @@ class Accounts:
     # Return an account given an account locator.  Navigates through
     # hierarchy, account parts are colon separated.
     def get_account(self, par, locator):
-        acct = par
+        if par == None:
+            acct = self.root
+        else:
+            acct = par
         for v in locator.split(":"):
             acct = acct.lookup_by_name(v)
             if acct == None:
@@ -104,10 +115,11 @@ class Accounts:
             )
         return res
 
-    def is_debit(self, tp):
-        if tp == gnucash.ACCT_TYPE_LIABILITY: return True
-        if tp == gnucash.ACCT_TYPE_PAYABLE: return True
+    def is_debit(self, accts):
+        tp = accts.GetType()
         if tp == gnucash.ACCT_TYPE_INCOME: return True
+        if tp == gnucash.ACCT_TYPE_EQUITY: return True
+        if tp == gnucash.ACCT_TYPE_LIABILITY: return True
         return False
 
     # Get vendor by vendor ID, returns Vendor object

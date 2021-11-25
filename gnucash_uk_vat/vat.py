@@ -15,18 +15,16 @@ def get_vat(accounts, config, start, end):
 
         if isinstance(locator, str):
             acct = accounts.get_account(accounts.root, locator)
-            tp = acct.GetType()
             all_splits = accounts.get_splits(acct, start, end)
-            if accounts.is_debit(tp):
+            if accounts.is_debit(acct):
                 for spl in all_splits:
                     spl["amount"] *= -1
         elif isinstance(locator, list):
             all_splits = []
             for elt in locator:
                 acct = accounts.get_account(accounts.root, elt)
-                tp = acct.GetType()
                 splits = accounts.get_splits(acct, start, end)
-                if accounts.is_debit(tp):
+                if accounts.is_debit(acct):
                     for spl in splits:
                         spl["amount"] *= -1
                 all_splits.extend(splits)
