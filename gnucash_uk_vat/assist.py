@@ -13,6 +13,7 @@ import threading
 import gnucash_uk_vat.model as model
 from datetime import timedelta
 import io
+import gnucash_uk_vat.vat as vat
 
 # This widget presents an introduction to the dialog process
 class Intro:
@@ -233,8 +234,6 @@ class AccountsSetup:
             except:
                 acct_sel.append([])
 
-        print(acct_sel)
-
         self.store.clear()
         for acct in acct_list:
 
@@ -245,6 +244,8 @@ class AccountsSetup:
                     row.append(True)
                 else:
                     row.append(False)
+
+            self.store.append(row)
 
 # Drives the authentication process, presents a link which launches a
 # browser, and then catches the auth token on successful authentication.
@@ -632,11 +633,11 @@ class UI:
         s = self.selected_obligation.start
         e = self.selected_obligation.end
 
-        ac_file = self.ui.vat.config.get("accounts.file")
-        ac_kind = self.ui.vat.config.get("accounts.kind")
+        ac_file = self.vat.config.get("accounts.file")
+        ac_kind = self.vat.config.get("accounts.kind")
         cls = accounts.get_class(ac_kind)
         acc = cls(ac_file)
-        vals = acc.get_vat(s, e)
+        vals = vat.get_vat(acc, self.vat.config, s, e)
 
         # Build base of the VAT return
         rtn = model.Return()
