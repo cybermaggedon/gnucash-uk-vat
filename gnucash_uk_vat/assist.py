@@ -76,7 +76,8 @@ class FileSelection:
         btn.set_current_folder(".")
 
         def select(w):
-            self.check(w)
+            self.filename = w.get_filename()
+            self.check()
 
         btn.connect("file-set", select)
         box.pack_start(btn, False, False, 0)
@@ -87,14 +88,49 @@ class FileSelection:
         try:
             acct_file = self.ui.vat.config.get("accounts.file")
             btn.set_filename(acct_file)
+            self.filename = acct_file
         except Exception as e:
+            self.filename = None
             pass
 
+        label2 = Gtk.Label()
+        label2.set_text("GnuCash accounts module to use")
+        box.pack_start(label2, False, False, 0)
+
+        def toggled(w, k):
+            if w.get_active():
+                self.kind = k
+                self.check()
+                
+        rb1 = Gtk.RadioButton.new_from_widget(None)
+        self.ui.select_kind("gnucash")
+        rb1.set_label("gnucash")
+        rb1.connect("toggled", toggled, "gnucash")
+        box.pack_start(rb1, False, False, 0)
+ 
+        rb2 = Gtk.RadioButton.new_from_widget(rb1)
+        rb2.set_label("piecash")
+        rb2.connect("toggled", toggled, "piecash")
+        box.pack_start(rb2, False, False, 0)
+
+        try:
+            acct_kind = self.ui.vat.config.get("accounts.kind")
+            if acct_kind == "gnucash":
+                rb1.set_active(True)
+            else:
+                rb2.set_active(True)
+            btn.set_filename(acct_file)
+        except Exception as e:
+            print(e)
+            pass
+        
         self.widget = box
 
-    def check(self, w):
-        f = w.get_filename()
+    def check(self):
+        f = self.filename
+        k = self.kind
         self.ui.vat.config.set("accounts.file", f)
+        self.ui.vat.config.set("accounts.kind", k)
         self.ui.vat.config.write()
         try:
             self.ui.check_file()
@@ -178,7 +214,9 @@ class AccountsSetup:
     def configure(self):
 
         ac_file = self.ui.vat.config.get("accounts.file")
-        accts = accounts.Accounts(self.ui.vat.config)
+        ac_kind = self.ui.vat.config.get("accounts.kind")
+        cls = accounts.get_class(ac_kind)
+        accts = cls(ac_file)
 
         acct_list = accts.get_accounts()
         del accts
@@ -194,6 +232,8 @@ class AccountsSetup:
                     acct_sel.append(set(sel))
             except:
                 acct_sel.append([])
+
+        print(acct_sel)
 
         self.store.clear()
         for acct in acct_list:
@@ -498,13 +538,13 @@ class Summary:
 
 # Overarching UI class, runs the assist dialogue
 class UI:
-    def __init__(self):
+    def __init__(self, config, auth):
         try:
-            self.cfg = Config()
+            self.cfg = Config(config)
         except:
-            initialise_config("config.json")
-            self.cfg = Config()
-        self.authz = Auth()
+            initialise_config(config)
+            self.cfg = Config(config)
+        self.authz = Auth(auth)
 
         self.vat = hmrc.create(self.cfg, self.authz)
         self.summary = io.StringIO()
@@ -538,7 +578,10 @@ class UI:
     def post_bill(self):
 
         # Open GnuCash accounts, and get VAT records for the period
-        accts = accounts.Accounts(self.vat.config)
+        ac_file = self.ui.vat.config.get("accounts.file")
+        ac_kind = self.ui.vat.config.get("accounts.kind")
+        cls = accounts.get_class(ac_kind)
+        accts = cls(ac_file)
 
         # FIXME: How to work out due date?  Online says 1 cal month plus 7 days
         # from end of accounting period
@@ -569,6 +612,10 @@ class UI:
         else:
             self.assistant.set_page_complete(self.obligations.widget, False)
 
+    def select_kind(self, k):
+        print(k)
+        self.selected_accounts_kind = k
+
     def configure_obligations(self):
         try:
             vrn = self.vat.config.get("identity.vrn")
@@ -585,7 +632,10 @@ class UI:
         s = self.selected_obligation.start
         e = self.selected_obligation.end
 
-        acc = accounts.Accounts(self.vat.config)
+        ac_file = self.ui.vat.config.get("accounts.file")
+        ac_kind = self.ui.vat.config.get("accounts.kind")
+        cls = accounts.get_class(ac_kind)
+        acc = cls(ac_file)
         vals = acc.get_vat(s, e)
 
         # Build base of the VAT return
@@ -606,9 +656,10 @@ class UI:
 
         try:
             ac_file = self.vat.config.get("accounts.file")
-            accts =  accounts.Accounts(self.vat.config)
+            ac_kind = self.vat.config.get("accounts.kind")
+            cls = accounts.get_class(ac_kind)
+            accts = cls(ac_file)
             self.assistant.set_page_complete(self.file_sel.widget, True)
-
         except Exception as e:
             self.assistant.set_page_complete(self.file_sel.widget, False)
             raise e
@@ -763,8 +814,8 @@ class Collector(threading.Thread):
         self.running = False
 
 # Entry point, runs the assist
-def run():
-    ui = UI()
+def run(config, auth):
+    ui = UI(config, auth)
     coll = Collector(ui)
     coll.start()
 
