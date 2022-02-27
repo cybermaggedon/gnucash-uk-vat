@@ -10,6 +10,41 @@ and produce the VAT return to meet your obligations.  As an optional step,
 once the VAT return is filed, a bill can be posted describing the VAT
 owing, and posted to an Accounts Payable account.
 
+## A word from our sponsors :)
+
+If you need low cost, automated accounts filing for small businesses, we
+are building a commercial offering which incorporates the functionality you
+see here.
+
+The proposition is simple.  We are not offering an accounting system.
+You manage your accounts using GnuCash (other acccounts systems to be
+added).  You manage your accounts, manage your invoices, manage receipts,
+and record everything in GnuCash.  When it comes to filing returns,
+you upload your GnuCash accounts to accountsmachine.io and use the system
+to file VAT returns, corporation tax returns, and
+company accounts with Companies House.  The production of returns is totally
+automated.
+
+This service is able to simplify accounts filing for simple businesses.
+Your company should be a Limited Company, conform to micro-entity
+requirements, and have a single trade.  This service is aimed at making
+life easier for startups and small businesses.  Once your business has grown
+beyond the simple starting point... Congratulations!  Glad you made it!  It
+was great working with you!  But you're going to need some accountants.
+
+The roadmap is for launch in 2Q2022.  At the time of writing, the website has
+not yet launched, but will do so at https://accountsmachine.io.  We are
+registered with HMRC and Companies House for filing purposes and have
+successfully filed VAT, corp tax and company accounts.
+
+Join our discord service to keep on top of latest progress:
+https://discord.gg/3cAvPASS6p
+
+As regards pricing, we're estimating on £40 per year for an entry-level
+account.  £20 per year as a introductory launch deal.  Enthusiastic early
+adopters may encounter free deals by joining the Discord community.
+Looking forward to filing for you. :)
+
 ## GnuCash backends
 
 Two ways of interacting with your GnuCash accounts are supported:
