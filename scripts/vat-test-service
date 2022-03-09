@@ -204,11 +204,53 @@ class Api:
             except:
                 pass
 
+            page = """
+<html>
+  <body>
+    <h1>Test system, don't enter real creds in here</h1>
+    <form action="/oauth/login" method="get">
+      <p>Creds are ignored anyway, just press submit.</p>
+      <div>
+	<label for="username">Username</label>
+	<input name="username" type="text">
+      </div>
+      <div>
+	<label for="password">Password</label>
+	<input name="password" type="password">
+      </div>
+      <input name="client_id" type="hidden" value="%s">
+      <input name="state" type="hidden" value="%s">
+      <input name="scope" type="hidden" value="%s">
+      <input name="redirect_uri" type="hidden" value="%s">
+      <button type="submit">Submit</button>
+    </form>
+  </body>
+</html>
+""" % (client_id, state, scope, redirect)
+
+            return web.Response(body=page, content_type="text/html")
+            
+        async def login(request):
+
+            try:
+                client_id = request.query["client_id"]
+                scope = request.query["scope"]
+                redirect = request.query["redirect_uri"]
+            except:
+                raise web.HTTPBadRequest()
+
+            state=""
+
+            try:
+                state = request.query["state"]
+            except:
+                pass
+
             resp = {
                 'code': 'code123',
             }
 
-            if resp != "":
+            if state != "":
                 resp["state"] = state
 
             url = redirect + "?" + urlencode(resp, quote_via=quote_plus)
@@ -221,6 +263,7 @@ class Api:
         app = web.Application()
 
         app.router.add_get('/oauth/authorize', authorize)
+        app.router.add_get('/oauth/login', login)
         app.router.add_post('/oauth/token', get_token)
         app.router.add_get('/test/fraud-prevention-headers/validate',
                            get_fraud_validate)
