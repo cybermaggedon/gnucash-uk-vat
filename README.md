@@ -10,6 +10,11 @@ and produce the VAT return to meet your obligations.  As an optional step,
 once the VAT return is filed, a bill can be posted describing the VAT
 owing, and posted to an Accounts Payable account.
 
+## Discuss
+
+There's a gnucash-uk-vat channel on our Discord server if you want
+to discuss... https://discord.gg/3cAvPASS6p
+
 ## A word from our sponsors :)
 
 If you need low cost, automated accounts filing for small businesses, we
