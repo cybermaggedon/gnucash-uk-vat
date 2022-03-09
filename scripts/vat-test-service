@@ -8,6 +8,7 @@ import uuid
 from datetime import date, datetime, timedelta
 import sys
 import argparse
+from urllib.parse import urlencode, quote_plus
 
 from gnucash_uk_vat.model import *
 
@@ -168,8 +169,6 @@ class Api:
                 "chargeRefNumber": str(uuid.uuid1()),
             }
 
-            print(resp)
-
             raise web.HTTPCreated(
                 body=json.dumps(resp, indent=4).encode("utf-8"),
                 content_type="application/json"
@@ -192,19 +191,33 @@ class Api:
         async def authorize(request):
 
             try:
-                id = request.query["client_id"]
+                client_id = request.query["client_id"]
                 scope = request.query["scope"]
                 redirect = request.query["redirect_uri"]
             except:
                 raise web.HTTPBadRequest()
-                
+
+            state=""
+
+            try:
+                state = request.query["state"]
+            except:
+                pass
 
             resp = {
                 'code': 'code123',
             }
 
-            raise web.HTTPFound(redirect + "?code=code123")
-            
+            if resp != "":
+                resp["state"] = state
+
+            url = redirect + "?" + urlencode(resp, quote_via=quote_plus)
+
+            print("Redirect to")
+            print(url)
+
+            raise web.HTTPFound(url)
+
         app = web.Application()
 
         app.router.add_get('/oauth/authorize', authorize)
