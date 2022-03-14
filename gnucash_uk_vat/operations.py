@@ -8,10 +8,12 @@ from . import model
 from . import vat
 
 # Perform authentication operation
-def authenticate(h, auth):
-    code = h.get_code()
+async def authenticate(h, auth):
+
+    code = await h.get_code()
+
     sys.stderr.write("Got one-time code.\n")
-    h.get_auth(code)
+    await h.get_auth(code)
     sys.stderr.write("Got authentication key.\n")
     auth.write()
     sys.stderr.write("Wrote %s.\n" % auth.file)

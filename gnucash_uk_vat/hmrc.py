@@ -83,8 +83,8 @@ class Vat:
         self.api_base = 'https://api.service.hmrc.gov.uk'
 
     # Get an auth code
-    def get_code(self):
-        return asyncio.run(self.get_code_coro())
+    async def get_code(self):
+        return await self.get_code_coro()
 
     def get_auth_url(self):
 
@@ -124,8 +124,8 @@ class Vat:
         return code
 
     # Convert code to an auth credential
-    def get_auth(self, code):
-        auth = asyncio.run(self.get_auth_coro(code))
+    async def get_auth(self, code):
+        auth = await self.get_auth_coro(code)
         self.auth.auth = auth
 
     # Co-routine implementation
@@ -172,8 +172,8 @@ class Vat:
 
     # Called to refresh credentials, re-issue auth request from refresh
     # token
-    def refresh_token(self, refresh):
-        return asyncio.run(self.refresh_token_coro(refresh))
+    async def refresh_token(self, refresh):
+        return await self.refresh_token_coro(refresh)
 
     # Co-routine implementation of refresh
     async def refresh_token_coro(self, refresh):

@@ -3,6 +3,8 @@
 import sys
 import argparse
 import json
+import asyncio
+
 from datetime import datetime, timedelta
 
 from gnucash_uk_vat.config import *
@@ -60,7 +62,8 @@ parser.add_argument('--assist', action='store_true',
 # Parse arguments
 args = parser.parse_args(sys.argv[1:])
 
-try:
+
+async def run():
 
     if args.assist:
         # Doing the import here so that command-line stuff still works if
@@ -83,12 +86,12 @@ try:
 
     # Authentication operation goes here.
     if args.authenticate:
-        authenticate(h, auth)
+        await authenticate(h, auth)
         sys.exit(0)
 
     # All following operations require a valid token, so refresh token if
     # expired.
-    auth.maybe_refresh(h)
+    await auth.maybe_refresh(h)
 
     # Call appropriate function to implement operations
     if args.show_open_obligations:
@@ -145,6 +148,9 @@ try:
         sys.exit(0)
     else:
         raise RuntimeError("No operation specified.  Try --assist option.")
+
+try:
+    asyncio.run(run())
 except Exception as e:
     sys.stderr.write("Exception: %s\n" % e)
     sys.exit(1)

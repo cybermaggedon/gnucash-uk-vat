@@ -27,14 +27,15 @@ class Auth:
 
     # Refresh expired token using the refresh token, and write new
     # creds back to the auth file.  svc=API service
-    def refresh(self, svc):
-        self.auth = svc.refresh_token(self.auth["refresh_token"])
+    async def refresh(self, svc):
+        self.auth = await svc.refresh_token(self.auth["refresh_token"])
         self.write()
 
     # If token has expired, refresh.
-    def maybe_refresh(self, svc):
+    async def maybe_refresh(self, svc):
         if "expires" not in self.auth:
             raise RuntimeError("No token expiry.  Have you authenticated?")
         expires = datetime.fromisoformat(self.auth["expires"])
         if  datetime.utcnow() > expires:
-            self.refresh(svc)
+            await self.refresh(svc)
+
