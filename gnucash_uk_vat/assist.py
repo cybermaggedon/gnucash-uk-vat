@@ -443,9 +443,12 @@ class VatReturnSubmission:
         textbuffer.apply_tag(self.red_tag, s, e)
 
 # Widget supports the submission of VAT bill
+# FIXME: This doesn't work with piecash, so I'm taking it out.
 class BillPosting:
     def __init__(self, ui):
+
         self.ui = ui
+        print("SET ui to", self.ui)
 
         box = Gtk.Box.new(Gtk.Orientation.VERTICAL, 10)
 
@@ -470,6 +473,8 @@ class BillPosting:
 
         def submitted(x):
             try:
+                print("GET")
+                print("GET ui to", self.ui)
                 self.ui.post_bill()
                 self.button.set_sensitive(False)
                 self.label.set_text("Bill post successful.")
@@ -508,6 +513,7 @@ class BillPosting:
 # Widget supports final step, display of a summary
 class Summary:
     def __init__(self, ui):
+
         self.ui = ui
 
         box = Gtk.Box.new(Gtk.Orientation.VERTICAL, 10)
@@ -579,8 +585,8 @@ class UI:
     def post_bill(self):
 
         # Open GnuCash accounts, and get VAT records for the period
-        ac_file = self.ui.vat.config.get("accounts.file")
-        ac_kind = self.ui.vat.config.get("accounts.kind")
+        ac_file = self.vat.config.get("accounts.file")
+        ac_kind = self.vat.config.get("accounts.kind")
         cls = accounts.get_class(ac_kind)
         accts = cls(ac_file)
 
@@ -588,7 +594,7 @@ class UI:
         # from end of accounting period
         end = self.selected_obligation.end
         due = self.selected_obligation.due
-        accts.post_vat_bill(
+        accts.post_bill(
             str(due),
             end,
             end + timedelta(days=28) + timedelta(days=7),
@@ -719,11 +725,11 @@ class UI:
                                      Gtk.AssistantPageType.CONTENT)
         self.assistant.set_page_title(self.vat_return_w.widget, "VAT return")
 
-        self.post_bill_w = BillPosting(self)
-        self.assistant.append_page(self.post_bill_w.widget)
-        self.assistant.set_page_type(self.post_bill_w.widget,
-                                     Gtk.AssistantPageType.CONTENT)
-        self.assistant.set_page_title(self.post_bill_w.widget, "Post VAT bill")
+#        self.post_bill_w = BillPosting(self)
+#        self.assistant.append_page(self.post_bill_w.widget)
+#        self.assistant.set_page_type(self.post_bill_w.widget,
+#                                     Gtk.AssistantPageType.CONTENT)
+#        self.assistant.set_page_title(self.post_bill_w.widget, "Post VAT bill")
 
         self.summary_w = Summary(self)
         self.assistant.append_page(self.summary_w.widget)
@@ -771,8 +777,8 @@ class UI:
             if page == self.vat_return_w.widget:
                 self.configure_vat_return()
 
-            if page == self.post_bill_w.widget:
-                self.post_bill_w.configure(self.vat_return)
+#            if page == self.post_bill_w.widget:
+#                self.post_bill_w.configure(self.vat_return)
 
             if page == self.summary_w.widget:
                 self.summary_w.show(self.summary.getvalue())
