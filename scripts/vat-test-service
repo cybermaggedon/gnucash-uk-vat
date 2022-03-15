@@ -14,197 +14,208 @@ from gnucash_uk_vat.model import *
 
 class Api:
 
-    def __init__(self, data, listen="0.0.0.0:8080"):
+    def __init__(self, data, listen="0.0.0.0:8080", headers=False):
         self.listen = listen
         self.data = data
+        self.headers = headers
 
-    async def run(self):
+    def dump_headers(self, request):
 
-        async def get_return(request):
+        for k in  request.headers:
+            print("%s: %s" % (k, request.headers[k]))
+        print()
 
-            key = request.match_info["periodKey"]
-            vrn = request.match_info["vrn"]
+    async def get_return(self, request):
 
-            if vrn in self.data.data:
-                user = self.data.data[vrn]
-                for v in user.returns:
-                    if v.periodKey == key:
-                        return web.Response(
-                            body=json.dumps(v.to_dict(), indent=4),
-                            content_type="application/json"
-                        )
+        if self.headers: self.dump_headers(request)
 
+        key = request.match_info["periodKey"]
+        vrn = request.match_info["vrn"]
+
+        if vrn in self.data.data:
+            user = self.data.data[vrn]
+            for v in user.returns:
+                if v.periodKey == key:
+                    return web.Response(
+                        body=json.dumps(v.to_dict(), indent=4),
+                        content_type="application/json"
+                    )
+
+        raise web.HTTPBadRequest()
+
+    async def get_fraud_validate(self, request):
+
+        self.dump_headers(request)
+
+        return web.Response(
+            body=json.dumps({}) + "\n",
+            content_type="application/json"
+        )
+
+    async def get_obligations(self, request):
+
+        if self.headers: self.dump_headers(request)
+
+        start=None
+        end=None
+        status=None
+        vrn = request.match_info["vrn"]
+
+        try:
+            start = datetime.fromisoformat(request.query["from"]).date()
+        except:
+            pass
+
+        try:
+            end = datetime.fromisoformat(request.query["to"]).date()
+        except:
+            pass
+
+        try:
+            status = request.query["status"]
+        except:
+            pass
+
+        try:
+            obls = self.data.data[vrn].obligations
+        except:
             raise web.HTTPBadRequest()
 
-        def dump_headers(request):
+        if start and end:
+            obls = [
+                v for v in obls
+                if v.in_range(start, end)
+            ]
 
-            for k in  request.headers:
-                print("%s: %s" % (k, request.headers[k]))
-            print()
+        if status:
+            obls = [
+                v for v in obls
+                if v.status == status
+            ]
 
-        async def get_fraud_validate(request):
+        resp = {
+            "obligations": [
+                v.to_dict()
+                for v in obls
+            ]
+        }
 
-            dump_headers(request)
+        return web.Response(
+            body=json.dumps(resp, indent=4) + "\n",
+            content_type="application/json"
+        )
 
-            return web.Response(
-                body=json.dumps({}) + "\n",
-                content_type="application/json"
-            )
+    async def get_liabilities(self, request):
 
-        async def get_obligations(request):
+        if self.headers: self.dump_headers(request)
 
-            start=None
-            end=None
-            status=None
-            vrn = request.match_info["vrn"]
+        try:
+            start = datetime.fromisoformat(request.query["from"]).date()
+            end = datetime.fromisoformat(request.query["to"]).date()
+        except:
+            raise web.HTTPBadRequest()
 
-            try:
-                start = datetime.fromisoformat(request.query["from"]).date()
-            except:
-                pass
+        vrn = request.match_info["vrn"]
 
-            try:
-                end = datetime.fromisoformat(request.query["to"]).date()
-            except:
-                pass
+        liabilities = self.data.data[vrn].liabilities
 
-            try:
-                status = request.query["status"]
-            except:
-                pass
+        resp = {
+            "liabilities": [
+                v.to_dict() for v in liabilities
+                if v.in_range(start, end)
+            ]
+        }
 
-            try:
-                obls = self.data.data[vrn].obligations
-            except:
-                raise web.HTTPBadRequest()
+        return web.Response(
+            body=json.dumps(resp, indent=4) + "\n",
+            content_type="application/json"
+        )
 
-            if start and end:
-                obls = [
-                    v for v in obls
-                    if v.in_range(start, end)
-                ]
+    async def get_payments(self, request):
 
-            if status:
-                obls = [
-                    v for v in obls
-                    if v.status == status
-                ]
-                
-            resp = {
-                "obligations": [
-                    v.to_dict()
-                    for v in obls
-                ]
-            }
+        if self.headers: self.dump_headers(request)
 
-            return web.Response(
-                body=json.dumps(resp, indent=4) + "\n",
-                content_type="application/json"
-            )
+        try:
+            start = datetime.fromisoformat(request.query["from"]).date()
+            end = datetime.fromisoformat(request.query["to"]).date()
+        except:
+            raise web.HTTPBadRequest()
 
-        async def get_liabilities(request):
+        vrn = request.match_info["vrn"]
 
-            try:
-                start = datetime.fromisoformat(request.query["from"]).date()
-                end = datetime.fromisoformat(request.query["to"]).date()
-            except:
-                raise web.HTTPBadRequest()
+        payments = self.data.data[vrn].payments
 
-            vrn = request.match_info["vrn"]
+        resp = {
+            "payments": [
+                v.to_dict() for v in payments
+                if v.in_range(start, end)
+            ]
+        }
 
-            liabilities = self.data.data[vrn].liabilities
+        return web.Response(
+            body=json.dumps(resp, indent=4) + "\n",
+            content_type="application/json"
+        )
 
-            resp = {
-                "liabilities": [
-                    v.to_dict() for v in liabilities
-                    if v.in_range(start, end)
-                ]
-            }
+    async def submit_return(self, request):
 
-            return web.Response(
-                body=json.dumps(resp, indent=4) + "\n",
-                content_type="application/json"
-            )
+        if self.headers: self.dump_headers(request)
 
-        async def get_payments(request):
+        body = await request.json()
 
-            try:
-                start = datetime.fromisoformat(request.query["from"]).date()
-                end = datetime.fromisoformat(request.query["to"]).date()
-            except:
-                raise web.HTTPBadRequest()
+        print(request.headers)
+        rtn =  Return.from_dict(body)
 
-            vrn = request.match_info["vrn"]
+        if not rtn.finalised:
+            raise web.HTTPBadRequest()
 
-            payments = self.data.data[vrn].payments
+        vrn = request.match_info["vrn"]
 
-            resp = {
-                "payments": [
-                    v.to_dict() for v in payments
-                    if v.in_range(start, end)
-                ]
-            }
+        self.data.add_return(vrn, rtn)
 
-            return web.Response(
-                body=json.dumps(resp, indent=4) + "\n",
-                content_type="application/json"
-            )
+        resp = {
+            "processingDate": datetime.utcnow().isoformat(),
+            "paymentIndicator": "BANK",
+            "formBundleNumber": str(uuid.uuid1()),
+            "chargeRefNumber": str(uuid.uuid1()),
+        }
 
-        async def submit_return(request):
+        return web.HTTPCreated(
+            body=json.dumps(resp, indent=4).encode("utf-8"),
+            content_type="application/json"
+        )
 
-            body = await request.json()
-            rtn =  Return.from_dict(body)
+    async def get_token(self, request):
 
-            if not rtn.finalised:
-                raise web.HTTPBadRequest()
+        token = {
+            "access_token": "12345",
+            "refresh_token": "67890",
+            "token_type": "bearer",
+            "expires_in": 1440
+        }
 
-            vrn = request.match_info["vrn"]
+        return web.Response(
+            body=json.dumps(token, indent=4) + "\n",
+            content_type="application/json"
+        )
 
-            self.data.add_return(vrn, rtn)
+    async def authorize(self, request):
 
-            resp = {
-                "processingDate": datetime.utcnow().isoformat(),
-                "paymentIndicator": "BANK",
-                "formBundleNumber": str(uuid.uuid1()),
-                "chargeRefNumber": str(uuid.uuid1()),
-            }
+        try:
+            client_id = request.query["client_id"]
+            scope = request.query["scope"]
+            redirect = request.query["redirect_uri"]
+        except:
+            raise web.HTTPBadRequest()
 
-            raise web.HTTPCreated(
-                body=json.dumps(resp, indent=4).encode("utf-8"),
-                content_type="application/json"
-            )
+        state=""
 
-        async def get_token(request):
+        try:
+            state = request.query["state"]
+        except:
+            pass
 
-            token = {
-                "access_token": "12345",
-                "refresh_token": "67890",
-                "token_type": "bearer",
-                "expires_in": 1440
-            }
-            
-            return web.Response(
-                body=json.dumps(token, indent=4) + "\n",
-                content_type="application/json"
-            )
-
-        async def authorize(request):
-
-            try:
-                client_id = request.query["client_id"]
-                scope = request.query["scope"]
-                redirect = request.query["redirect_uri"]
-            except:
-                raise web.HTTPBadRequest()
-
-            state=""
-
-            try:
-                state = request.query["state"]
-            except:
-                pass
-
-            page = """
+        page = """
 <html>
   <body>
     <h1>Test system, don't enter real creds in here</h1>
@@ -228,54 +239,57 @@ class Api:
 </html>
 """ % (client_id, state, scope, redirect)
 
-            return web.Response(body=page, content_type="text/html")
-            
-        async def login(request):
+        return web.Response(body=page, content_type="text/html")
 
-            try:
-                client_id = request.query["client_id"]
-                scope = request.query["scope"]
-                redirect = request.query["redirect_uri"]
-            except:
-                raise web.HTTPBadRequest()
+    async def login(self, request):
 
-            state=""
+        try:
+            client_id = request.query["client_id"]
+            scope = request.query["scope"]
+            redirect = request.query["redirect_uri"]
+        except:
+            raise web.HTTPBadRequest()
 
-            try:
-                state = request.query["state"]
-            except:
-                pass
+        state=""
 
-            resp = {
-                'code': 'code123',
-            }
+        try:
+            state = request.query["state"]
+        except:
+            pass
 
-            if state != "":
-                resp["state"] = state
+        resp = {
+            'code': 'code123',
+        }
 
-            url = redirect + "?" + urlencode(resp, quote_via=quote_plus)
+        if state != "":
+            resp["state"] = state
 
-            print("Redirect to")
-            print(url)
+        url = redirect + "?" + urlencode(resp, quote_via=quote_plus)
 
-            raise web.HTTPFound(url)
+        print("Redirect to")
+        print(url)
+
+        raise web.HTTPFound(url)
+
+    async def run(self):
 
         app = web.Application()
 
-        app.router.add_get('/oauth/authorize', authorize)
-        app.router.add_get('/oauth/login', login)
-        app.router.add_post('/oauth/token', get_token)
+        app.router.add_get('/oauth/authorize', self.authorize)
+        app.router.add_get('/oauth/login', self.login)
+        app.router.add_post('/oauth/token', self.get_token)
         app.router.add_get('/test/fraud-prevention-headers/validate',
-                           get_fraud_validate)
+                           self.get_fraud_validate)
         app.router.add_get('/organisations/vat/{vrn}/obligations',
-                           get_obligations)
+                           self.get_obligations)
         app.router.add_get('/organisations/vat/{vrn}/liabilities',
-                           get_liabilities)
+                           self.get_liabilities)
         app.router.add_get('/organisations/vat/{vrn}/payments',
-                           get_payments)
+                           self.get_payments)
         app.router.add_get('/organisations/vat/{vrn}/returns/{periodKey}',
-                           get_return)
-        app.router.add_post('/organisations/vat/{vrn}/returns', submit_return)
+                           self.get_return)
+        app.router.add_post('/organisations/vat/{vrn}/returns',
+                            self.submit_return)
 
         runner = web.AppRunner(app)
         await runner.setup()
@@ -296,13 +310,15 @@ parser.add_argument('--listen', '-l',
 parser.add_argument('--data', '-d',
 		    default='vat-data.json',
                     help='Data file to load at init (default: vat-data.json)')
+parser.add_argument('--dump-headers', '-H', action='store_true',
+                    help='Whether to dump headers')
 
 # Parse arguments
 args = parser.parse_args(sys.argv[1:])
 
 data = open(args.data).read()
 v = VATData.from_json(data)
-a = Api(v, args.listen)
+a = Api(v, args.listen, args.dump_headers)
 
 loop = asyncio.get_event_loop()
 loop.run_until_complete(a.run())
