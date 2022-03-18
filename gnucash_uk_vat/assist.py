@@ -273,6 +273,9 @@ class Authentication:
         self.button = Gtk.LinkButton.new_with_label("", "Authenticate")
         box.add(self.button)
 
+        self.status = Gtk.Label()
+        box.add(self.status)
+
         widget.add(box)
 
         self.ui = ui
@@ -280,6 +283,9 @@ class Authentication:
 
     def configure(self, url):
         self.button.set_uri(url)
+
+    def got_auth(self):
+        self.status.set_text("Got authentication token.")
 
 # Dialogue which allows for VRN entry
 class VrnEntry:
@@ -607,9 +613,9 @@ class UI:
 
         self.summary.write("Posted bill for period, due %s\n\n" % str(due))
         
-    def collect_auth(self, code):
-        self.vat.get_auth(code)
+    def got_auth(self):
         self.vat.auth.write()
+        self.auth.got_auth()
         self.assistant.set_page_complete(self.auth.widget, True)
 
     def select_obligation(self, ob):
@@ -620,7 +626,6 @@ class UI:
             self.assistant.set_page_complete(self.obligations.widget, False)
 
     def select_kind(self, k):
-        print(k)
         self.selected_accounts_kind = k
 
     def configure_obligations(self):
@@ -809,7 +814,11 @@ class Collector(threading.Thread):
 
             await asyncio.sleep(0.2)
 
-        GLib.idle_add(self.ui.collect_auth, self.coll.result["code"])
+            # asd
+
+        await self.ui.vat.get_auth(self.coll.result["code"])
+
+        GLib.idle_add(self.ui.got_auth)
         await self.coll.stop()
 
     def run(self):
