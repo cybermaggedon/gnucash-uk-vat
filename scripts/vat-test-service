@@ -16,12 +16,16 @@ from gnucash_uk_vat.model import *
 
 class Api:
 
-    def __init__(self, template, listen="0.0.0.0:8080", headers=False):
+    def __init__(self, template, listen="0.0.0.0:8080",
+                 username=None, password=None,
+                 headers=False):
         self.listen = listen
         self.template = template
         self.data = {}
         self.headers = headers
         self.access_token = secrets.token_hex(16)
+        self.username = username
+        self.password = password
 
     def dump_headers(self, request):
 
@@ -34,7 +38,20 @@ class Api:
             self.data[vrn] = copy.deepcopy(self.template)
         return self.data[vrn]
 
+    def check_auth(self, request):
+        try:
+
+            tok = request.headers["Authorization"].split(" ")
+            if tok[0] != "Bearer":
+                raise web.HTTPUnauthorized()
+            if tok[1] != self.access_token:
+                raise web.HTTPUnauthorized()
+        except:
+            raise web.HTTPUnauthorized()
+
     async def get_return(self, request):
+
+        self.check_auth(request)
 
         if self.headers: self.dump_headers(request)
 
@@ -54,6 +71,8 @@ class Api:
 
     async def get_fraud_validate(self, request):
 
+        self.check_auth(request)
+
         self.dump_headers(request)
 
         return web.Response(
@@ -62,6 +81,8 @@ class Api:
         )
 
     async def get_obligations(self, request):
+
+        self.check_auth(request)
 
         if self.headers: self.dump_headers(request)
 
@@ -116,6 +137,8 @@ class Api:
 
     async def get_liabilities(self, request):
 
+        self.check_auth(request)
+
         if self.headers: self.dump_headers(request)
 
         try:
@@ -141,6 +164,8 @@ class Api:
         )
 
     async def get_payments(self, request):
+
+        self.check_auth(request)
 
         if self.headers: self.dump_headers(request)
 
@@ -168,6 +193,8 @@ class Api:
 
     async def submit_return(self, request):
 
+        self.check_auth(request)
+
         if self.headers: self.dump_headers(request)
 
         body = await request.json()
@@ -194,6 +221,15 @@ class Api:
         )
 
     async def get_token(self, request):
+
+        data = await request.post()
+        grant = data['grant_type']
+        if grant != "authorization_code":
+            raise web.HTTPUnauthorized()
+
+        code = data['code']
+        if code != self.code:
+            raise web.HTTPUnauthorized()
 
         token = {
             "access_token": self.access_token,
@@ -258,6 +294,22 @@ class Api:
         except:
             raise web.HTTPBadRequest()
 
+        try:
+            username = request.query["username"]
+        except:
+            username = None
+
+        try:
+            password = request.query["password"]
+        except:
+            password = None
+
+        if self.username != None and self.username != username:
+            raise web.HTTPUnauthorized()
+
+        if self.password != None and self.password != password:
+            raise web.HTTPUnauthorized()
+
         state=""
 
         try:
@@ -265,8 +317,10 @@ class Api:
         except:
             pass
 
+        self.code = secrets.token_hex(16)
+
         resp = {
-            'code': 'code123',
+            'code': self.code,
         }
 
         if state != "":
@@ -320,13 +374,18 @@ parser.add_argument('--data', '-d',
                     help='Data file to load at init (default: vat-data.json)')
 parser.add_argument('--dump-headers', '-H', action='store_true',
                     help='Whether to dump headers')
+parser.add_argument('--username', '-u',
+                    help='Enables authentication with the specified username')
+parser.add_argument('--password', '-p',
+                    help='Enables authentication with the specified password')
 
 # Parse arguments
 args = parser.parse_args(sys.argv[1:])
 
 data = open(args.data).read()
 template = VATData.from_json(data).data["TEMPLATE"]
-a = Api(template, args.listen, args.dump_headers)
+a = Api(template, args.listen, headers=args.dump_headers,
+        username=args.username, password=args.password)
 
 loop = asyncio.get_event_loop()
 loop.run_until_complete(a.run())
