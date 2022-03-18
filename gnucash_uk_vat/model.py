@@ -96,7 +96,7 @@ class Obligation:
     def in_range(self, start, end):
 #        if self.status == "O":
 #            return self.due >= start and self.due <= end
-        return self.received >= start and self.received <= end
+        return self.end >= start and self.end <= end
 
 class Liability:
     def __init__(self, start, end, typ, original, outstanding=None, due=None):
