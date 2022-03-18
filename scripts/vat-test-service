@@ -9,21 +9,30 @@ from datetime import date, datetime, timedelta
 import sys
 import argparse
 from urllib.parse import urlencode, quote_plus
+import secrets
+import copy
 
 from gnucash_uk_vat.model import *
 
 class Api:
 
-    def __init__(self, data, listen="0.0.0.0:8080", headers=False):
+    def __init__(self, template, listen="0.0.0.0:8080", headers=False):
         self.listen = listen
-        self.data = data
+        self.template = template
+        self.data = {}
         self.headers = headers
+        self.access_token = secrets.token_hex(16)
 
     def dump_headers(self, request):
 
         for k in  request.headers:
             print("%s: %s" % (k, request.headers[k]))
         print()
+
+    def get_data(self, vrn):
+        if vrn not in self.data:
+            self.data[vrn] = copy.deepcopy(self.template)
+        return self.data[vrn]
 
     async def get_return(self, request):
 
@@ -32,14 +41,14 @@ class Api:
         key = request.match_info["periodKey"]
         vrn = request.match_info["vrn"]
 
-        if vrn in self.data.data:
-            user = self.data.data[vrn]
-            for v in user.returns:
-                if v.periodKey == key:
-                    return web.Response(
-                        body=json.dumps(v.to_dict(), indent=4),
-                        content_type="application/json"
-                    )
+        user = self.get_data(vrn)
+
+        for v in user.returns:
+            if v.periodKey == key:
+                return web.Response(
+                    body=json.dumps(v.to_dict(), indent=4),
+                    content_type="application/json"
+                )
 
         raise web.HTTPBadRequest()
 
@@ -77,7 +86,7 @@ class Api:
             pass
 
         try:
-            obls = self.data.data[vrn].obligations
+            obls = self.get_data(vrn).obligations
         except:
             raise web.HTTPBadRequest()
 
@@ -117,7 +126,7 @@ class Api:
 
         vrn = request.match_info["vrn"]
 
-        liabilities = self.data.data[vrn].liabilities
+        liabilities = self.get_data(vrn).liabilities
 
         resp = {
             "liabilities": [
@@ -143,7 +152,7 @@ class Api:
 
         vrn = request.match_info["vrn"]
 
-        payments = self.data.data[vrn].payments
+        payments = self.get_data(vrn).payments
 
         resp = {
             "payments": [
@@ -163,7 +172,6 @@ class Api:
 
         body = await request.json()
 
-        print(request.headers)
         rtn =  Return.from_dict(body)
 
         if not rtn.finalised:
@@ -171,7 +179,7 @@ class Api:
 
         vrn = request.match_info["vrn"]
 
-        self.data.add_return(vrn, rtn)
+        self.get_data(vrn).add_return(rtn)
 
         resp = {
             "processingDate": datetime.utcnow().isoformat(),
@@ -188,7 +196,7 @@ class Api:
     async def get_token(self, request):
 
         token = {
-            "access_token": "12345",
+            "access_token": self.access_token,
             "refresh_token": "67890",
             "token_type": "bearer",
             "expires_in": 1440
@@ -317,8 +325,8 @@ parser.add_argument('--dump-headers', '-H', action='store_true',
 args = parser.parse_args(sys.argv[1:])
 
 data = open(args.data).read()
-v = VATData.from_json(data)
-a = Api(v, args.listen, args.dump_headers)
+template = VATData.from_json(data).data["TEMPLATE"]
+a = Api(template, args.listen, args.dump_headers)
 
 loop = asyncio.get_event_loop()
 loop.run_until_complete(a.run())

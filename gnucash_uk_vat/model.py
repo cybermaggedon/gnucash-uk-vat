@@ -94,8 +94,8 @@ class Obligation:
             obj["due"] = self.due.isoformat()
         return obj
     def in_range(self, start, end):
-        if self.status == "O":
-            return self.due >= start and self.due <= end
+#        if self.status == "O":
+#            return self.due >= start and self.due <= end
         return self.received >= start and self.received <= end
 
 class Liability:
@@ -309,5 +309,5 @@ class VATData:
     def from_json(s):
         data = json.loads(s)
         return VATData.from_dict(data)
-    def add_return(self, vrn, rtn):
-        self.data[vrn].add_return(rtn)
+#    def add_return(self, vrn, rtn):
+#        self.data[vrn].add_return(rtn)
