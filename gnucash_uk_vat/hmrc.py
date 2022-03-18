@@ -95,7 +95,7 @@ class Vat:
             {
                 'response_type': 'code',
 	        'client_id': self.config.get("application.client-id"),
-                'scope': 'read:vat+write:vat',
+                'scope': 'read:vat write:vat',
                 'redirect_uri': 'http://localhost:9876/auth',
             }
         )
