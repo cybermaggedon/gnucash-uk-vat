@@ -387,6 +387,6 @@ template = VATData.from_json(data).data["TEMPLATE"]
 a = Api(template, args.listen, headers=args.dump_headers,
         username=args.username, password=args.password)
 
-loop = asyncio.get_event_loop()
-loop.run_until_complete(a.run())
+loop = asyncio.run(a.run())
+
 
