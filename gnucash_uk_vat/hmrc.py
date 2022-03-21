@@ -259,34 +259,28 @@ class Vat:
         }
 
     # Test fraud headers.  Only available in Sandbox, not production
-    def test_fraud_headers(self):
+    async def test_fraud_headers(self):
 
         headers = self.build_fraud_headers()
         headers['Accept'] = 'application/vnd.hmrc.1.0+json'
 
         url = self.api_base + '/test/fraud-prevention-headers/validate'
 
-        resp = requests.get(url, headers=headers)
-        if resp.status_code != 200:
-            try:
-                msg = resp.json()["message"]
-            except:
-                msg = "HTTP error %d" % resp.status_code
-            raise RuntimeError(msg)
+        async with aiohttp.ClientSession() as client:
+            async with client.get(url, headers=headers) as resp:
+                if resp.status != 200:
+                    try:
+                        msg = (await resp.json())["message"]
+                    except:
+                        msg = "HTTP error %d" % resp.status
+                    raise RuntimeError(msg)
 
-        obj = resp.json()
-
-        if resp.status_code != 200:
-            try:
-                msg = resp.json()["message"]
-            except:
-                msg = "HTTP error %d" % resp.status_code
-            raise RuntimeError(msg)
+                obj = await resp.json()
 
         return obj
 
     # API request, fetch obligations which are in state O.
-    def get_open_obligations(self, vrn):
+    async def get_open_obligations(self, vrn):
 
         headers = self.build_fraud_headers()
         headers['Accept'] = 'application/vnd.hmrc.1.0+json'
@@ -300,15 +294,16 @@ class Vat:
             urlencode(params)
         )
 
-        resp = requests.get(url, headers=headers)
-        if resp.status_code != 200:
-            try:
-                msg = resp.json()["message"]
-            except:
-                msg = "HTTP error %d" % resp.status_code
-            raise RuntimeError(msg)
+        async with aiohttp.ClientSession() as client:
+            async with client.get(url, headers=headers) as resp:
+                if resp.status != 200:
+                    try:
+                        msg = (await resp.json())["message"]
+                    except:
+                        msg = "HTTP error %d" % resp.status
+                    raise RuntimeError(msg)
 
-        obj = resp.json()
+                obj = await resp.json()
 
         if "obligations" not in obj:
             raise RuntimeError(obj["message"])
@@ -320,7 +315,7 @@ class Vat:
         return obligations
 
     # API request, fetch obligations which are in a time period.
-    def get_obligations(self, vrn, start=None, end=None):
+    async def get_obligations(self, vrn, start=None, end=None):
 
         if start == None:
             start = datetime.utcnow() - timedelta(days=(2 * 356))
@@ -341,15 +336,16 @@ class Vat:
             urlencode(params)
         )
 
-        resp = requests.get(url, headers=headers)
-        if resp.status_code != 200:
-            try:
-                msg = resp.json()["message"]
-            except:
-                msg = "HTTP error %d" % resp.status_code
-            raise RuntimeError(msg)
+        async with aiohttp.ClientSession() as client:
+            async with client.get(url, headers=headers) as resp:
+                if resp.status != 200:
+                    try:
+                        msg = (await resp.json())["message"]
+                    except:
+                        msg = "HTTP error %d" % resp.status
+                    raise RuntimeError(msg)
 
-        obj = resp.json()
+                obj = await resp.json()
 
         if "obligations" not in obj:
             raise RuntimeError(obj["message"])
@@ -359,7 +355,7 @@ class Vat:
         ]
 
     # API request, fetch a VAT return instance.
-    def get_vat_return(self, vrn, period):
+    async def get_vat_return(self, vrn, period):
 
         headers = self.build_fraud_headers()
         headers['Accept'] = 'application/vnd.hmrc.1.0+json'
@@ -372,20 +368,22 @@ class Vat:
             vrn, quote_plus(period)
         )
 
-        resp = requests.get(url, headers=headers)
-        if resp.status_code != 200:
-            try:
-                msg = resp.json()["message"]
-            except:
-                msg = "HTTP error %d" % resp.status_code
-            raise RuntimeError(msg)
+        print(url)
+        async with aiohttp.ClientSession() as client:
+            async with client.get(url, headers=headers) as resp:
+                if resp.status != 200:
+                    try:
+                        msg = (await resp.json())["message"]
+                    except:
+                        msg = "HTTP error %d" % resp.status
+                    raise RuntimeError(msg)
 
-        obj = resp.json()
+                obj = await resp.json()
 
         return Return.from_dict(obj)
 
     # API request, submit a VAT return.
-    def submit_vat_return(self, vrn, rtn):
+    async def submit_vat_return(self, vrn, rtn):
 
         headers = self.build_fraud_headers()
         headers['Accept'] = 'application/vnd.hmrc.1.0+json'
@@ -394,16 +392,17 @@ class Vat:
             vrn
         )
 
-        resp = requests.post(url, headers=headers,
-                             data=json.dumps(rtn.to_dict()))
-        if resp.status_code != 201:
-            try:
-                msg = resp.json()["message"]
-            except:
-                msg = "HTTP error %d" % resp.status_code
-            raise RuntimeError(msg)
+        async with aiohttp.ClientSession() as client:
+            async with client.post(url, headers=headers,
+                                   json=rtn.to_dict()) as resp:
+                if resp.status != 201:
+                    try:
+                        msg = (await resp.json())["message"]
+                    except:
+                        msg = "HTTP error %d" % resp.status
+                    raise RuntimeError(msg)
 
-        obj = resp.json()
+                obj = await resp.json()
 
         if "code" in obj:
             raise RuntimeError(obj["message"])
@@ -411,7 +410,7 @@ class Vat:
         return obj
 
     # Get liabilities in time period
-    def get_vat_liabilities(self, vrn, start, end):
+    async def get_vat_liabilities(self, vrn, start, end):
 
         headers = self.build_fraud_headers()
         headers['Accept'] = 'application/vnd.hmrc.1.0+json'
@@ -426,20 +425,21 @@ class Vat:
             urlencode(params)
         )
 
-        resp = requests.get(url, headers=headers)
-        if resp.status_code != 200:
-            try:
-                msg = resp.json()["message"]
-            except:
-                msg = "HTTP error %d" % resp.status_code
-            raise RuntimeError(msg)
+        async with aiohttp.ClientSession() as client:
+            async with client.get(url, headers=headers) as resp:
+                if resp.status != 200:
+                    try:
+                        msg = (await resp.json())["message"]
+                    except:
+                        msg = "HTTP error %d" % resp.status
+                    raise RuntimeError(msg)
 
-        obj = resp.json()
+                obj = await resp.json()
 
         return [Liability.from_dict(v) for v in obj["liabilities"]]
 
     # Get payments in time period
-    def get_vat_payments(self, vrn, start, end):
+    async def get_vat_payments(self, vrn, start, end):
 
         headers = self.build_fraud_headers()
         headers['Accept'] = 'application/vnd.hmrc.1.0+json'
@@ -454,15 +454,16 @@ class Vat:
             urlencode(params)
         )
 
-        resp = requests.get(url, headers=headers)
-        if resp.status_code != 200:
-            try:
-                msg = resp.json()["message"]
-            except:
-                msg = "HTTP error %d" % resp.status_code
-            raise RuntimeError(msg)
+        async with aiohttp.ClientSession() as client:
+            async with client.get(url, headers=headers) as resp:
+                if resp.status != 200:
+                    try:
+                        msg = (await resp.json())["message"]
+                    except:
+                        msg = "HTTP error %d" % resp.status
+                    raise RuntimeError(msg)
 
-        obj = resp.json()
+                obj = await resp.json()
 
         return [
             Payment.from_dict(v) for v in obj["payments"]

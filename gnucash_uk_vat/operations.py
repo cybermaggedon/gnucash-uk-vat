@@ -19,9 +19,9 @@ async def authenticate(h, auth):
     sys.stderr.write("Wrote %s.\n" % auth.file)
 
 # Show obligations with the O state
-def show_open_obligations(h, config):
+async def show_open_obligations(h, config):
 
-    obs = h.get_open_obligations(config.get("identity.vrn"))
+    obs = await h.get_open_obligations(config.get("identity.vrn"))
 
     if len(obs) == 0:
         print("No obligations matched.")
@@ -36,9 +36,9 @@ def show_open_obligations(h, config):
                    tablefmt="pretty"))
 
 # Show obligations in a time period
-def show_obligations(start, end, h, config):
+async def show_obligations(start, end, h, config):
 
-    obs = h.get_obligations(config.get("identity.vrn"), start, end)
+    obs = await h.get_obligations(config.get("identity.vrn"), start, end)
 
     if len(obs) == 0:
         print("No obligations matched.")
@@ -54,11 +54,11 @@ def show_obligations(start, end, h, config):
                    tablefmt="pretty"))
 
 # Submit a VAT return
-def submit_vat_return(due, h, config):
+async def submit_vat_return(due, h, config):
 
     # We need start/end information, but only have a due date.
     # Load the obligations to get the mapping
-    obs = h.get_open_obligations(config.get("identity.vrn"))
+    obs = await h.get_open_obligations(config.get("identity.vrn"))
 
     # Iterate over obligations to find the period
     obl = None
@@ -107,7 +107,7 @@ declaration can result in prosecution.
         print("Answer not recognised.")
 
     # Call the API
-    resp = h.submit_vat_return(config.get("identity.vrn"), rtn)
+    resp = await h.submit_vat_return(config.get("identity.vrn"), rtn)
 
     # Dump out the response
     print()
@@ -122,11 +122,11 @@ declaration can result in prosecution.
         print("%-30s: %s" % ("Charge ref", resp["chargeRefNumber"]))
 
 # Submit a VAT return
-def post_vat_bill(start, end, due, h, config):
+async def post_vat_bill(start, end, due, h, config):
 
     # We need start/end information, but only have a period key first.
     # Load the obligations to get the mapping
-    obs = h.get_obligations(config.get("identity.vrn"), start, end)
+    obs = await h.get_obligations(config.get("identity.vrn"), start, end)
 
     # Iterate over obligations to find the period
     obl = None
@@ -175,10 +175,10 @@ def post_vat_bill(start, end, due, h, config):
     print("Bill posted.")
 
 # Show GnuCash information relating to open VAT obligations
-def show_account_data(h, config, due, detail=False):
+async def show_account_data(h, config, due, detail=False):
 
     # Get open obligations
-    obs = h.get_open_obligations(config.get("identity.vrn"))
+    obs = await h.get_open_obligations(config.get("identity.vrn"))
 
     # Iterate over obligations to find the period
     obl = None
@@ -242,11 +242,11 @@ def show_account_data(h, config, due, detail=False):
             print()
 
 # Dump out a VAT return
-def show_vat_return(start, end, due, h, config):
+async def show_vat_return(start, end, due, h, config):
 
     # We need start/end information, but only have a period key first.
     # Load the obligations to get the mapping
-    obs = h.get_obligations(config.get("identity.vrn"), start, end)
+    obs = await h.get_obligations(config.get("identity.vrn"), start, end)
 
     # Iterate over obligations to find the period
     obl = None
@@ -258,14 +258,14 @@ def show_vat_return(start, end, due, h, config):
         raise RuntimeError("Due date '%s' does not match any obligation" % due)
 
     # Fetch VAT return data
-    rtn = h.get_vat_return(config.get("identity.vrn"), obl.periodKey)
+    rtn = await h.get_vat_return(config.get("identity.vrn"), obl.periodKey)
     sys.stdout.write(rtn.to_string())
 
 # Show liabilities
-def show_liabilities(start, end, h, config):
+async def show_liabilities(start, end, h, config):
 
     # Fetch values from liabilities endpoint
-    rtn = h.get_vat_liabilities(config.get("identity.vrn"), start, end)
+    rtn = await h.get_vat_liabilities(config.get("identity.vrn"), start, end)
 
     # Initialise empty table
     tbl = []
@@ -284,10 +284,10 @@ def show_liabilities(start, end, h, config):
     print(tabulate(tbl, ["Period End", "Type", "Amount", "Outstanding", "Due"],
                    tablefmt="pretty"))
 
-def show_payments(start, end, h, config):
+async def show_payments(start, end, h, config):
 
     # Fetch values from payments endpoint
-    rtn = h.get_vat_payments(config.get("identity.vrn"), start, end)
+    rtn = await h.get_vat_payments(config.get("identity.vrn"), start, end)
 
     # Initialise empty table
     tbl = []
@@ -302,3 +302,4 @@ def show_payments(start, end, h, config):
     # Dump out table
     print(tabulate(tbl, ["Amount", "Received"],
                    tablefmt="pretty"))
+

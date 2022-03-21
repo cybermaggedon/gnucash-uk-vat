@@ -95,18 +95,18 @@ async def run():
 
     # Call appropriate function to implement operations
     if args.show_open_obligations:
-        show_open_obligations(h, config)
+        await show_open_obligations(h, config)
         sys.exit(0)
     elif args.show_obligations:
         start = datetime.fromisoformat(args.start).date()
         end = datetime.fromisoformat(args.end).date()
-        show_obligations(start, end, h, config)
+        await show_obligations(start, end, h, config)
         sys.exit(0)
     elif args.submit_vat_return:
         if args.due_date == None:
             raise RuntimeError("--due-date must be specified")
         due = datetime.fromisoformat(args.due_date).date()
-        submit_vat_return(due, h, config)
+        await submit_vat_return(due, h, config)
         sys.exit(0)
 #    elif args.post_vat_bill:
 #        start = datetime.fromisoformat(args.start).date()
@@ -120,13 +120,13 @@ async def run():
         if args.due_date == None:
             raise RuntimeError("--due-date must be specified")
         due = datetime.fromisoformat(args.due_date).date()
-        show_account_data(h, config, due, detail=True)
+        await show_account_data(h, config, due, detail=True)
         sys.exit(0)
     elif args.show_account_summary:
         if args.due_date == None:
             raise RuntimeError("--due-date must be specified")
         due = datetime.fromisoformat(args.due_date).date()
-        show_account_data(h, config, due)
+        await show_account_data(h, config, due)
         sys.exit(0)
     elif args.show_vat_return:
         start = datetime.fromisoformat(args.start).date()
@@ -134,17 +134,17 @@ async def run():
         if args.due_date == None:
             raise RuntimeError("--due-date must be specified")
         due = datetime.fromisoformat(args.due_date).date()
-        show_vat_return(start, end, due, h, config)
+        await show_vat_return(start, end, due, h, config)
         sys.exit(0)
     elif args.show_liabilities:
         start = datetime.fromisoformat(args.start).date()
         end = datetime.fromisoformat(args.end).date()
-        show_liabilities(start, end, h, config)
+        await show_liabilities(start, end, h, config)
         sys.exit(0)
     elif args.show_payments:
         start = datetime.fromisoformat(args.start).date()
         end = datetime.fromisoformat(args.end).date()
-        show_payments(start, end, h, config)
+        await show_payments(start, end, h, config)
         sys.exit(0)
     else:
         raise RuntimeError("No operation specified.  Try --assist option.")
