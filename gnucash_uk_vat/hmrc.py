@@ -368,7 +368,6 @@ class Vat:
             vrn, quote_plus(period)
         )
 
-        print(url)
         async with aiohttp.ClientSession() as client:
             async with client.get(url, headers=headers) as resp:
                 if resp.status != 200:
