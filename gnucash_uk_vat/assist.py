@@ -14,6 +14,34 @@ import gnucash_uk_vat.model as model
 from datetime import timedelta
 import io
 import gnucash_uk_vat.vat as vat
+import time
+
+class EventLoop(threading.Thread):
+
+    def __init__(self, loop=None, name="loop"):
+
+        super().__init__()
+        self.running = True
+        self.name = name
+
+        if loop:
+            self.loop = loop
+        else:
+            self.loop = asyncio.new_event_loop()
+
+    async def collect(self):
+        
+        while self.running:
+
+            await asyncio.sleep(0.2)
+
+    def run(self):
+        self.loop.run_until_complete(self.collect())
+
+    def stop(self):
+        self.running = False
+
+evloop = asyncio.new_event_loop()
 
 # This widget presents an introduction to the dialog process
 class Intro:
@@ -333,6 +361,7 @@ class VrnEntry:
             self.ui.select_vrn(vrn)
             self.status.set_text("VRN is valid.")
         except Exception as e:
+            print(e)
             self.status.set_text("VRN " + vrn + " is not valid.")
 
 # Widget supports selection of VAT obligation period
@@ -570,16 +599,32 @@ class UI:
         self.vat.config.write()
 
         try:
-            obs = self.vat.get_open_obligations(vrn)
+
+            task = asyncio.run_coroutine_threadsafe(
+                self.vat.get_open_obligations(vrn),
+                loop=evloop
+            )
+
+            obs = task.result(timeout=10)
+
             self.assistant.set_page_complete(self.vrn.widget, True)
+
         except Exception as e:
+            print(e)
             self.assistant.set_page_complete(self.vrn.widget,
                                              False)
             raise e
             
     def submit_return(self):
         vrn = self.vat.config.get("identity.vrn")
-        resp = self.vat.submit_vat_return(vrn, self.vat_return)
+
+        task = asyncio.run_coroutine_threadsafe(
+            self.vat.submit_vat_return(vrn, self.vat_return),
+            loop=evloop
+        )
+
+        resp = task.result(timeout=10)
+
         self.assistant.set_page_complete(self.vat_return_w.widget, True)
 
         self.summary.write("Submitted return for period %s - %s:\n%s\n" % (
@@ -631,13 +676,23 @@ class UI:
     def configure_obligations(self):
         try:
             vrn = self.vat.config.get("identity.vrn")
-            obls = self.vat.get_open_obligations(vrn)
+
+            task = asyncio.run_coroutine_threadsafe(
+                self.vat.get_open_obligations(vrn),
+                loop=evloop
+            )
+
+            obls = task.result(timeout=10)
+
             self.obligations.configure(obls)
+
             if len(obls) == 0:
                 self.assistant.set_page_complete(self.obligations.widget, False)
             else:
                 self.assistant.set_page_complete(self.obligations.widget, True)
+
         except Exception as e:
+            print(e)
             self.assistant.set_page_complete(self.obligations.widget, False)
 
     def configure_vat_return(self):
@@ -752,15 +807,25 @@ class UI:
 
                 try:
                     vrn = self.vat.config.get("identity.vrn")
-                    obs = self.vat.get_open_obligations(vrn)
+
+                    task = asyncio.run_coroutine_threadsafe(
+                        self.vat.get_open_obligations(vrn),
+                        loop=evloop
+                    )
+
+                    obs = task.result(timeout=10)
+
                     # Auth worked.  No need to auth
                     self.auth.label.set_text(
                         "You are already authenticated. " +
                         "You do not need to re-authenticate."
                     )
                     self.assistant.set_page_complete(self.auth.widget, True)
-                except:
+
+                except Exception as e:
+                    print(e)
                     pass
+
                 url = self.vat.get_auth_url()
                 self.auth.configure(url)
 
@@ -835,8 +900,12 @@ def run(config, auth):
     coll = Collector(ui)
     coll.start()
 
+    el = EventLoop(loop=evloop)
+    el.start()
+
     ui.create_assistant()
 
     Gtk.main()
     coll.stop()
+    el.stop()
 
