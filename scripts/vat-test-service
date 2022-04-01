@@ -18,14 +18,23 @@ class Api:
 
     def __init__(self, template, listen="0.0.0.0:8080",
                  username=None, password=None,
-                 headers=False):
+                 headers=False, secret=None):
         self.listen = listen
         self.template = template
         self.data = {}
         self.headers = headers
-        self.access_token = secrets.token_hex(16)
         self.username = username
         self.password = password
+
+        # This is a test service, secrets here are for testing that clients
+        # handle secrets properly.  Nobody should be using this service
+        # with real data.
+        if secret == None:
+            self.secret = "1KGHk9KDMCjAu0Sr"
+        else:
+            self.secret = secret
+
+        self.access_token = self.secret
 
     def dump_headers(self, request):
 
@@ -378,6 +387,8 @@ parser.add_argument('--username', '-u',
                     help='Enables authentication with the specified username')
 parser.add_argument('--password', '-p',
                     help='Enables authentication with the specified password')
+parser.add_argument('--secret', '-S',
+                    help='A key used to seed token generation, default hard-coded')
 
 # Parse arguments
 args = parser.parse_args(sys.argv[1:])
@@ -385,7 +396,7 @@ args = parser.parse_args(sys.argv[1:])
 data = open(args.data).read()
 template = VATData.from_json(data).data["TEMPLATE"]
 a = Api(template, args.listen, headers=args.dump_headers,
-        username=args.username, password=args.password)
+        username=args.username, password=args.password, secret=args.secret)
 
 loop = asyncio.run(a.run())
 
