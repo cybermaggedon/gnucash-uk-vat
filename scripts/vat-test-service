@@ -46,7 +46,7 @@ class Api:
             print()
 
         for k in  request.headers:
-            if k.startswith("Gov"):
+            if k.lower().startswith("gov-"):
                 self.captured_headers[k] = request.headers[k]
 
     async def get_headers(self, request):
