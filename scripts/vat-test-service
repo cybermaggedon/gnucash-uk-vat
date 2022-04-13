@@ -36,6 +36,8 @@ class Api:
         else:
             self.secret = secret
 
+        self.refresh_token = "67890"
+
         self.access_token = self.secret
 
     def handle_headers(self, request):
@@ -244,19 +246,33 @@ class Api:
 
         data = await request.post()
         grant = data['grant_type']
-        if grant != "authorization_code":
-            raise web.HTTPUnauthorized()
 
-        code = data['code']
-        if code != self.code:
-            raise web.HTTPUnauthorized()
+        if grant == "refresh_token":
+            if data["refresh_token"] != self.refresh_token:
+                raise web.HTTPUnauthorized()
+            token = {
+                "access_token": self.access_token,
+                "refresh_token": self.refresh_token,
+                "token_type": "bearer",
+                "expires_in": 1440
+            }
 
-        token = {
-            "access_token": self.access_token,
-            "refresh_token": "67890",
-            "token_type": "bearer",
-            "expires_in": 1440
-        }
+        elif grant == "authorization_code":
+
+            code = data['code']
+            if code != self.code:
+                raise web.HTTPUnauthorized()
+
+            token = {
+                "access_token": self.access_token,
+                "refresh_token": self.refresh_token,
+                "token_type": "bearer",
+                "expires_in": 1440
+            }
+
+        else:
+
+            raise web.HTTPUnauthorized()
 
         return web.Response(
             body=json.dumps(token, indent=4) + "\n",
