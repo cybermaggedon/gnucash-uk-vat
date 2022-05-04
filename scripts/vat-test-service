@@ -55,9 +55,149 @@ class Api:
 
         return web.json_response(self.captured_headers)
 
+    def fab_data(self, dt):
+
+        dt = datetime.strptime(dt, "%d%m%y").date()
+
+        # Create:
+        # Open obligations for period starting dt, and following period
+        # Filed obligations for previous two periods
+        # Payments for the first of those periods
+        # Liabilty for the second of those periods
+
+        # FIXME: This treats 1 month = 30 days, VAT return periods are really
+        # calendar months
+        
+        p1s = dt - timedelta(days=210)
+        p1e = p1s + timedelta(days=90)
+        p1d = p1e + timedelta(days=30)
+        p1p = p1d - timedelta(days=5)
+
+        p2s = p1s + timedelta(days=90)
+        p2e = p2s + timedelta(days=90)
+        p2d = p2e + timedelta(days=30)
+        p2p = p2d - timedelta(days=5)
+
+        p3s = p2s + timedelta(days=90)
+        p3e = p3s + timedelta(days=90)
+        p3d = p3e + timedelta(days=30)
+        p3p = p3d - timedelta(days=5)
+
+        p4s = p3s + timedelta(days=90)
+        p4e = p4s + timedelta(days=90)
+        p4d = p4e + timedelta(days=30)
+        p4p = p4d - timedelta(days=5)
+
+        rec = {
+            "payments": [
+                {
+                    "amount": 123.45,
+                    "received": p1p.isoformat()
+                }
+            ],
+            "liabilities": [
+                {
+                    "type": "Net VAT",
+                    "originalAmount": 1100,
+                    "taxPeriod": {
+                        "from": p1s.isoformat(),
+                        "to": p1e.isoformat(),
+                    },
+                    "due": p1d.isoformat(),
+                },
+                {
+                    "type": "Net VAT",
+                    "originalAmount": 1100,
+                    "outstandingAmount": 1100,
+                    "taxPeriod": {
+                        "from": p2s.isoformat(),
+                        "to": p2e.isoformat(),
+                    },
+                    "due": p2d.isoformat(),
+                },
+            ],
+            "returns": [
+                {
+                    "periodKey": "#000",
+                    "vatDueSales": 100,
+                    "vatDueAcquisitions": 120,
+                    "totalVatDue": 220,
+                    "vatReclaimedCurrPeriod": 30,
+                    "netVatDue": 180,
+                    "totalValueSalesExVAT": 1000,
+                    "totalValuePurchasesExVAT": 1200,
+                    "totalValueGoodsSuppliedExVAT": 50,
+                    "totalAcquisitionsExVAT": 30
+                },
+                {
+                    "periodKey": "#001",
+                    "vatDueSales": 100,
+                    "vatDueAcquisitions": 120,
+                    "totalVatDue": 220,
+                    "vatReclaimedCurrPeriod": 30,
+                    "netVatDue": 180,
+                    "totalValueSalesExVAT": 1000,
+                    "totalValuePurchasesExVAT": 1200,
+                    "totalValueGoodsSuppliedExVAT": 50,
+                    "totalAcquisitionsExVAT": 30
+                },
+            ],
+            "obligations": [
+                {
+                    "status": "F",
+                    "periodKey": "#000",
+                    "start": p1s.isoformat(),
+                    "end": p1e.isoformat(),
+                    "received": p1p.isoformat(),
+                    "due": p1d.isoformat(),
+                },
+                {
+                    "status": "F",
+                    "periodKey": "#002",
+                    "start": p2s.isoformat(),
+                    "end": p2e.isoformat(),
+                    "received": p2p.isoformat(),
+                    "due": p2d.isoformat(),
+                },
+                {
+                    "status": "O",
+                    "periodKey": "#003",
+                    "start": p3s.isoformat(),
+                    "end": p3e.isoformat(),
+                    "due": p3d.isoformat(),
+                },
+                {
+                    "status": "O",
+                    "periodKey": "#004",
+                    "start": p4s.isoformat(),
+                    "end": p4e.isoformat(),
+                    "due": p4d.isoformat(),
+                },
+            ]
+        }
+
+        rec = { "record": rec }
+        return VATData.from_dict(rec).data["record"]
+
+
     def get_data(self, vrn):
+
         if vrn not in self.data:
+
+            # There are magic code VRNs which encode a data, and the
+            # VAT data is built around that date.
+            # Format is 999ddmmyy
+
+            if str(vrn)[0:3] == "999":
+
+                dt = str(vrn)[3:]
+
+                if len(dt) == 6:
+                    self.data[vrn] = self.fab_data(dt)
+                    return self.data[vrn]
+
             self.data[vrn] = copy.deepcopy(self.template)
+
         return self.data[vrn]
 
     def check_auth(self, request):
