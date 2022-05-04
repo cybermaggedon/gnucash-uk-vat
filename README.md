@@ -17,38 +17,37 @@ to discuss... https://discord.gg/3cAvPASS6p
 
 ## A word from our sponsors :)
 
-If you need low cost, automated accounts filing for small businesses, we
-are building a commercial offering which incorporates the functionality you
-see here.
+If you need low cost, automated accounts filing for small businesses,
+Accounts Machine has a commercial offering which incorporates the
+functionality you see here in a web service.
 
-The proposition is simple.  We are not offering an accounting system.
-You manage your accounts using GnuCash (other acccounts systems to be
-added).  You manage your accounts, manage your invoices, manage receipts,
-and record everything in GnuCash.  When it comes to filing returns,
-you upload your GnuCash accounts to accountsmachine.io and use the system
-to file VAT returns, corporation tax returns, and
-company accounts with Companies House.  The production of returns is totally
-automated.
+The proposition is simple.  Accounts Machine does not offer an
+accounting system.  You manage your accounts using GnuCash or anything
+which produces CSV output.  You manage your accounts, manage your
+invoices, manage receipts, and record everything in your application
+under your control.  When it comes to filing returns, you upload your
+accounts to accountsmachine.io and use the system to file VAT returns,
+corporation tax returns, and company accounts with Companies House.
+The production of returns is as automated as possible.  Accounts
+production conforms to iXBRL specifications, and HMRC VAT MTD.
 
 This service is able to simplify accounts filing for simple businesses.
 Your company should be a Limited Company, conform to micro-entity
 requirements, and have a single trade.  This service is aimed at making
-life easier for startups and small businesses.  Once your business has grown
-beyond the simple starting point... Congratulations!  Glad you made it!  It
-was great working with you!  But you're going to need some accountants.
+life easier for startups and small businesses.
 
-The roadmap is for launch in 2Q2022.  At the time of writing, the website has
-not yet launched, but will do so at https://accountsmachine.io.  We are
-registered with HMRC and Companies House for filing purposes and have
-successfully filed VAT, corp tax and company accounts.
+The roadmap is for launch in 2Q2022.  VAT filing is complete, just going
+through the final validation process with HMRC.
+
+Visit https://accountsmachine.io.  Accounts Machine is registered with HMRC
+and Companies House for filing purposes and have successfully filed VAT,
+corp tax and company accounts.
 
 Join our discord service to keep on top of latest progress:
 https://discord.gg/3cAvPASS6p
 
-As regards pricing, we're estimating on £40 per year for an entry-level
-account.  £20 per year as a introductory launch deal.  Enthusiastic early
-adopters may encounter free deals by joining the Discord community.
-Looking forward to filing for you. :)
+Enthusiastic early adopters will find free deal links on the Discord
+server.  Looking forward to filing for you. :)
 
 ## GnuCash backends
 
