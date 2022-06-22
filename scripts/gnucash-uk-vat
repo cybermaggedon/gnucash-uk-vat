@@ -4,6 +4,7 @@ import sys
 import argparse
 import json
 import asyncio
+import types
 
 from datetime import datetime, timedelta
 
@@ -149,8 +150,28 @@ async def run():
     else:
         raise RuntimeError("No operation specified.  Try --assist option.")
 
+def asyncrun(coro):
+
+    # asyncio.run introduced in Python 3.7, just use that.
+    if sys.version_info >= (3, 7):
+        return asyncio.run(coro)
+
+    # Emulate asyncio.run()
+
+    # asyncio.run() requires a coro, so require it here as well
+    if not isinstance(coro, types.CoroutineType):
+        raise TypeError("run() requires a coroutine object")
+
+    loop = asyncio.new_event_loop()
+    asyncio.set_event_loop(loop)
+    try:
+        return loop.run_until_complete(coro)
+    finally:
+        loop.close()
+        asyncio.set_event_loop(None)
+
 try:
-    asyncio.run(run())
+    asyncrun(run())
 except Exception as e:
     sys.stderr.write("Exception: %s\n" % e)
     sys.exit(1)
