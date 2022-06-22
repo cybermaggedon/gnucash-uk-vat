@@ -24,7 +24,8 @@ setuptools.setup(
         'aiohttp',
         'py-dmidecode',
         'requests',
-        'piecash'
+        'piecash',
+        'tabulate',
     ],
     scripts=[
         "scripts/gnucash-uk-vat",
