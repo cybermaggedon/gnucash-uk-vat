@@ -93,10 +93,11 @@ def get_device_config():
         err = "Couldn't fetch device information, install dmidecode?"
         raise RuntimeError(err)
 
-    uname = os.uname()
+    import platform
+    uname = platform.uname()
 
     return {
-        'os-family': uname.sysname,
+        'os-family': uname.system,
 	'os-version': uname.release,
         'device-manufacturer': dmi["manufacturer"],
         'device-model': dmi["model"],
