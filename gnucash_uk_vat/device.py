@@ -4,6 +4,7 @@ import platform
 def get_device():
 
     p = platform.system()
+    print("Platform is", p)
 
     if p == 'Linux':
         return get_linux_device()
@@ -31,6 +32,7 @@ def get_linux_device():
         return None
 
 def get_windows_device():
+    print("NOT WORKING?!")
     raise RuntimeError("Windows not implemented")
 
 def get_darwin_device():
