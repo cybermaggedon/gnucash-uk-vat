@@ -1,9 +1,10 @@
 
 print("HERE!?")
-import platform
 
 def get_device():
+    print("HERE2!")
 
+    import platform
     p = platform.system()
     print("Platform is", p)
 
