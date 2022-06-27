@@ -35,7 +35,7 @@ def get_windows_device():
         subprocess.check_output('wmic csproduct get uuid'), 'utf-8'
     ).split('\n')[1].strip()
     model = str(
-        subprocess.check_output('wmic csproduct get model'), 'utf-8'
+        subprocess.check_output('wmic csproduct get name'), 'utf-8'
     ).split('\n')[1].strip()
     manuf = str(
         subprocess.check_output('wmic csproduct get vendor'), 'utf-8'
