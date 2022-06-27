@@ -1,4 +1,5 @@
 
+print("HERE!?")
 import platform
 
 def get_device():
