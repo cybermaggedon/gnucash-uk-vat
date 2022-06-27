@@ -1,12 +1,8 @@
 
-print("HERE!?")
-
 def get_device():
-    print("HERE2!")
 
     import platform
     p = platform.system()
-    print("Platform is", p)
 
     if p == 'Linux':
         return get_linux_device()
@@ -34,8 +30,22 @@ def get_linux_device():
         return None
 
 def get_windows_device():
-    print("NOT WORKING?!")
-    raise RuntimeError("Windows not implemented")
+    import subprocess
+    uuid = str(
+        subprocess.check_output('wmic csproduct get uuid'), 'utf-8'
+    ).split('\n')[1].strip()
+    model = str(
+        subprocess.check_output('wmic csproduct get model'), 'utf-8'
+    ).split('\n')[1].strip()
+    manuf = str(
+        subprocess.check_output('wmic csproduct get vendor'), 'utf-8'
+    ).split('\n')[1].strip()
+
+    return {
+        "manufacturer": manuf,
+        "model": model,
+        "serial": id,
+    }
 
 def get_darwin_device():
     import json
