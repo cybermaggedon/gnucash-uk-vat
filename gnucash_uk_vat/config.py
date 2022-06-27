@@ -88,10 +88,14 @@ def initialise_config(config_file):
 
 def get_device_config():
 
+    print("HERE?????")
     dmi = get_device()
     if dmi == None:
+        print("HERE2?????")
         err = "Couldn't fetch device information, install dmidecode?"
         raise RuntimeError(err)
+
+    print("HERE3?????")
 
     uname = os.uname()
 
