@@ -12,7 +12,7 @@ owing, and posted to an Accounts Payable account.
 
 ## Discuss
 
-There's a gnucash-uk-vat channel on our Discord server if you want
+There's a #gnucash-uk-vat channel on our Discord server if you want
 to discuss... https://discord.gg/3cAvPASS6p
 
 ## A word from our sponsors :)
@@ -65,8 +65,8 @@ Two ways of interacting with your GnuCash accounts are supported:
 This is a command-line utility, with a GTK-based dialog mode which removes
 the need to know about configuration files or command-line options.
 I have used this to submit my own VAT returns.  If you want to join the
-party email me, mark AT cyberapocalypse DOT co DOT uk, and I'll support you
-through the process.
+party come to the #gnucash-uk-vat channel on Discord server 
+https://discord.gg/3cAvPASS6p and I'll try to help you through the process.
 
 ## Credentials
 
@@ -148,7 +148,8 @@ files as you would any password or other secret.
 
 ## Licence
 
-Copyright (C) 2020, 2021, Cyberapocalypse Limited
+Copyright (c) 2020-2021, Cyberapocalypse Limited
+Copyright (c) 2021-2022, Accounts Machine Limited
 
 This program is free software: you can redistribute it and/or modify
 it under the terms of the GNU General Public License as published by
