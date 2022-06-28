@@ -1,0 +1,61 @@
+#!/usr/bin/env python3
+
+# This code connects to the HMRC sandbox Fraud API and fetches feedback
+# on compliance with Fraud API requirements.
+
+import requests
+import json
+import sys
+
+# Add your client ID and secret here
+client_id = "CLIENT_ID"
+client_secret = "CLIENT_SECRET"
+
+headers = {
+    "content-type": "application/x-www-form-urlencoded",
+}
+
+data = {
+    "client_secret": client_secret,
+    "client_id": client_id,
+    "grant_type": "client_credentials",
+    "scope": "read:vat",
+}
+
+resp = requests.post(
+    "https://test-api.service.hmrc.gov.uk/oauth/token", headers=headers,
+    data=data
+)
+
+if resp.status_code != 200:
+    print(resp.text)
+    sys.exit(1)
+
+token = resp.json()["access_token"]
+
+headers = {
+    "Authorization": "Bearer " + token,
+    "Accept": "application/vnd.hmrc.1.0+json",
+}
+
+url = "https://test-api.service.hmrc.gov.uk/test/fraud-prevention-headers/vat-mtd/validation-feedback?connectionMethod=WEB_APP_VIA_SERVER"
+
+resp = requests.get(url, headers=headers)
+if resp.status_code != 200:
+    print(resp.text)
+    sys.exit(1)
+
+#print(json.dumps(resp.json(), indent=4))
+
+results = resp.json()
+results = results["requests"]
+
+for req in results:
+
+    print("Path %s %s..." % (req["method"], req["path"]))
+    print("  Time: %s" % req["requestTimestamp"])
+    print("  Result: %s" % req["code"])
+
+    for hdr in req["headers"]:
+        print("    %-35s: %s" % (hdr["header"], hdr["code"]))
+
