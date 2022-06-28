@@ -1,0 +1,65 @@
+#!/usr/bin/env python3
+
+# This code connects to the HMRC test user API and provisions a new sandbox
+# test user, outputting the gov ID, password and VRN.
+
+import requests
+import json
+import sys
+
+# Add your client ID and secret here
+client_id = "CLIENT_ID"
+client_secret = "CLIENT_SECRET"
+
+headers = {
+    "content-type": "application/x-www-form-urlencoded",
+}
+
+data = {
+    "client_secret": client_secret,
+    "client_id": client_id,
+    "grant_type": "client_credentials",
+    "scope": "read:vat",
+}
+
+resp = requests.post(
+    "https://test-api.service.hmrc.gov.uk/oauth/token", headers=headers,
+    data=data
+)
+
+if resp.status_code != 200:
+    print(resp.text)
+    sys.exit(1)
+
+token = resp.json()["access_token"]
+
+headers = {
+    "Authorization": "Bearer " + token,
+    "Content-Type": "application/json",
+    "Accept": "application/vnd.hmrc.1.0+json",
+}
+
+data = {
+    "serviceNames": [
+        "mtd-vat",
+    ],
+}
+
+url = "https://test-api.service.hmrc.gov.uk/create-test-user/organisations"
+
+resp = requests.post(url, data=json.dumps(data), headers=headers)
+if resp.status_code != 201:
+    print(resp.text)
+    sys.exit(1)
+
+#print(json.dumps(resp.json(), indent=4))
+
+user = resp.json()
+
+def present(x):
+    return x
+
+print("User:      ", present(user["userId"]))
+print("Password:  ", present(user["password"]))
+print("VRN:       ", present(user["vrn"]))
+
