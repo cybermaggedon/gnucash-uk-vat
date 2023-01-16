@@ -53,7 +53,7 @@ def initialise_config(config_file):
     config = {
         "accounts": {
             "kind": "piecash",
-	    "file": "accounts/accounts.gnucash",
+            "file": "accounts/accounts.gnucash",
             "vatDueSales": "VAT:Output:Sales",
             "vatDueAcquisitions": "VAT:Output:EU",
             "totalVatDue": "VAT:Output",
@@ -69,7 +69,8 @@ def initialise_config(config_file):
         "application": {
             "profile": "prod",
             "client-id": "<CLIENT ID>",
-            "client-secret": "<SECRET>"
+            "client-secret": "<SECRET>",
+            "terms-and-conditions-url": "http://example.com/terms_and_conditions/"
         },
         "identity": {
             "vrn": "<VRN>",
