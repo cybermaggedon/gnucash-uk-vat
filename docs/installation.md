@@ -22,12 +22,10 @@ There are instructions for MacOS installation which I have not tested on the
 wiki page.
 
 ## Windows 8
-Installing on Windows 8 using the latest Python 3.11(ATM) causes a rebuild and VC 14 to throw a linker error when building the aiohttp dependancy:
+Installing on:
+* Windows 8 
+* Python 3.11
+causes a rebuild and VC 14 to throw a linker error when building the aiohttp dependancy:
       _http_parser.obj : error LNK2001: unresolved external symbol _PyUnicode_Ready
 
 Using Python 3.8 seems to resolve the problem.
-
-## Add Python scripts to Windows Path
-The installed Python scripts arent automatically added to the Windows Path.
-Run the 'pip --verbose install ...' to see where the scripts are installed and add this folder to the Windows Path.
-Alternatively, use a full qualified path to the Python scripts.
