@@ -105,10 +105,16 @@ class Vat:
     # Co-routine implementation
     async def get_code_coro(self):
 
+        tandc_url = self.config.get("application.terms-and-conditions-url")
+        
+        if tandc_url:
+            print("Read the terms and conditions at this URL:")
+            print(tandc_url)
+
+        # Send user to the URL
         url = self.get_auth_url()
         
-        # Send user to the URL
-        print("Please visit the following URL and authenticate:")
+        print("If you agree to the terms and conditions, visit the following URL and authenticate:")
         print(url)
 
         # Start auth code collector, and wait for it to finish
