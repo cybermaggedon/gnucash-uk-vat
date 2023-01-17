@@ -7,9 +7,10 @@ profile=test
 gnucash_file=hmrc-test.sqlite3.gnucash
 config_file=gnucash-uk-vat-${profile}.json
 user_config_file=".${config_file}"
+due_date_list=("2017-05-07" "2017-08-07")
 
 # NOTE: This needs updating each time a command is added
-valid_commands=( config create-user auth test-fraud help )
+valid_commands=( config create-user auth test-fraud show-obligations show-open-obligations show-payments show-liabilities submit-vat-return show-vat-return show-account-summary show-account-detail help )
 
 
 help_string=$( cat <<HEREDOC
@@ -76,14 +77,13 @@ complies with the HMRC MTD requirements.
 A report will be printed to the screen showing any issues it encountered.
 
 NOTE #1: Missing header 'gov-client-multi-factor': A bridge system doesnt generally use MFA.
-NOTE #2: Missing header 'gov-vendor-license-ids': This internal bridge system doesnt have 
-         customers and therefore no customer Licences.
-NOTE #3: This command assumes the application associated with the client-id in 
-          ${config_file}
+NOTE #2: This command assumes the application associated with the client-id in 
+            ${config_file}
          has been configured to access the 'Test Fraud Prevention Headers' endpoint 
          in 'API Subscriptions' when viewin application details from here:
          https://developer.service.hmrc.gov.uk/developer/applications
 
+# Test show-open-obligations
 
 
 HEREDOC
@@ -99,7 +99,9 @@ if [[ ! "$1" == "" ]]; then
         command=${provided_command}
     else
         echo "Invalid command '${provided_command}'";
-        echo "Choose from: '${valid_commands[*]}'";
+        command_list=$( echo ${valid_commands[*]} | tr " " "\n" )
+        echo "Choose from:";
+        echo "${command_list}";
         exit 0
     fi
 fi
@@ -149,6 +151,73 @@ test_fraud() {
   python -u test-fraud-api
 }
 
+show_open_obligations() {
+  echo "Test for Open Obligations against MTD website..."
+  python -u $(dirname $(which python))/scripts/gnucash-uk-vat --show-open-obligations --config ${config_file} --json
+}
+
+show_obligations() {
+  echo "Show VAT Obligations against MTD website..."
+  python -u $(dirname $(which python))/scripts/gnucash-uk-vat --show-obligations --config ${config_file} --json
+}
+
+show_payments() {
+  echo "Show previous Payments against MTD website..."
+  python -u $(dirname $(which python))/scripts/gnucash-uk-vat --start "2017-01-01"  --end "2017-12-31" --show-payments --config ${config_file} --json
+}
+
+show_liabilities() {
+  echo "Show current Liabilities against MTD website..."
+  python -u $(dirname $(which python))/scripts/gnucash-uk-vat --start "2017-01-01"  --end "2017-12-31" --show-liabilities --config ${config_file} --json
+}
+
+show_vat_return() {
+  echo "Show previous Vat Return against MTD website..."
+
+  due_date_index=${1:-0}
+  due_date=${due_date_list[${due_date_index}]}
+  
+  echo "due_date=${due_date}"
+
+  # Check for vat returns.
+  python -u $(dirname $(which python))/scripts/gnucash-uk-vat --due-date "${due_date}" --start "2017-01-01"  --end "2017-12-31" --show-vat-return --config ${config_file} --json
+}
+
+show_account_summary() {
+  echo "Show GnuCash account summary against MTD website..."
+
+  due_date_index=${1:-0}
+  due_date=${due_date_list[${due_date_index}]}
+  
+  echo "due_date=${due_date}"
+
+  # Check for vat returns.
+  python -u $(dirname $(which python))/scripts/gnucash-uk-vat --due-date "${due_date}" --show-account-summary --config ${config_file} --json
+}
+
+show_account_detail() {
+  echo "Show GnuCash account details against MTD website..."
+
+  due_date_index=${1:-0}
+  due_date=${due_date_list[${due_date_index}]}
+  
+  echo "due_date=${due_date}"
+
+  # Check for vat returns.
+  python -u $(dirname $(which python))/scripts/gnucash-uk-vat --due-date "${due_date}" --show-account-detail --config ${config_file} --json
+}
+
+submit_vat_return() {
+  echo "Submit Vat Return against MTD website..."
+
+  due_date_index=${1:-0}
+  due_date=${due_date_list[${due_date_index}]}
+  
+  echo "due_date=${due_date}"
+
+  # Check for vat returns.
+  python -u $(dirname $(which python))/scripts/gnucash-uk-vat --due-date "${due_date}" --submit-vat-return --config ${config_file} --json
+}
 
 case $command in
   config)
@@ -166,6 +235,58 @@ case $command in
   test-fraud)
     check_user_config
     test_fraud
+    ;;
+  show-obligations)
+    check_user_config
+    show_obligations
+    ;;
+  show-open-obligations)
+    check_user_config
+    show_open_obligations
+    ;;
+  show-payments)
+    check_user_config
+    show_payments
+    ;;
+  show-liabilities)
+    check_user_config
+    show_liabilities
+    ;;
+  show-vat-return)
+    check_user_config
+    due_date_index=${2:-0}
+    if [[ ! "${due_date_index}" == "0" ]] && [[ ! "${due_date_index}" == "1" ]]; then
+        echo "ERROR: Parameter 1 must be 0 or 1"
+        exit 1
+    fi
+    show_vat_return $due_date_index
+    ;;
+  show-account-summary)
+    check_user_config
+    due_date_index=${2:-0}
+    if [[ ! "${due_date_index}" == "0" ]] && [[ ! "${due_date_index}" == "1" ]]; then
+        echo "ERROR: Parameter 1 must be 0 or 1"
+        exit 1
+    fi
+    show_account_summary $due_date_index
+    ;;
+  show-account-detail)
+    check_user_config
+    due_date_index=${2:-0}
+    if [[ ! "${due_date_index}" == "0" ]] && [[ ! "${due_date_index}" == "1" ]]; then
+        echo "ERROR: Parameter 1 must be 0 or 1"
+        exit 1
+    fi
+    show_account_detail $due_date_index
+    ;;
+  submit-vat-return)
+    check_user_config
+    due_date_index=${2:-0}
+    if [[ ! "${due_date_index}" == "0" ]] && [[ ! "${due_date_index}" == "1" ]]; then
+        echo "ERROR: Parameter 1 must be 0 or 1"
+        exit 1
+    fi
+    submit_vat_return $due_date_index
     ;;
   help)
     print_help

@@ -20,6 +20,9 @@ default_end = str(datetime.utcnow().date())
 
 # Command-line argument parser
 parser = argparse.ArgumentParser(description="Gnucash to HMRC VAT API")
+parser.add_argument('--json', '-j',
+            action='store_true',
+                    help='Print output as json for automated testing (default: False)')
 parser.add_argument('--userfile', '-u',
             default='user.json',
                     help='MTD test user file returned by ./get-test-user (default: user.json)')
@@ -96,6 +99,7 @@ async def run():
     else:
       user = None
 
+    print_json = args.json
     h = hmrc.create(config, auth, user)
 
     # Authenticate HMRC [test]user with MTD API.
@@ -109,12 +113,12 @@ async def run():
 
     # Call appropriate function to implement operations
     if args.show_open_obligations:
-        await show_open_obligations(h, config)
+        await show_open_obligations(h, config, print_json)
         sys.exit(0)
     elif args.show_obligations:
         start = datetime.fromisoformat(args.start).date()
         end = datetime.fromisoformat(args.end).date()
-        await show_obligations(start, end, h, config)
+        await show_obligations(start, end, h, config, print_json)
         sys.exit(0)
     elif args.submit_vat_return:
         if args.due_date == None:

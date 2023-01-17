@@ -384,12 +384,13 @@ class Vat:
         headers = self.build_fraud_headers()
         headers['Accept'] = 'application/vnd.hmrc.1.0+json'
 
-        params = {
-            "periodKey": period
-        }
+#        params = {
+#            "periodKey": period
+#        }
 
         url = self.api_base + '/organisations/vat/%s/returns/%s' % (
-            vrn, quote_plus(period)
+            vrn, 
+            quote_plus(period)
         )
 
         async with aiohttp.ClientSession() as client:
@@ -399,6 +400,8 @@ class Vat:
                         msg = (await resp.json())["message"]
                     except:
                         msg = "HTTP error %d" % resp.status
+                        
+                    print("url: %s" % url)
                     raise RuntimeError(msg)
 
                 obj = await resp.json()
@@ -423,6 +426,7 @@ class Vat:
                         msg = (await resp.json())["message"]
                     except:
                         msg = "HTTP error %d" % resp.status
+
                     raise RuntimeError(msg)
 
                 obj = await resp.json()
@@ -455,6 +459,13 @@ class Vat:
                         msg = (await resp.json())["message"]
                     except:
                         msg = "HTTP error %d" % resp.status
+
+                    app_args = {
+                        "start": start.strftime("%Y-%m-%d"),
+                        "end": end.strftime("%Y-%m-%d")
+                    }
+                    print("arguments: %s" % json.dumps(app_args))
+
                     raise RuntimeError(msg)
 
                 obj = await resp.json()
@@ -479,11 +490,18 @@ class Vat:
 
         async with aiohttp.ClientSession() as client:
             async with client.get(url, headers=headers) as resp:
+
                 if resp.status != 200:
                     try:
                         msg = (await resp.json())["message"]
                     except:
                         msg = "HTTP error %d" % resp.status
+
+                    app_args = {
+                        "start": start.strftime("%Y-%m-%d"),
+                        "end": end.strftime("%Y-%m-%d")
+                    }
+                    print("arguments: %s" % json.dumps(app_args))
                     raise RuntimeError(msg)
 
                 obj = await resp.json()

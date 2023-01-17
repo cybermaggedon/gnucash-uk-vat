@@ -1,5 +1,7 @@
 accounts/*.gnucash.*.gnucash
 accounts/*.gnucash.*.log
+test/*.gnucash.*.gnucash
+test/*.gnucash.*.log
 *~
 build/
 dist/
