@@ -316,7 +316,6 @@ async def show_liabilities(start, end, h, config):
 
 async def show_payments(start, end, h, config):
 
-    print("TP#1")
     # Fetch values from payments endpoint
     rtn = await h.get_vat_payments(config.get("identity.vrn"), start, end)
 

@@ -83,7 +83,25 @@ NOTE #2: This command assumes the application associated with the client-id in
          in 'API Subscriptions' when viewin application details from here:
          https://developer.service.hmrc.gov.uk/developer/applications
 
+# Test show-obligations
+Show all obligations for the test year
+    '$0 show-obligations'
+This should show both Finished and Open VAT obligations.
+
 # Test show-open-obligations
+Show all open obligations for the test year
+    '$0 show-open-obligations'
+This should only show Open VAT obligations.
+
+# Test show-account-summary
+Show account summary for a particular due_date
+    '$0 show-account-summary [0|1]'
+This will report the account summary for the Obligation matching the due_date_index.
+
+# Test show-account-detail
+Show account details for a particular due_date
+    '$0 show-account-detail [0|1]'
+This will report the account details for the Obligation matching the due_date_index.
 
 
 HEREDOC
@@ -256,7 +274,7 @@ case $command in
     check_user_config
     due_date_index=${2:-0}
     if [[ ! "${due_date_index}" == "0" ]] && [[ ! "${due_date_index}" == "1" ]]; then
-        echo "ERROR: Parameter 1 must be 0 or 1"
+        echo "ERROR: Parameter #1 must be 0 or 1"
         exit 1
     fi
     show_vat_return $due_date_index
@@ -265,7 +283,7 @@ case $command in
     check_user_config
     due_date_index=${2:-0}
     if [[ ! "${due_date_index}" == "0" ]] && [[ ! "${due_date_index}" == "1" ]]; then
-        echo "ERROR: Parameter 1 must be 0 or 1"
+        echo "ERROR: Parameter #1 must be 0 or 1"
         exit 1
     fi
     show_account_summary $due_date_index
@@ -274,7 +292,7 @@ case $command in
     check_user_config
     due_date_index=${2:-0}
     if [[ ! "${due_date_index}" == "0" ]] && [[ ! "${due_date_index}" == "1" ]]; then
-        echo "ERROR: Parameter 1 must be 0 or 1"
+        echo "ERROR: Parameter #1 must be 0 or 1"
         exit 1
     fi
     show_account_detail $due_date_index
@@ -283,7 +301,7 @@ case $command in
     check_user_config
     due_date_index=${2:-0}
     if [[ ! "${due_date_index}" == "0" ]] && [[ ! "${due_date_index}" == "1" ]]; then
-        echo "ERROR: Parameter 1 must be 0 or 1"
+        echo "ERROR: Parameter #1 must be 0 or 1"
         exit 1
     fi
     submit_vat_return $due_date_index
