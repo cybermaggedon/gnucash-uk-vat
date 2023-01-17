@@ -8,3 +8,6 @@ gnucash_uk_vat.egg-info/
 auth.json
 config.json
 __pycache__
+/test/gnucash-uk-vat-test.json
+/setup.log
+/test/user.json

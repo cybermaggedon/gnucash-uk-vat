@@ -1,0 +1,37 @@
+{
+    "accounts": {
+        "kind": "piecash",
+        "file": "hmrc-test.sqlite3.gnucash",
+        "vatDueSales": "Retained Earnings Transfer Account:[AC435=AC36] :[AC32=CP44] :[AC26] :[AC16=CP14=CP39] :[AC12=CP7] :FRV@14.5%:0000-05",
+        "vatDueAcquisitions": "Retained Earnings Transfer Account:[AC435=AC36] :[AC32=CP44] :[AC26] :[AC16=CP14=CP39] :[AC12=CP7] :ZeroVatAccount",
+        "totalVatDue": "Retained Earnings Transfer Account:[AC435=AC36] :[AC32=CP44] :[AC26] :[AC16=CP14=CP39] :[AC12=CP7] :FRV@14.5%:0000-05",
+        "vatReclaimedCurrPeriod": "Retained Earnings Transfer Account:[AC435=AC36] :[AC32=CP44] :[AC26] :[AC16=CP14=CP39] :[AC12=CP7] :ZeroVatAccount",
+        "netVatDue": "Retained Earnings Transfer Account:[AC435=AC36] :[AC32=CP44] :[AC26] :[AC16=CP14=CP39] :[AC12=CP7] :FRV@14.5%:0000-05",
+        "totalValueSalesExVAT": "Retained Earnings Transfer Account:[AC435=AC36] :[AC32=CP44] :[AC26] :[AC16=CP14=CP39] :[AC12=CP7] :FRV Turnover:0000-05",
+        "totalValuePurchasesExVAT": "Retained Earnings Transfer Account:[AC435=AC36] :[AC32=CP44] :[AC26] :[AC16=CP14=CP39] :[AC12=CP7] :ZeroVatAccount",
+        "totalValueGoodsSuppliedExVAT": "Retained Earnings Transfer Account:[AC435=AC36] :[AC32=CP44] :[AC26] :[AC16=CP14=CP39] :[AC12=CP7] :ZeroVatAccount",
+        "totalAcquisitionsExVAT": "Retained Earnings Transfer Account:[AC435=AC36] :[AC32=CP44] :[AC26] :[AC16=CP14=CP39] :[AC12=CP7] :ZeroVatAccount",
+        "liabilities": "Retained Earnings Transfer Account:[AC435=AC36] :[AC32=CP44] :[AC26] :[AC16=CP14=CP39] :[AC12=CP7] :ZeroVatAccount",
+        "bills": "Retained Earnings Transfer Account:[AC435=AC36] :[AC32=CP44] :[AC26] :[AC16=CP14=CP39] :[AC12=CP7] :ZeroVatAccount"
+    },
+    "application": {
+        "profile": "test",
+        "client-id": "<CLIENT_ID>",
+        "client-secret": "<CLIENT-SECRET>",
+        "terms-and-conditions-url": "http://example.com/terms_and_conditions/"
+    },
+    "identity": {
+        "vrn": "<VRN>",
+        "device": {
+            "os-family": "Windows",
+            "os-version": "8.1",
+            "device-manufacturer": "ASUSTeK COMPUTER INC.",
+            "device-model": "G751JY",
+            "id": "12345678-1234-1234-1234-1234567890"
+        },
+        "user": "account_name",
+        "local-ip": "192.168.0.100",
+        "mac-address": "12:34:56:78:90:12",
+        "time": "2023-01-16T16:33:01.953Z"
+    }
+}

@@ -1,0 +1,62 @@
+#!/usr/bin/env python3
+
+# This calls the Fraud API test endpoint on sandbox.  Only useful for developers.
+import asyncio
+import sys
+import types
+import json
+import argparse
+
+import gnucash_uk_vat.hmrc as hmrc
+from gnucash_uk_vat.config import Config
+from gnucash_uk_vat.auth import Auth
+
+# Command-line argument parser
+parser = argparse.ArgumentParser(description="Gnucash to HMRC VAT API")
+parser.add_argument('--config', '-c',
+            default='gnucash-uk-vat-test.json',
+                    help='Configuration file (default: gnucash-uk-vat-test.json)')
+
+# Parse arguments
+args = parser.parse_args(sys.argv[1:])
+
+
+# Loads default config, user and auth
+config = Config(args.config)
+u = Config()
+a = Auth()
+
+# Use the sandbox service
+svc = hmrc.VatTest(config, a, u)
+
+# Call fraud API and dump out results.  This is gonna be a fail on lack of
+# gov-vendor-license-ids and gov-lient-multi-factor headers.
+
+def asyncrun(coro):
+    # Prevent "RuntimeError: Event loop is closed" on Windows
+    asyncio.set_event_loop_policy(asyncio.WindowsSelectorEventLoopPolicy())
+
+    # asyncio.run introduced in Python 3.7, just use that.
+    if sys.version_info >= (3, 7):
+        return asyncio.run(coro)
+
+    # Emulate asyncio.run()
+
+    # asyncio.run() requires a coro, so require it here as well
+    if not isinstance(coro, types.CoroutineType):
+        raise TypeError("run() requires a coroutine object")
+
+    loop = asyncio.new_event_loop()
+    asyncio.set_event_loop(loop)
+    try:
+        return loop.run_until_complete(coro)
+    finally:
+        loop.close()
+        asyncio.set_event_loop(None)
+
+try:
+    resp = asyncrun(svc.test_fraud_headers())
+    print(json.dumps(resp, indent=4))
+except Exception as e:
+    sys.stderr.write("Exception: %s\n" % e)
+    sys.exit(1)

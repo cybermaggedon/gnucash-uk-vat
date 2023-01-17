@@ -7,6 +7,7 @@ import asyncio
 from datetime import datetime, timedelta, date
 import requests
 import json
+import hashlib
 
 from . model import *
 
@@ -74,9 +75,10 @@ class AuthCollector:
 class Vat:
 
     # Constructor
-    def __init__(self, config, auth):
+    def __init__(self, config, auth, user):
         self.config = config
         self.auth = auth
+        self.user = user
 
         # Production API endpoints
         self.oauth_base = 'https://www.tax.service.gov.uk'
@@ -102,6 +104,12 @@ class Vat:
 
         return url + "?" + params
 
+    def get_auth_credentials(self):
+        auth_credentials = None
+        if self.user and self.user.get("userId") and self.user.get("password"):
+          auth_credentials = "    UserId: %s\n    Password: %s" % ( self.user.get("userId"), self.user.get("password") )
+        return auth_credentials
+
     # Co-routine implementation
     async def get_code_coro(self):
 
@@ -113,9 +121,13 @@ class Vat:
 
         # Send user to the URL
         url = self.get_auth_url()
+        auth_credentials = self.get_auth_credentials()
         
-        print("If you agree to the terms and conditions, visit the following URL and authenticate:")
+        print("If you agree to the terms and conditions, visit the following URL and authenticate:\n")
         print(url)
+        if auth_credentials:
+          print("Authenticate using this test user:")
+          print("%s" % auth_credentials)
 
         # Start auth code collector, and wait for it to finish
         a = AuthCollector("localhost", 9876)
@@ -241,12 +253,18 @@ class Vat:
         if dev_id == "":
             raise RuntimeError("identity.device.id not set")
 
+        product_name = self.config.get("application.product-name")
+        if product_name == "":
+            raise RuntimeError("application.product-name not set")
+
         ua = urlencode({
             "os-family": dev_os_fam,
             "os-version": dev_os_version,
             "device-manufacturer": dev_manuf,
             "device-model": dev_model
         })
+        
+        hashed_license_id = hashlib.sha1(b'GPL3').hexdigest()
 
         # Return headers
         return {
@@ -259,14 +277,14 @@ class Vat:
             'Gov-Client-Local-IPs-Timestamp': self.config.get("identity.time"),
             'Gov-Client-MAC-Addresses': mac,
             'Gov-Client-User-Agent': ua,
-            'Gov-Vendor-Version': 'gnucash-uk-vat=1.0',
-            'Gov-Vendor-Product-Name': 'gnucash-uk-vat',
+            'Gov-Vendor-Version': '%s=1.0' % product_name,
+            'Gov-Vendor-Product-Name': '%s' % product_name,
+            'Gov-Vendor-License-Ids': '%s=%s' % (product_name, hashed_license_id ),
             'Authorization': 'Bearer %s' % self.auth.get("access_token"),
         }
 
     # Test fraud headers.  Only available in Sandbox, not production
     async def test_fraud_headers(self):
-
         headers = self.build_fraud_headers()
         headers['Accept'] = 'application/vnd.hmrc.1.0+json'
 
@@ -476,30 +494,31 @@ class Vat:
 
 # Like VAT, but talks to test API endpoints.
 class VatTest(Vat):
-    def __init__(self, config, auth):
-        super().__init__(config, auth)
+    def __init__(self, config, auth, user):
+    
+        super().__init__(config, auth, user)
         self.oauth_base = 'https://test-www.tax.service.gov.uk'
         self.api_base = 'https://test-api.service.hmrc.gov.uk'
 
 # Like VAT, but talks to an API endpoints on localhost:8080.
 class VatLocalTest(Vat):
-    def __init__(self, config, auth):
-        super().__init__(config, auth)
+    def __init__(self, config, auth, user):
+        super().__init__(config, auth, user)
         self.oauth_base = 'http://localhost:8080'
         self.api_base = 'http://localhost:8080'
 
-def create(config, auth):
+def create(config, auth, user):
 
     # Get profile
     prof = config.get("application.profile")
 
     # Initialise API client endpoint based on selected profile
     if prof == "prod":
-        return Vat(config, auth)
+        return Vat(config, auth, user)
     elif prof == "test":
-        return VatTest(config, auth)
+        return VatTest(config, auth, user)
     elif prof == "local":
-        return VatLocalTest(config, auth)
+        return VatLocalTest(config, auth, user)
     else:
         raise RuntimeError("Profile '%s' is not known." % prof)
 

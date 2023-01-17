@@ -20,11 +20,20 @@ default_end = str(datetime.utcnow().date())
 
 # Command-line argument parser
 parser = argparse.ArgumentParser(description="Gnucash to HMRC VAT API")
+parser.add_argument('--userfile', '-u',
+            default='user.json',
+                    help='MTD test user file returned by ./get-test-user (default: user.json)')
+parser.add_argument('--gnucash', '-g',
+            default='accounts.sqlite3.gnucash',
+                    help='Target profile (default: test)')
+parser.add_argument('--profile', '-p',
+            default='test',
+                    help='Target profile (default: test)')
 parser.add_argument('--config', '-c',
-		    default='config.json',
+            default='config.json',
                     help='Configuration file (default: config.json)')
 parser.add_argument('--auth', '-a',
-		    default='auth.json',
+            default='auth.json',
                     help='File to store auth credentials (default: auth.json)')
 parser.add_argument('--init-config', action='store_true',
                     help='Initialise configuration file with template')
@@ -76,16 +85,20 @@ async def run():
     # Initialise configuration operation.  This goes here as configuration
     # can be initialised if no auth has been performed
     if args.init_config:
-        initialise_config(args.config)
+        initialise_config(args.config, args.profile, args.gnucash)
         sys.exit(0)
 
     # Initialise config and auth.  
     config = Config(args.config)
     auth = Auth(args.auth)
+    if  os.path.exists(args.userfile):
+      user = Config(args.userfile)
+    else:
+      user = None
 
-    h = hmrc.create(config, auth)
+    h = hmrc.create(config, auth, user)
 
-    # Authentication operation goes here.
+    # Authenticate HMRC [test]user with MTD API.
     if args.authenticate:
         await authenticate(h, auth)
         sys.exit(0)

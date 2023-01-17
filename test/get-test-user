@@ -6,10 +6,25 @@
 import requests
 import json
 import sys
+import argparse
 
-# Add your client ID and secret here
-client_id = "CLIENT_ID"
-client_secret = "CLIENT_SECRET"
+from gnucash_uk_vat.config import *
+
+# Command-line argument parser
+parser = argparse.ArgumentParser(description="Gnucash to HMRC VAT API")
+parser.add_argument('--config', '-c',
+            default='gnucash-uk-vat-test.json',
+                    help='Configuration file (default: gnucash-uk-vat-test.json)')
+parser.add_argument('--userfile', '-u',
+            default='user.json',
+                    help='MTD User file (default: user.json)')
+
+# Parse arguments
+args = parser.parse_args(sys.argv[1:])
+config = Config(args.config)
+
+client_id = config.get("application.client-id")
+client_secret = config.get("application.client-secret")
 
 headers = {
     "content-type": "application/x-www-form-urlencoded",
@@ -52,8 +67,6 @@ if resp.status_code != 201:
     print(resp.text)
     sys.exit(1)
 
-#print(json.dumps(resp.json(), indent=4))
-
 user = resp.json()
 
 def present(x):
@@ -62,4 +75,9 @@ def present(x):
 print("User:      ", present(user["userId"]))
 print("Password:  ", present(user["password"]))
 print("VRN:       ", present(user["vrn"]))
+
+with open(args.userfile, "w") as user_file:
+    user_file.write(json.dumps(user, indent=4))
+
+
 

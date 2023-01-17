@@ -33,7 +33,7 @@ class Config:
 
 # Initialise configuration file with some (mainly) static values.  Also,
 # collate personal information for the Fraud API.
-def initialise_config(config_file):
+def initialise_config(config_file, profile_name):
 
     # This gets hold of the MAC address, which the uuid module knows.
     # FIXME: Hacky.
@@ -67,7 +67,7 @@ def initialise_config(config_file):
             "bills": "Accounts Payable"
         },
         "application": {
-            "profile": "prod",
+            "profile": profile_name,
             "client-id": "<CLIENT ID>",
             "client-secret": "<SECRET>",
             "terms-and-conditions-url": "http://example.com/terms_and_conditions/"
