@@ -4,7 +4,7 @@ Open a console (Git Bash for Windows) in the 'test' directory.
 # Help
 Display the help using:
 
-./unit-test.sh help
+    ./unit-test.sh help
 
 # Overview
 Script to launch various commands required to unit-test the gnucash-uk-vat bridging application.
@@ -17,9 +17,11 @@ See ../README.md for instruction on how to run the setup.sh.
 # Initial setup
 The first time the './unit-test.sh config' command is run, it checks for:
 1. gnucash-uk-vat script
+
    If this is missing, the 'setup.sh' hasn't been run yet.
    See 'Requirements' section above.
 2. User configuration file
+
    The 'gnucash-uk-vat --init-config' command will use the default values
    stored in a private User/Profile specific configuration file:
 
@@ -36,6 +38,7 @@ The first time the './unit-test.sh config' command is run, it checks for:
 
      b) 'accounts' section: Add GnuCash accounts for the test gnucash data
         file: hmrc-test.sqlite3.gnucash
+
         See the config.example.json for the accounts that should be used
         to test with the hmrc-test.sqlite3.gnucash data file.
 
