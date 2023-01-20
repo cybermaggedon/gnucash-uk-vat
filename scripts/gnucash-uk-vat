@@ -88,7 +88,7 @@ async def run():
     # Initialise configuration operation.  This goes here as configuration
     # can be initialised if no auth has been performed
     if args.init_config:
-        initialise_config(args.config, args.profile, args.gnucash)
+        initialise_config(args.config, args.profile, args.gnucash, args.userfile)
         sys.exit(0)
 
     # Initialise config and auth.  

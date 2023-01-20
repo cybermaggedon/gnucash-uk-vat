@@ -7,10 +7,27 @@ profile=test
 gnucash_file=hmrc-test.sqlite3.gnucash
 config_file=gnucash-uk-vat-${profile}.json
 user_config_file=".${config_file}"
-due_date_list=("2017-05-07" "2017-08-07")
+
+start_date_list=("2017-01-01" "2017-04-01" "2017-01-01" "2017-01-01")
+end_date_list=(  "2017-03-31" "2017-06-30" "2017-12-31" "2017-12-31")
+due_date_list=(  "2017-05-07" "2017-08-07" "2017-05-07" "2017-08-07")
 
 # NOTE: This needs updating each time a command is added
-valid_commands=( config create-user auth test-fraud show-obligations show-open-obligations show-payments show-liabilities submit-vat-return show-vat-return show-account-summary show-account-detail help )
+valid_commands=( 
+    config 
+    create-user 
+    auth 
+    test-fraud 
+    show-obligations 
+    show-open-obligations 
+    show-payments 
+    show-liabilities 
+    submit-vat-return 
+    show-vat-return 
+    show-account-summary 
+    show-account-detail 
+    help 
+)
 
 
 help_string=$( cat <<HEREDOC
@@ -83,26 +100,45 @@ NOTE #2: This command assumes the application associated with the client-id in
          in 'API Subscriptions' when viewin application details from here:
          https://developer.service.hmrc.gov.uk/developer/applications
 
-# Test show-obligations
-Show all obligations for the test year
+# show-obligations
+Show all obligations in MTD for the test year
     '$0 show-obligations'
 This should show both Finished and Open VAT obligations.
 
-# Test show-open-obligations
-Show all open obligations for the test year
+# show-open-obligations
+Show all open obligations in MTD for the test year
     '$0 show-open-obligations'
 This should only show Open VAT obligations.
 
-# Test show-account-summary
-Show account summary for a particular due_date
+# show-account-summary
+Show GnuCash account summary for a particular due_date
     '$0 show-account-summary [0|1]'
 This will report the account summary for the Obligation matching the due_date_index.
 
-# Test show-account-detail
-Show account details for a particular due_date
+# show-account-detail
+Show GnuCash account details for a particular due_date
     '$0 show-account-detail [0|1]'
 This will report the account details for the Obligation matching the due_date_index.
 
+# show-liabilities
+Show VAT liabilities for start and end dates
+    '$0 show-liabilities'
+This will report the current liabilities matching the due_date_index.
+
+# show-payments
+Show VAT payments for start and end dates
+    '$0 show-payments'
+This will report the VAT payments matching the due_date_index.
+
+# show-vat-return
+Show VAT return for due dates
+    '$0 show-payments [0|1]'
+This will report the VAT returns matching the due_date_index.
+
+# submit-vat-return
+Show VAT payments for due dates
+    '$0 show-payments [0|1]'
+This will submit VAT return matching the due_date_index.
 
 HEREDOC
 )
@@ -192,13 +228,20 @@ show_liabilities() {
 show_vat_return() {
   echo "Show previous Vat Return against MTD website..."
 
+  start_date_index=${1:-0}
+  start_date=${start_date_list[${start_date_index}]}
+  echo "start_date=${start_date}"
+
+  end_date_index=${1:-0}
+  end_date=${end_date_list[${end_date_index}]}
+  echo "end_date=${end_date}"
+
   due_date_index=${1:-0}
   due_date=${due_date_list[${due_date_index}]}
-  
   echo "due_date=${due_date}"
 
   # Check for vat returns.
-  python -u $(dirname $(which python))/scripts/gnucash-uk-vat --due-date "${due_date}" --start "2017-01-01"  --end "2017-12-31" --show-vat-return --config ${config_file} --json
+  python -u $(dirname $(which python))/scripts/gnucash-uk-vat --due-date "${due_date}" --start "${start_date}"  --end "${end_date}" --show-vat-return --config ${config_file} --json
 }
 
 show_account_summary() {
@@ -206,7 +249,6 @@ show_account_summary() {
 
   due_date_index=${1:-0}
   due_date=${due_date_list[${due_date_index}]}
-  
   echo "due_date=${due_date}"
 
   # Check for vat returns.
@@ -218,7 +260,6 @@ show_account_detail() {
 
   due_date_index=${1:-0}
   due_date=${due_date_list[${due_date_index}]}
-  
   echo "due_date=${due_date}"
 
   # Check for vat returns.
@@ -230,7 +271,6 @@ submit_vat_return() {
 
   due_date_index=${1:-0}
   due_date=${due_date_list[${due_date_index}]}
-  
   echo "due_date=${due_date}"
 
   # Check for vat returns.
@@ -273,7 +313,7 @@ case $command in
   show-vat-return)
     check_user_config
     due_date_index=${2:-0}
-    if [[ ! "${due_date_index}" == "0" ]] && [[ ! "${due_date_index}" == "1" ]]; then
+    if [[ ! "${due_date_index}" == "0" ]] && [[ ! "${due_date_index}" == "1" ]] && [[ ! "${due_date_index}" == "2" ]] && [[ ! "${due_date_index}" == "3" ]]; then
         echo "ERROR: Parameter #1 must be 0 or 1"
         exit 1
     fi
@@ -282,7 +322,7 @@ case $command in
   show-account-summary)
     check_user_config
     due_date_index=${2:-0}
-    if [[ ! "${due_date_index}" == "0" ]] && [[ ! "${due_date_index}" == "1" ]]; then
+    if [[ ! "${due_date_index}" == "0" ]] && [[ ! "${due_date_index}" == "1" ]] && [[ ! "${due_date_index}" == "2" ]] && [[ ! "${due_date_index}" == "3" ]]; then
         echo "ERROR: Parameter #1 must be 0 or 1"
         exit 1
     fi
@@ -291,7 +331,7 @@ case $command in
   show-account-detail)
     check_user_config
     due_date_index=${2:-0}
-    if [[ ! "${due_date_index}" == "0" ]] && [[ ! "${due_date_index}" == "1" ]]; then
+    if [[ ! "${due_date_index}" == "0" ]] && [[ ! "${due_date_index}" == "1" ]] && [[ ! "${due_date_index}" == "2" ]] && [[ ! "${due_date_index}" == "3" ]]; then
         echo "ERROR: Parameter #1 must be 0 or 1"
         exit 1
     fi
@@ -300,7 +340,7 @@ case $command in
   submit-vat-return)
     check_user_config
     due_date_index=${2:-0}
-    if [[ ! "${due_date_index}" == "0" ]] && [[ ! "${due_date_index}" == "1" ]]; then
+    if [[ ! "${due_date_index}" == "0" ]] && [[ ! "${due_date_index}" == "1" ]] && [[ ! "${due_date_index}" == "2" ]] && [[ ! "${due_date_index}" == "3" ]]; then
         echo "ERROR: Parameter #1 must be 0 or 1"
         exit 1
     fi
