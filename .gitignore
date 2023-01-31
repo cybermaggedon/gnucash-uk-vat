@@ -13,3 +13,5 @@ __pycache__
 /test/gnucash-uk-vat-test.json
 /setup.log
 /test/user.json
+/test/setup.log
+/test/hmrc-test.sqlite3.gnucash.test.json

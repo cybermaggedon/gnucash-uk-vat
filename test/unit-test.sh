@@ -5,9 +5,10 @@
 # This uses the HMRC test sandbox
 profile=test
 gnucash_file=hmrc-test.sqlite3.gnucash
-config_file=gnucash-uk-vat-${profile}.json
+config_file=${gnucash_file}.${profile}.json
 user_config_file=".${config_file}"
 
+# Index into test data stored in gnuCash accounts and MTD test system.
 start_date_list=("2017-01-01" "2017-04-01" "2017-01-01" "2017-01-01")
 end_date_list=(  "2017-03-31" "2017-06-30" "2017-12-31" "2017-12-31")
 due_date_list=(  "2017-05-07" "2017-08-07" "2017-05-07" "2017-08-07")
@@ -71,6 +72,7 @@ NOTE: The 'identity.vrn' field can't be populated until there is an
 When using the test (sandbox) profile, you will need to create a test user (Don't use your HMRC production credentials!)
     '$0 user'
 This creates a user in the MTD system and downloads the users details into user.json
+It also updates the config fiel with the new VRN.
 NOTE: This command assumes the application associated with the client-id in 
           ${config_file}
       has been configured to access the 'Create Test User' endpoint 
@@ -112,12 +114,12 @@ This should only show Open VAT obligations.
 
 # show-account-summary
 Show GnuCash account summary for a particular due_date
-    '$0 show-account-summary [0|1]'
+    '$0 show-account-summary [0|1|2|3]'
 This will report the account summary for the Obligation matching the due_date_index.
 
 # show-account-detail
 Show GnuCash account details for a particular due_date
-    '$0 show-account-detail [0|1]'
+    '$0 show-account-detail [0|1|2|3]'
 This will report the account details for the Obligation matching the due_date_index.
 
 # show-liabilities
@@ -132,12 +134,12 @@ This will report the VAT payments matching the due_date_index.
 
 # show-vat-return
 Show VAT return for due dates
-    '$0 show-payments [0|1]'
+    '$0 show-vat-return [0|1|2|3]'
 This will report the VAT returns matching the due_date_index.
 
 # submit-vat-return
 Show VAT payments for due dates
-    '$0 show-payments [0|1]'
+    '$0 submit-vat-return [0|1|2|3]'
 This will submit VAT return matching the due_date_index.
 
 HEREDOC
@@ -170,10 +172,16 @@ check_user_config() {
       else
         # Create a default user config file for testing
         python $(dirname $(which python))/scripts/gnucash-uk-vat --init-config --config ${user_config_file} --profile ${profile} --gnucash ${gnucash_file}
-        echo "Created: ${HOME}/${user_config_file}"
-        echo "Now update the 'accounts' and 'application' stanzas for the environment being tested against"
-        echo "These will be used to populate config files used in tests. Missing fields will be ignored."
-        echo "Once configured to your requirements, re-run your command."
+        return_code=$?
+        if [[ $return_code -ne 0 ]]; then
+            echo "[ERROR] Failed to create users static gnucash config file: ${user_config_file}"
+            exit 1
+        else
+            echo "Created: ${HOME}/${user_config_file}"
+            echo "Now update the 'accounts' and 'application' stanzas for the environment being tested against"
+            echo "These will be used to populate config files used in tests. Missing fields will be ignored."
+            echo "Once configured to your requirements, re-run your command."
+        fi
       fi
       popd 2>&1 > /dev/null
       exit 1
@@ -285,6 +293,7 @@ case $command in
   create-user)
     check_user_config
     user
+    config
     ;;
   auth)
     check_user_config

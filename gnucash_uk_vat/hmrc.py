@@ -280,6 +280,7 @@ class Vat:
             'Gov-Vendor-Version': '%s=1.0' % product_name,
             'Gov-Vendor-Product-Name': '%s' % product_name,
             'Gov-Vendor-License-Ids': '%s=%s' % (product_name, hashed_license_id ),
+            'Gov-Client-Multi-Factor': '',
             'Authorization': 'Bearer %s' % self.auth.get("access_token"),
         }
 
@@ -287,6 +288,10 @@ class Vat:
     async def test_fraud_headers(self):
         headers = self.build_fraud_headers()
         headers['Accept'] = 'application/vnd.hmrc.1.0+json'
+        
+        print("Collected Fraud Headers:")
+        print(json.dumps(headers, sort_keys=True, indent=4, default=str))
+        
 
         url = self.api_base + '/test/fraud-prevention-headers/validate'
 

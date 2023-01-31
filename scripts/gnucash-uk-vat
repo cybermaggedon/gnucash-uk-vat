@@ -85,19 +85,21 @@ async def run():
         assist.run(args.config, args.auth)
         sys.exit(0)
 
+    if  os.path.exists(args.userfile):
+      user = Config(args.userfile)
+    else:
+      user = None
+
     # Initialise configuration operation.  This goes here as configuration
     # can be initialised if no auth has been performed
     if args.init_config:
-        initialise_config(args.config, args.profile, args.gnucash, args.userfile)
+        # NOTE: user may be none 
+        initialise_config(args.config, args.profile, args.gnucash, user)
         sys.exit(0)
 
     # Initialise config and auth.  
     config = Config(args.config)
     auth = Auth(args.auth)
-    if  os.path.exists(args.userfile):
-      user = Config(args.userfile)
-    else:
-      user = None
 
     print_json = args.json
     h = hmrc.create(config, auth, user)
