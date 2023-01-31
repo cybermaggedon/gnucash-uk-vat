@@ -10,11 +10,13 @@ configFilename = "gnucash_uk_vat/config.py"
 # Inject the product_version into configFilename
 fin = open(configFilename, "rt")
 data = fin.read()
-data = re.sub("product_version[ ]*=[ ]*\"[0-9\.]+\"", "product_version = \"%s\"" % productVersion, data, count=1)
 fin.close()
-fin = open(configFilename, "wt")
-fin.write(data)
-fin.close()
+# Only update if changed
+if not re.search("product_version[ ]*=[ ]*\"%s\"" % productVersion, data):
+    data = re.sub("product_version[ ]*=[ ]*\"[0-9\.]+\"", "product_version = \"%s\"" % productVersion, data, count=1)
+    fout = open(configFilename, "wt")
+    fout.write(data)
+    fout.close()
 
 setuptools.setup(
     name="gnucash-uk-vat",
