@@ -6,12 +6,15 @@ import getpass
 import socket
 import sys
 import netifaces
+import git
 from pprint import pprint
 
 from datetime import datetime
 from pathlib import Path
 
 from . device import get_device
+
+PRODUCT_MAJOR_MINOR_VERSION = "1.0"
 
 # Configuration object, loads configuration from a JSON file, and then
 # supports path navigate with config.get("part1.part2.part3")
@@ -22,7 +25,10 @@ class Config:
     def get(self, key):
         cfg = self.config
         for v in key.split("."):
-            cfg = cfg[v]
+            if v in cfg.keys():
+                cfg = cfg[v]
+            else:
+                cfg = None
         return cfg
     def set(self, key, value):
         cfg = self.config
@@ -56,8 +62,6 @@ def get_gateway_mac():
 # collate personal information for the Fraud API.
 def initialise_config(config_file, profile_name, gnucashFile, user):
 
-    
-    
     # User static config is stored in the HOME directory mashes gnucash_filename and the profile_name
     gnucash_filename = Path(gnucashFile).name
     gnucash_userfile = os.path.join(os.environ.get('HOME'),".%s.%s.json" % (gnucash_filename,profile_name))
@@ -80,6 +84,11 @@ def initialise_config(config_file, profile_name, gnucashFile, user):
     local_ip = get_gateway_ip()
 
     di = get_device_config()
+    
+    # Use git commit count as a build number in product-version
+    git_repo = git.Repo(search_parent_directories=True)
+    git_commits = list(git_repo.iter_commits('HEAD'))
+    git_count = len(git_commits)
 
     vatDueSales = "VAT:Output:Sales" 
     vatDueAcquisitions = "VAT:Output:EU"
@@ -93,6 +102,7 @@ def initialise_config(config_file, profile_name, gnucashFile, user):
     liabilities = "VAT:Liabilities"
     bills = "Accounts Payable"
     product_name = "gnucash-uk-vat"
+    product_version = "%s.%s" % (PRODUCT_MAJOR_MINOR_VERSION, git_count)
     client_id = "<CLIENT ID>"
     client_secret = "<SECRET>"
     terms_and_conditions_url = "http://example.com/terms_and_conditions/"
@@ -113,6 +123,7 @@ def initialise_config(config_file, profile_name, gnucashFile, user):
         liabilities = gnucash_user.get("accounts.liabilities") if gnucash_user.get("accounts.liabilities") else liabilities
         bills = gnucash_user.get("accounts.bills") if gnucash_user.get("accounts.bills") else bills
         product_name = gnucash_user.get("application.product-name") if gnucash_user.get("application.product-name") else product_name
+        product_version = product_version
         client_id = gnucash_user.get("application.client-id") if gnucash_user.get("application.client-id") else client_id
         client_secret = gnucash_user.get("application.client-secret") if gnucash_user.get("application.client-secret") else client_secret
         terms_and_conditions_url = gnucash_user.get("application.terms-and-conditions-url") if gnucash_user.get("application.terms-and-conditions-url") else terms_and_conditions_url
@@ -139,6 +150,7 @@ def initialise_config(config_file, profile_name, gnucashFile, user):
         "application": {
             "profile": profile_name,
             "product-name": product_name,
+            "product-version": product_version,
             "client-id": client_id,
             "client-secret": client_secret,
             "terms-and-conditions-url": terms_and_conditions_url
@@ -156,6 +168,7 @@ def initialise_config(config_file, profile_name, gnucashFile, user):
     # Special case when initialising the users static config in the HOME dir
     if Path(gnucash_userfile).name == Path(config_file).name:
         del config["identity"]
+        del config["application.product-version"]
 
     with open(config_file, "w") as cfg_file:
         cfg_file.write(json.dumps(config, indent=4))

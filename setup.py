@@ -27,6 +27,7 @@ setuptools.setup(
         'piecash',
         'netifaces',
         'tabulate',
+        'GitPython',
     ],
     scripts=[
         "scripts/gnucash-uk-vat",

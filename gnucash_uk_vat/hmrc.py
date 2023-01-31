@@ -256,6 +256,9 @@ class Vat:
         product_name = self.config.get("application.product-name")
         if product_name == "":
             raise RuntimeError("application.product-name not set")
+        product_version = self.config.get("application.product-version")
+        if product_version == "":
+            raise RuntimeError("application.product-version not set")
 
         ua = urlencode({
             "os-family": dev_os_fam,
@@ -277,7 +280,7 @@ class Vat:
             'Gov-Client-Local-IPs-Timestamp': self.config.get("identity.time"),
             'Gov-Client-MAC-Addresses': mac,
             'Gov-Client-User-Agent': ua,
-            'Gov-Vendor-Version': '%s=1.0' % product_name,
+            'Gov-Vendor-Version': '%s=%s' % (product_name,product_version),
             'Gov-Vendor-Product-Name': '%s' % product_name,
             'Gov-Vendor-License-Ids': '%s=%s' % (product_name, hashed_license_id ),
             'Gov-Client-Multi-Factor': '',
