@@ -14,7 +14,7 @@ from gnucash_uk_vat.auth import Auth
 # Command-line argument parser
 parser = argparse.ArgumentParser(description="Gnucash to HMRC VAT API")
 parser.add_argument('--config', '-c',
-            default='gnucash-uk-vat-test.json',
+            default='config.json',
                     help='Configuration file (default: gnucash-uk-vat-test.json)')
 
 # Parse arguments

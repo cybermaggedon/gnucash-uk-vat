@@ -210,7 +210,7 @@ auth() {
 
 test_fraud() {
   echo "Test Fraud Prevention Headers against MTD website..."
-  python -u test-fraud-api
+  python -u test-fraud-api --config  ${config_file}
 }
 
 show_open_obligations() {

@@ -94,6 +94,7 @@ def initialise_config(config_file, profile_name, gnucashFile, user):
         totalAcquisitionsExVAT = gnucash_user.get("accounts.totalAcquisitionsExVAT") if gnucash_user.get("accounts.totalAcquisitionsExVAT") else totalAcquisitionsExVAT
         liabilities = gnucash_user.get("accounts.liabilities") if gnucash_user.get("accounts.liabilities") else liabilities
         bills = gnucash_user.get("accounts.bills") if gnucash_user.get("accounts.bills") else bills
+        product_name = gnucash_user.get("application.product-name") if gnucash_user.get("application.product-name") else product_name
         client_id = gnucash_user.get("application.client-id") if gnucash_user.get("application.client-id") else client_id
         client_secret = gnucash_user.get("application.client-secret") if gnucash_user.get("application.client-secret") else client_secret
         terms_and_conditions_url = gnucash_user.get("application.terms-and-conditions-url") if gnucash_user.get("application.terms-and-conditions-url") else terms_and_conditions_url

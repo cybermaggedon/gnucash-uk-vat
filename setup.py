@@ -25,6 +25,7 @@ setuptools.setup(
         'py-dmidecode',
         'requests',
         'piecash',
+        'netifaces',
         'tabulate',
     ],
     scripts=[
