@@ -5,6 +5,9 @@ import os
 import getpass
 import socket
 import sys
+import netifaces
+from pprint import pprint
+
 from datetime import datetime
 from pathlib import Path
 
@@ -32,10 +35,29 @@ class Config:
         with open(self.file, "w") as config_file:
             config_file.write(json.dumps(self.config, indent=4))
 
+def get_default_gateway_if():
+    gateways = netifaces.gateways()
+    default_gateway_if = gateways['default'][netifaces.AF_INET][1]
+    ifaddresses = netifaces.ifaddresses(default_gateway_if)
+    return ifaddresses
+
+def get_gateway_ip():
+    default_gateway_if = get_default_gateway_if()
+    ip_addr = default_gateway_if[netifaces.AF_INET][0]['addr']
+    return ip_addr
+
+def get_gateway_mac():
+    default_gateway_if = get_default_gateway_if()
+    mac_addr = default_gateway_if[netifaces.AF_LINK][0]['addr']
+    return mac_addr
+
+
 # Initialise configuration file with some (mainly) static values.  Also,
 # collate personal information for the Fraud API.
 def initialise_config(config_file, profile_name, gnucashFile, user):
 
+    
+    
     # User static config is stored in the HOME directory mashes gnucash_filename and the profile_name
     gnucash_filename = Path(gnucashFile).name
     gnucash_userfile = os.path.join(os.environ.get('HOME'),".%s.%s.json" % (gnucash_filename,profile_name))
@@ -49,17 +71,13 @@ def initialise_config(config_file, profile_name, gnucashFile, user):
     # This gets hold of the MAC address, which the uuid module knows.
     # FIXME: Hacky.
     try:
-        mac = uuid.getnode()
-        print("raw-mac-address: %s" % mac)
-        mac = [
-            '{:02x}'.format((mac >> ele) & 0xff)
-            for ele in range(0,8*6,8)
-        ][::-1]
-        mac = ':'.join(mac)
+        mac = get_gateway_mac()
         print("mac-address: %s" % mac)
     except:
         # Fallback.
         mac = '00:00:00:00:00:00'
+
+    local_ip = get_gateway_ip()
 
     di = get_device_config()
 
@@ -129,7 +147,7 @@ def initialise_config(config_file, profile_name, gnucashFile, user):
             "vrn": vrn,
             "device": di,
             "user": getpass.getuser(),
-            "local-ip": socket.gethostbyname(socket.gethostname()),
+            "local-ip": local_ip,
             "mac-address": mac,
             "time": datetime.utcnow().isoformat()[:-3] + "Z"
         }
