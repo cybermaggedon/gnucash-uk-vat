@@ -177,7 +177,7 @@ def get_device_config():
 
     return {
         'os-family': uname.system,
-	'os-version': uname.release,
+        'os-version': uname.release,
         'device-manufacturer': dmi["manufacturer"],
         'device-model': dmi["model"],
         'id': str(uuid.uuid1()),
