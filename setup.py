@@ -1,10 +1,24 @@
 import setuptools
 import re
+import git
+
+PRODUCT_BASE_VERSION = "1.5"
 
 with open("README.md", "r") as fh:
     long_description = fh.read()
 
-productVersion = "1.5.2"
+uncommitted = True
+try:
+    # Use git commit count as a build number in product-version
+    git_repo = git.Repo(search_parent_directories=True)
+    uncommitted = git_repo.is_dirty()
+    git_commits = list(git_repo.iter_commits('HEAD'))
+    git_count = len(git_commits)
+except Exception as git_exception:
+    git_count = 9999
+    raise Exception("[ERROR] Couldn't calculate the GIT commit count! Is this a git checkout?")
+
+productVersion = "%s.%s" % (PRODUCT_BASE_VERSION, git_count)
 configFilename = "gnucash_uk_vat/config.py"
 
 # Inject the product_version into configFilename
@@ -42,6 +56,7 @@ setuptools.setup(
         'piecash',
         'netifaces',
         'tabulate',
+        'GitPython',
     ],
     scripts=[
         "scripts/gnucash-uk-vat",

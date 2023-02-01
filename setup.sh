@@ -4,8 +4,6 @@
 if [[ $(sfc 2>&1 | tr -d '\0') =~ SCANNOW ]]; then 
 	if [[ -f $(dirname $(which python))/scripts/gnucash-uk-vat ]]; then
 	  echo "Update gnucash-uk-vat"
-# The '--force-reinstall' was a bit savage
-#	  python -m pip install --upgrade --force-reinstall . 2>&1 | tee setup.log 
 	  python -m pip install --upgrade . 2>&1 | tee setup.log 
 	else
 	  echo "Install gnucash-uk-vat"
