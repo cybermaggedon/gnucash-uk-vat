@@ -1,5 +1,6 @@
 #!/usr/bin/env python3
 
+import os
 import sys
 import argparse
 import json
@@ -170,8 +171,9 @@ async def run():
         raise RuntimeError("No operation specified.  Try --assist option.")
 
 def asyncrun(coro):
-    # Prevent "RuntimeError: Event loop is closed" on Windows
-    asyncio.set_event_loop_policy(asyncio.WindowsSelectorEventLoopPolicy())
+    if os.name == 'nt':
+        # Prevent "RuntimeError: Event loop is closed" on Windows
+        asyncio.set_event_loop_policy(asyncio.WindowsSelectorEventLoopPolicy())
 
     # asyncio.run introduced in Python 3.7, just use that.
     if sys.version_info >= (3, 7):
