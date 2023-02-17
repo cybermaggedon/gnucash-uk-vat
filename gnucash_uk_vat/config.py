@@ -13,14 +13,18 @@ from pathlib import Path
 from . device import get_device
 
 # BEWARE: This version number is injected by setup.py
-product_version = "1.5.141"
+product_version = "1.5.142"
 
 # Configuration object, loads configuration from a JSON file, and then
 # supports path navigate with config.get("part1.part2.part3")
 class Config:
-    def __init__(self, file="config.json"):
+    def __init__(self, file="config.json", config=None):
         self.file = file
-        self.config = json.loads(open(file).read())
+        if config:
+            # Used to populate default values when creating new config
+            self.config = config
+        else:
+            self.config = json.loads(open(file).read())
     def get(self, key):
         cfg = self.config
         for v in key.split("."):
@@ -29,12 +33,14 @@ class Config:
             else:
                 cfg = None
         return cfg
-    def set(self, key, value):
-        cfg = self.config
-        keys = key.split(".")
-        for v in keys[:-1]:
-            cfg = cfg[v]
-        cfg[keys[-1]] = value
+    def set(self, key, value, applyNone=True):
+        # Should 'set' ignore value==None
+        if value or ( not value and applyNone ):
+            cfg = self.config
+            keys = key.split(".")
+            for v in keys[:-1]:
+                cfg = cfg[v]
+            cfg[keys[-1]] = value
     # Write back to file
     def write(self):
         with open(self.file, "w") as config_file:
@@ -57,96 +63,80 @@ def get_gateway_mac():
     return mac_addr
 
 
-# Initialise configuration file with some (mainly) static values.  Also,
-# collate personal information for the Fraud API.
+
+# Initialise/update configuration file.
+# Order of precedence:
+#    1. private user config, if exists
+#    2. current config, if exists
+#    3. static config defaults from this function
+# Also, collate personal information for the Fraud API.
 def initialise_config(config_file, profile_name, gnucashFile, user):
 
-    # User static config is stored in the HOME directory mashes gnucash_filename and the profile_name
-    gnucash_filename = Path(gnucashFile).name
-    gnucash_userfile = os.path.join(os.environ.get('HOME'),".%s.%s.json" % (gnucash_filename,profile_name))
-
-    gnucash_user = None
-    if  os.path.exists(gnucash_userfile):
-      gnucash_user = Config(gnucash_userfile)
-    else:
-      print("Test userfile is missing so VRN cannot be set at the moment", end="\n")
+    # Strip away the path if present
+    config_filename = Path(config_file).name
+    config_path = Path(config_file).parent
+    user_home = os.environ.get('HOME')
+    
+    config_private_filename = os.path.join(os.environ.get('HOME'),".%s" % (config_filename))
+    config_private = None
+    config_current = None
 
     try:
         mac = get_gateway_mac()
-        print("mac-address: %s" % mac)
     except:
         # Fallback.
         mac = '00:00:00:00:00:00'
 
     local_ip = get_gateway_ip()
-
     di = get_device_config()
-    
-    vatDueSales = "VAT:Output:Sales" 
-    vatDueAcquisitions = "VAT:Output:EU"
-    totalVatDue = "VAT:Output"
-    vatReclaimedCurrPeriod = "VAT:Input"
-    netVatDue = "VAT"
-    totalValueSalesExVAT = "Income:Sales"
-    totalValuePurchasesExVAT = "Expenses:VAT Purchases"
-    totalValueGoodsSuppliedExVAT = "Income:Sales:EU:Goods"
-    totalAcquisitionsExVAT = "Expenses:VAT Purchases:EU Reverse VAT"
-    liabilities = "VAT:Liabilities"
-    bills = "Accounts Payable"
-    product_name = "gnucash-uk-vat"
-    client_id = "<CLIENT ID>"
-    client_secret = "<SECRET>"
-    terms_and_conditions_url = "http://example.com/terms_and_conditions/"
-    vrn = "<VRN>"
 
-    # If default file exists and it's not initialising the gnucash_user 
-    if gnucash_user:
-        # use the defaults to create the new config file
-        vatDueSales = gnucash_user.get("accounts.vatDueSales") if gnucash_user.get("accounts.vatDueSales") else vatDueSales 
-        vatDueAcquisitions = gnucash_user.get("accounts.vatDueAcquisitions") if gnucash_user.get("accounts.vatDueAcquisitions") else vatDueAcquisitions
-        totalVatDue = gnucash_user.get("accounts.totalVatDue") if gnucash_user.get("accounts.totalVatDue") else totalVatDue
-        vatReclaimedCurrPeriod = gnucash_user.get("accounts.vatReclaimedCurrPeriod") if gnucash_user.get("accounts.vatReclaimedCurrPeriod") else vatReclaimedCurrPeriod
-        netVatDue = gnucash_user.get("accounts.netVatDue") if gnucash_user.get("accounts.netVatDue") else netVatDue
-        totalValueSalesExVAT = gnucash_user.get("accounts.totalValueSalesExVAT") if gnucash_user.get("accounts.totalValueSalesExVAT") else totalValueSalesExVAT
-        totalValuePurchasesExVAT = gnucash_user.get("accounts.totalValuePurchasesExVAT") if gnucash_user.get("accounts.totalValuePurchasesExVAT") else totalValuePurchasesExVAT
-        totalValueGoodsSuppliedExVAT = gnucash_user.get("accounts.totalValueGoodsSuppliedExVAT") if gnucash_user.get("accounts.totalValueGoodsSuppliedExVAT") else totalValueGoodsSuppliedExVAT
-        totalAcquisitionsExVAT = gnucash_user.get("accounts.totalAcquisitionsExVAT") if gnucash_user.get("accounts.totalAcquisitionsExVAT") else totalAcquisitionsExVAT
-        liabilities = gnucash_user.get("accounts.liabilities") if gnucash_user.get("accounts.liabilities") else liabilities
-        bills = gnucash_user.get("accounts.bills") if gnucash_user.get("accounts.bills") else bills
-        product_name = gnucash_user.get("application.product-name") if gnucash_user.get("application.product-name") else product_name
-        client_id = gnucash_user.get("application.client-id") if gnucash_user.get("application.client-id") else client_id
-        client_secret = gnucash_user.get("application.client-secret") if gnucash_user.get("application.client-secret") else client_secret
-        terms_and_conditions_url = gnucash_user.get("application.terms-and-conditions-url") if gnucash_user.get("application.terms-and-conditions-url") else terms_and_conditions_url
+#    vatDueSales = "VAT:Output:Sales" 
+#    vatDueAcquisitions = "VAT:Output:EU"
+#    totalVatDue = "VAT:Output"
+#    vatReclaimedCurrPeriod = "VAT:Input"
+#    netVatDue = "VAT"
+#    totalValueSalesExVAT = "Income:Sales"
+#    totalValuePurchasesExVAT = "Expenses:VAT Purchases"
+#    totalValueGoodsSuppliedExVAT = "Income:Sales:EU:Goods"
+#    totalAcquisitionsExVAT = "Expenses:VAT Purchases:EU Reverse VAT"
+#    liabilities = "VAT:Liabilities"
+#    bills = "Accounts Payable"
+#    product_name = "gnucash-uk-vat"
+#    client_id = "<CLIENT ID>"
+#    client_secret = "<CLIENT_SECRET>"
+    terms_and_conditions_url = None
+#    vrn = "<VRN>"
 
-    if user:
-        vrn = user.get("vrn") if user.get("vrn") else vrn
-
-    config = {
+    configDefaults = {
+        "dates": {
+            "start": "2017-01-01",
+            "end": "2017-03-31",
+            "due": "2017-05-07"
+        },
         "accounts": {
             "kind": "piecash",
             "file": gnucashFile,
-            "vatDueSales": vatDueSales,
-            "vatDueAcquisitions": vatDueAcquisitions,
-            "totalVatDue": totalVatDue,
-            "vatReclaimedCurrPeriod": vatReclaimedCurrPeriod,
-            "netVatDue": netVatDue,
-            "totalValueSalesExVAT": totalValueSalesExVAT,
-            "totalValuePurchasesExVAT": totalValuePurchasesExVAT,
-            "totalValueGoodsSuppliedExVAT": totalValueGoodsSuppliedExVAT,
-            "totalAcquisitionsExVAT": totalAcquisitionsExVAT,
-            "liabilities": liabilities,
-            "bills": bills
+            "vatDueSales": "VAT:Output:Sales",
+            "vatDueAcquisitions": "VAT:Output:EU",
+            "totalVatDue": "VAT:Output",
+            "vatReclaimedCurrPeriod": "VAT:Input",
+            "netVatDue": "VAT",
+            "totalValueSalesExVAT": "Income:Sales",
+            "totalValuePurchasesExVAT": "Expenses:VAT Purchases",
+            "totalValueGoodsSuppliedExVAT": "Income:Sales:EU:Goods",
+            "totalAcquisitionsExVAT": "Expenses:VAT Purchases:EU Reverse VAT",
+            "liabilities": "VAT:Liabilities",
+            "bills": "Accounts Payable"
         },
         "application": {
             "profile": profile_name,
-            "product-name": product_name,
-            "product-version": product_version,
-            "client-id": client_id,
-            "client-secret": client_secret,
-            "terms-and-conditions-url": terms_and_conditions_url
+            "product-name": "gnucash-uk-vat",
+            "product-version": "gnucash-uk-vat-%s" % product_version,
+            "client-id": "<CLIENT ID>",
+            "client-secret": "<CLIENT_SECRET>"
         },
         "identity": {
-            "vrn": vrn,
+            "vrn": "<VRN>",
             "device": di,
             "user": getpass.getuser(),
             "local-ip": local_ip,
@@ -155,15 +145,66 @@ def initialise_config(config_file, profile_name, gnucashFile, user):
         }
     }
 
-    # Special case when initialising the users static config in the HOME dir
-    if Path(gnucash_userfile).name == Path(config_file).name:
-        del config["identity"]
-        del config["application.product-version"]
 
-    with open(config_file, "w") as cfg_file:
-        cfg_file.write(json.dumps(config, indent=4))
+    # LOAD PRIVATE CONFIG
+    creating_config_private_filename = ( user_home == config_path and config_filename.startswith('.') and not os.path.exists(config_file) )
+    if creating_config_private_filename:
+        print("Creating private config from defaults", end="\n")
+        config_private = Config(config_private_filename, configDefaults)
 
-    print("Wrote %s.\n" % config_file, end="\n")
+        # Populate the private user config with default
+        config_private.set("application.terms-and-conditions-url", "http://example.com/terms_and_conditions/")
+        config_private.write()
+
+        return
+
+    else:
+        if os.path.exists(config_private_filename):
+            config_private = Config(config_private_filename)
+        else:
+            print("Private config file is missing: %s" % config_private_filename, end="\n")
+
+
+    # LOAD CURRENT CONFIG
+    if os.path.exists(config_file):
+        usingDefaults = False
+        config_current = Config(config_file)
+    else:
+        print("Create missing config file using defaults: %s" % config_file, end="\n")
+        usingDefaults = True
+        config_current = Config(config_file, configDefaults)
+
+    if config_private:
+        if config_private.get("accounts"):
+            config_current.set("accounts.vatDueSales", config_private.get("accounts.vatDueSales"), applyNone=False)
+            config_current.set("accounts.vatDueAcquisitions", config_private.get("accounts.vatDueAcquisitions"), applyNone=False)
+            config_current.set("accounts.totalVatDue", config_private.get("accounts.totalVatDue"), applyNone=False)
+            config_current.set("accounts.vatReclaimedCurrPeriod", config_private.get("accounts.vatReclaimedCurrPeriod"), applyNone=False)
+            config_current.set("accounts.netVatDue", config_private.get("accounts.netVatDue"), applyNone=False)
+            config_current.set("accounts.totalValueSalesExVAT", config_private.get("accounts.totalValueSalesExVAT"), applyNone=False)
+            config_current.set("accounts.totalValuePurchasesExVAT", config_private.get("accounts.totalValuePurchasesExVAT"), applyNone=False)
+            config_current.set("accounts.totalValueGoodsSuppliedExVAT", config_private.get("accounts.totalValueGoodsSuppliedExVAT"), applyNone=False)
+            config_current.set("accounts.totalAcquisitionsExVAT", config_private.get("accounts.totalAcquisitionsExVAT"), applyNone=False)
+            config_current.set("accounts.liabilities", config_private.get("accounts.liabilities"), applyNone=False)
+            config_current.set("accounts.bills", config_private.get("accounts.bills"), applyNone=False)
+        if config_private.get("application"):
+            config_current.set("application.product-name", config_private.get("application.product-name"), applyNone=False)
+            config_current.set("application.product-version", product_version, applyNone=False)
+            config_current.set("application.client-id", config_private.get("application.client-id"), applyNone=False)
+            config_current.set("application.client-secret", config_private.get("application.client-secret"), applyNone=False)
+            config_current.set("application.terms-and-conditions-url", config_private.get("application.terms-and-conditions-url"), applyNone=False)
+        if config_private.get("identity") and profile_name == "prod":
+            config_current.set("identity.vrn", config_private.get("identity.vrn"), applyNone=False)
+
+    # For test environments
+    if profile_name != "prod" and user:
+        # Use the test-user VRN
+        config_current.set("identity.vrn", user.get("vrn"), applyNone=False)
+
+    config_current.write()
+    print("    Wrote '%s'" % config_file, end="\n")
+    if usingDefaults:
+        print("    The newly created config file may require some changes to suit your specific environment!", end="\n")
 
 def get_device_config():
 

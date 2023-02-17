@@ -3,15 +3,16 @@
 # This should work on linux and Windows Git Bash
 
 # This uses the HMRC test sandbox
-profile=test
-gnucash_file=hmrc-test.sqlite3.gnucash
-config_file=${gnucash_file}.${profile}.json
-user_config_file=".${config_file}"
+default_profile=test
+default_gnucash_file=hmrc-test.sqlite3.gnucash
+default_config_file=${default_gnucash_file}.${default_profile}.json
 
-# Index into test data stored in gnuCash accounts and MTD test system.
+# Indexed test data. Stored in gnuCash accounts and MTD test system.
 start_date_list=("2017-01-01" "2017-04-01" "2017-01-01" "2017-01-01")
 end_date_list=(  "2017-03-31" "2017-06-30" "2017-12-31" "2017-12-31")
 due_date_list=(  "2017-05-07" "2017-08-07" "2017-05-07" "2017-08-07")
+# Select the MTD data to test against
+gov_test_scenario_list=( "QUARTERLY_ONE_MET", "QUARTERLY_ONE_MET", "QUARTERLY_ONE_MET", "QUARTERLY_ONE_MET" )
 
 # NOTE: This needs updating each time a command is added
 valid_commands=( 
@@ -47,7 +48,7 @@ The first time the '$0 config' command is run, it checks for:
 2. User configuration file
    The 'gnucash-uk-vat --init-config' command will use the default values 
    stored in a private User/Profile specific configuration file:
-       $HOME/${user_config_file}
+       $HOME/${private_config_file}
    If this file doesnt exist, it creates a new copy from a template.
    IMPORTANT: 
    Update this config file with your private credentials and common configuration:
@@ -59,12 +60,13 @@ The first time the '$0 config' command is run, it checks for:
         to test with the ${gnucash_file} data file.
      c) 'identity' section: can be removed, as it is not used to initialise a config.json.
 
-# Create ${config_file}
+# Create Config File
 The test config file can be created or updated using the command:
-    '$0 config'
-This will create a local config file: ${config_file} 
+    '$0 config [config_file] [profile] [gnucash_file] [private_config_file]'
+This will create a local config file using the defaults or with the provided values.
 
-NOTE: The 'identity.vrn' field can't be populated until there is an 
+NOTE#1: The name of the config file is stored in the file .config_file and will be loaded by all other commands
+NOTE#2: The 'identity.vrn' field can't be populated until there is an 
       application.client-[id|secret]
       See 'Create HMRC User' section below.
 
@@ -96,8 +98,7 @@ complies with the HMRC MTD requirements.
 A report will be printed to the screen showing any issues it encountered.
 
 NOTE #1: Missing header 'gov-client-multi-factor': A bridge system doesnt generally use MFA.
-NOTE #2: This command assumes the application associated with the client-id in 
-            ${config_file}
+NOTE #2: This command assumes the application associated with the client-id in config_file
          has been configured to access the 'Test Fraud Prevention Headers' endpoint 
          in 'API Subscriptions' when viewin application details from here:
          https://developer.service.hmrc.gov.uk/developer/applications
@@ -146,41 +147,25 @@ HEREDOC
 )
 
 
-# Set a default command
-command="help"
-# If command provided
-if [[ ! "$1" == "" ]]; then
-    provided_command=$1
-    if [[ ${valid_commands[*]} =~ (^|[[:space:]])"${provided_command}"($|[[:space:]]) ]]; then
-        command=${provided_command}
-    else
-        echo "Invalid command '${provided_command}'";
-        command_list=$( echo ${valid_commands[*]} | tr " " "\n" )
-        echo "Choose from:";
-        echo "${command_list}";
-        exit 0
-    fi
-fi
-
 # Check for a json configuration file with user specific configuration 
-check_user_config() {
+check_private_config() {
   pushd ${HOME} 2>&1 > /dev/null
-  if [[ ! -f ${user_config_file} ]]; then
+  if [[ ! -f ${private_config_file} ]]; then
       # Create the user config file
       if [[ ! -f $(dirname $(which python))/scripts/gnucash-uk-vat ]]; then
         echo "ERROR: Missing python script '$(dirname $(which python))/scripts/gnucash-uk-vat'. Run the setup"
       else
         # Create a default user config file for testing
-        python $(dirname $(which python))/scripts/gnucash-uk-vat --init-config --config ${user_config_file} --profile ${profile} --gnucash ${gnucash_file}
+        python $(dirname $(which python))/scripts/gnucash-uk-vat --init-config --config ${private_config_file} --profile ${profile} --gnucash ${gnucash_file}
         return_code=$?
         if [[ $return_code -ne 0 ]]; then
-            echo "[ERROR] Failed to create users static gnucash config file: ${user_config_file}"
+            echo "[ERROR] Failed to create users static gnucash config file: ${private_config_file}"
             exit 1
         else
-            echo "Created: ${HOME}/${user_config_file}"
-            echo "Now update the 'accounts' and 'application' stanzas for the environment being tested against"
-            echo "These will be used to populate config files used in tests. Missing fields will be ignored."
-            echo "Once configured to your requirements, re-run your command."
+            echo "Now update the 'accounts', 'application' and 'identy' stanzas for the environment being tested against"
+            echo "These can be used to populate config files with fields that contain personal or sensitive infomation."
+            echo "NOTE: Fields missing from the private user config file will be ignored, leaving the existing config value in-place."
+            echo "Once configured to your requirements, re-run the 'config' command and these fields will update the config file."
         fi
       fi
       popd 2>&1 > /dev/null
@@ -194,7 +179,7 @@ print_help() {
 }
 
 config() {
-  echo "Create config.json..."
+  echo "Creating ${config_file}..."
   python $(dirname $(which python))/scripts/gnucash-uk-vat --init-config --config ${config_file} --profile ${profile} --gnucash ${gnucash_file}
 }
 
@@ -219,7 +204,7 @@ show_open_obligations() {
 }
 
 show_obligations() {
-  echo "Show VAT Obligations against MTD website..."
+  # Show VAT Obligations against MTD website...
   python -u $(dirname $(which python))/scripts/gnucash-uk-vat --show-obligations --config ${config_file} --json
 }
 
@@ -233,20 +218,37 @@ show_liabilities() {
   python -u $(dirname $(which python))/scripts/gnucash-uk-vat --start "2017-01-01"  --end "2017-12-31" --show-liabilities --config ${config_file} --json
 }
 
+set_date_variables() {
+
+  data_index=$1
+
+  if [[ ! -z "${data_index}" ]]; then
+    echo "Get test dates from local data using index ${data_index}"
+    start_date=${start_date_list[${data_index}]}
+    end_date=${end_date_list[${data_index}]}
+    due_date=${due_date_list[${data_index}]}
+  else
+    echo "Get VAT submission dates from config file: ${config_file}"
+    if command -v jq &> /dev/null; then
+      due_date=$( cat test-config.json | jq -r '.dates?.due' )
+      start_date=$( cat test-config.json | jq -r '.dates?.start' )
+      end_date=$( cat test-config.json | jq -r '.dates?.end' )
+    else
+      echo "Missing tool. Please install 'jq' and try again"
+      exit 1
+    fi
+  fi
+  
+}
+
 show_vat_return() {
   echo "Show previous Vat Return against MTD website..."
 
-  start_date_index=${1:-0}
-  start_date=${start_date_list[${start_date_index}]}
-  echo "start_date=${start_date}"
-
-  end_date_index=${1:-0}
-  end_date=${end_date_list[${end_date_index}]}
-  echo "end_date=${end_date}"
-
-  due_date_index=${1:-0}
-  due_date=${due_date_list[${due_date_index}]}
-  echo "due_date=${due_date}"
+  data_index=$1
+  set_date_variables "${data_index}"
+  echo "    start_date=${start_date}"
+  echo "    end_date=${end_date}"
+  echo "    due_date=${due_date}"
 
   # Check for vat returns.
   python -u $(dirname $(which python))/scripts/gnucash-uk-vat --due-date "${due_date}" --start "${start_date}"  --end "${end_date}" --show-vat-return --config ${config_file} --json
@@ -255,9 +257,9 @@ show_vat_return() {
 show_account_summary() {
   echo "Show GnuCash account summary against MTD website..."
 
-  due_date_index=${1:-0}
-  due_date=${due_date_list[${due_date_index}]}
-  echo "due_date=${due_date}"
+  data_index=$1
+  set_date_variables "${data_index}"
+  echo "    due_date=${due_date}"
 
   # Check for vat returns.
   python -u $(dirname $(which python))/scripts/gnucash-uk-vat --due-date "${due_date}" --show-account-summary --config ${config_file} --json
@@ -266,9 +268,9 @@ show_account_summary() {
 show_account_detail() {
   echo "Show GnuCash account details against MTD website..."
 
-  due_date_index=${1:-0}
-  due_date=${due_date_list[${due_date_index}]}
-  echo "due_date=${due_date}"
+  data_index=$1
+  set_date_variables "${data_index}"
+  echo "    due_date=${due_date}"
 
   # Check for vat returns.
   python -u $(dirname $(which python))/scripts/gnucash-uk-vat --due-date "${due_date}" --show-account-detail --config ${config_file} --json
@@ -277,80 +279,137 @@ show_account_detail() {
 submit_vat_return() {
   echo "Submit Vat Return against MTD website..."
 
-  due_date_index=${1:-0}
-  due_date=${due_date_list[${due_date_index}]}
-  echo "due_date=${due_date}"
+  data_index=$1
+  set_date_variables "${data_index}"
+  echo "    due_date=${due_date}"
 
   # Check for vat returns.
   python -u $(dirname $(which python))/scripts/gnucash-uk-vat --due-date "${due_date}" --submit-vat-return --config ${config_file} --json
 }
 
+persistant_config_file=.config_file
+
+# load the config_file variable from file generated by 'config' command
+if [[ -f ${persistant_config_file} ]]; then
+    source ${persistant_config_file}
+fi
+
+
+# Set a default command
+command="help"
+# If command provided
+if [[ ! "$1" == "" ]]; then
+    provided_command=$1
+    if [[ ${valid_commands[*]} =~ (^|[[:space:]])"${provided_command}"($|[[:space:]]) ]]; then
+        command=${provided_command}
+    else
+        echo "Invalid command '${provided_command}'";
+        command_list=$( echo ${valid_commands[*]} | tr " " "\n" )
+        echo "Choose from:";
+        echo "${command_list}";
+        exit 0
+    fi
+fi
+
 case $command in
   config)
-    check_user_config
+    config_file=${2:-"${default_config_file}"}
+    profile=${3:-"${default_profile}"}
+    gnucash_file=${4:-"${default_gnucash_file}"}
+    private_config_file="${HOME}/.${config_file}"
+
+    check_private_config
     config
+    
+    # Create a persistent variable file
+    echo "config_file=${config_file}" > ${persistant_config_file}
     ;;
   create-user)
-    check_user_config
+    private_config_file="${HOME}/.${config_file}"
+
+    check_private_config
     user
     config
     ;;
   auth)
-    check_user_config
+    private_config_file="${HOME}/.${config_file}"
+
+    check_private_config
     auth
     ;;
   test-fraud)
-    check_user_config
+    private_config_file="${HOME}/.${config_file}"
+
+    check_private_config
     test_fraud
     ;;
   show-obligations)
-    check_user_config
+    private_config_file="${HOME}/.${config_file}"
+
+    check_private_config
     show_obligations
     ;;
   show-open-obligations)
-    check_user_config
+    private_config_file="${HOME}/.${config_file}"
+
+    check_private_config
     show_open_obligations
     ;;
   show-payments)
-    check_user_config
+    private_config_file="${HOME}/.${config_file}"
+
+    check_private_config
     show_payments
     ;;
   show-liabilities)
-    check_user_config
+    private_config_file="${HOME}/.${config_file}"
+
+    check_private_config
     show_liabilities
     ;;
   show-vat-return)
-    check_user_config
-    due_date_index=${2:-0}
-    if [[ ! "${due_date_index}" == "0" ]] && [[ ! "${due_date_index}" == "1" ]] && [[ ! "${due_date_index}" == "2" ]] && [[ ! "${due_date_index}" == "3" ]]; then
-        echo "ERROR: Parameter #1 must be 0 or 1"
+    due_date_index=$2
+    private_config_file="${HOME}/.${config_file}"
+
+    check_private_config
+    if [[ ! -z "${due_date_index}" ]] && [[ ! ${due_date_index} =~ [0-3] ]]; then
+        echo "ERROR: If present, parameter #1 must be a single digit from 0 to 3"
         exit 1
     fi
     show_vat_return $due_date_index
     ;;
   show-account-summary)
-    check_user_config
-    due_date_index=${2:-0}
-    if [[ ! "${due_date_index}" == "0" ]] && [[ ! "${due_date_index}" == "1" ]] && [[ ! "${due_date_index}" == "2" ]] && [[ ! "${due_date_index}" == "3" ]]; then
-        echo "ERROR: Parameter #1 must be 0 or 1"
+    due_date_index=$2
+    private_config_file="${HOME}/.${config_file}"
+
+    check_private_config
+
+    if [[ ! -z "${due_date_index}" ]] && [[ ! ${due_date_index} =~ [0-3] ]]; then
+        echo "ERROR: If present, parameter #1 must be a single digit from 0 to 3"
         exit 1
     fi
     show_account_summary $due_date_index
     ;;
   show-account-detail)
-    check_user_config
-    due_date_index=${2:-0}
-    if [[ ! "${due_date_index}" == "0" ]] && [[ ! "${due_date_index}" == "1" ]] && [[ ! "${due_date_index}" == "2" ]] && [[ ! "${due_date_index}" == "3" ]]; then
-        echo "ERROR: Parameter #1 must be 0 or 1"
+    due_date_index=$2
+    private_config_file="${HOME}/.${config_file}"
+
+    check_private_config
+
+    if [[ ! -z "${due_date_index}" ]] && [[ ! ${due_date_index} =~ [0-3] ]]; then
+        echo "ERROR: If present, parameter #1 must be a single digit from 0 to 3"
         exit 1
     fi
     show_account_detail $due_date_index
     ;;
   submit-vat-return)
-    check_user_config
-    due_date_index=${2:-0}
-    if [[ ! "${due_date_index}" == "0" ]] && [[ ! "${due_date_index}" == "1" ]] && [[ ! "${due_date_index}" == "2" ]] && [[ ! "${due_date_index}" == "3" ]]; then
-        echo "ERROR: Parameter #1 must be 0 or 1"
+    due_date_index=$2
+    private_config_file="${HOME}/.${config_file}"
+
+    check_private_config
+
+    if [[ ! -z "${due_date_index}" ]] && [[ ! ${due_date_index} =~ [0-3] ]]; then
+        echo "ERROR: If present, parameter #1 must be a single digit from 0 to 3"
         exit 1
     fi
     submit_vat_return $due_date_index

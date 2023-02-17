@@ -15,3 +15,5 @@ __pycache__
 /test/user.json
 /test/setup.log
 /test/hmrc-test.sqlite3.gnucash.test.json
+/test/.config_file
+/test/test-config.json
