@@ -4,7 +4,7 @@ Open a console (Git Bash for Windows) in the 'test' directory.
 # Help
 Display the help using:
 
-    ./unit-test.sh help
+    ./gnucash-uk-vat.sh help
 
 # Overview
 Script to launch various commands required to unit-test the gnucash-uk-vat bridging application.
@@ -15,7 +15,7 @@ This script assumes that the setup.sh has been run for the gnucash-uk-vat bridgi
 See ../README.md for instruction on how to run the setup.sh.
 
 # Initial setup
-The first time the './unit-test.sh config' command is run, it checks for:
+The first time the './gnucash-uk-vat.sh config' command is run, it checks for:
 1. gnucash-uk-vat script
 
    If this is missing, the 'setup.sh' hasn't been run yet.
@@ -47,7 +47,7 @@ The first time the './unit-test.sh config' command is run, it checks for:
 # Create gnucash-uk-vat-test.json
 The test config file can be created or updated using the command:
 
-    './unit-test.sh config'
+    './gnucash-uk-vat.sh config'
 
 This will create a local config file: gnucash-uk-vat-test.json
 
@@ -58,7 +58,7 @@ NOTE: The 'identity.vrn' field can't be populated until there is an
 # Create Test User
 When using the test (sandbox) profile, you will need to create a test user (Don't use your HMRC production credentials!)
 
-    './unit-test.sh user'
+    './gnucash-uk-vat.sh user'
 
 This creates a user in the MTD system and downloads the users details into user.json
 
@@ -71,12 +71,12 @@ NOTE: This command assumes the application associated with the client-id in
 # Update gnucash-uk-vat-test.json with VRN
 After updating the user.json file, update the config file to use the new test VRN.
 
-    './unit-test.sh config'
+    './gnucash-uk-vat.sh config'
 
 # Authenticate with HMRC
 Run this command to authenticate with HMRC MTD sandbox application.:
 
-    './unit-test.sh auth'
+    './gnucash-uk-vat.sh auth'
 
 Open the printed authentication URL in a browser and enter the test MTD account credentials printed in the console.
 Once authenticated, the file 'test/auth.json' will be populated with a short lived authentication token.
@@ -85,7 +85,7 @@ Once authenticated, the file 'test/auth.json' will be populated with a short liv
 Run this command to verify that the fraud headers submitted by gnucash-uk-vat
 complies with the HMRC MTD requirements.
 
-    './unit-test.sh test-fraud'
+    './gnucash-uk-vat.sh test-fraud'
 
 A report will be printed to the screen showing any issues it encountered.
 
@@ -100,56 +100,56 @@ NOTE #2: This command assumes the application associated with the client-id in
 # show-obligations
 Show all obligations in MTD for the test year
 
-    './unit-test.sh show-obligations'
+    './gnucash-uk-vat.sh show-obligations'
 
 This should show both Finished and Open VAT obligations.
 
 # show-open-obligations
 Show all open obligations in MTD for the test year
 
-    './unit-test.sh show-open-obligations'
+    './gnucash-uk-vat.sh show-open-obligations'
 
 This should only show Open VAT obligations.
 
 # show-account-summary
 Show GnuCash account summary for a particular due_date
 
-    './unit-test.sh show-account-summary [0|1]'
+    './gnucash-uk-vat.sh show-account-summary [0|1]'
 
 This will report the account summary for the Obligation matching the due_date_index.
 
 # show-account-detail
 Show GnuCash account details for a particular due_date
 
-    './unit-test.sh show-account-detail [0|1]'
+    './gnucash-uk-vat.sh show-account-detail [0|1]'
 
 This will report the account details for the Obligation matching the due_date_index.
 
 # show-liabilities
 Show VAT liabilities for start and end dates
 
-    './unit-test.sh show-liabilities'
+    './gnucash-uk-vat.sh show-liabilities'
 
 This will report the current liabilities matching the due_date_index.
 
 # show-payments
 Show VAT payments for start and end dates
 
-    './unit-test.sh show-payments'
+    './gnucash-uk-vat.sh show-payments'
 
 This will report the VAT payments matching the due_date_index.
 
 # show-vat-return
 Show VAT return for due dates
 
-    './unit-test.sh show-payments [0|1]'
+    './gnucash-uk-vat.sh show-payments [0|1]'
 
 This will report the VAT returns matching the due_date_index.
 
 # submit-vat-return
 Show VAT payments for due dates
 
-    './unit-test.sh show-payments [0|1]'
+    './gnucash-uk-vat.sh show-payments [0|1]'
 
 This will submit VAT return matching the due_date_index.
 
