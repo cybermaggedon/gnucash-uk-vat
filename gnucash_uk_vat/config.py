@@ -13,7 +13,7 @@ from pathlib import Path
 from . device import get_device
 
 # BEWARE: This version number is injected by setup.py
-product_version = "1.5.146"
+product_version = "1.5.147"
 
 # Configuration object, loads configuration from a JSON file, and then
 # supports path navigate with config.get("part1.part2.part3")
@@ -42,8 +42,9 @@ class Config:
                 cfg = cfg[v]
             cfg[keys[-1]] = value
     # Write back to file
-    def write(self):
-        with open(self.file, "w") as config_file:
+    def write(self, fileOverride=None):
+        filename = fileOverride if fileOverride else self.file
+        with open(filename , "w") as config_file:
             config_file.write(json.dumps(self.config, indent=4))
 
 def get_default_gateway_if():
@@ -201,10 +202,14 @@ def initialise_config(config_file, profile_name, gnucashFile, user):
         # Use the test-user VRN
         config_current.set("identity.vrn", user.get("vrn"), applyNone=False)
 
-    config_current.write()
-    print("    Wrote '%s'" % config_file, end="\n")
     if usingDefaults:
+        config_current.write()
+        print("    Wrote '%s'" % config_file, end="\n")
         print("    The newly created config file may require some changes to suit your specific environment!", end="\n")
+    else:
+        config_current.write("config.json")
+        print("    Wrote 'config.json'", end="\n")
+    
 
 def get_device_config():
 
