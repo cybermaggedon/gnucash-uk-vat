@@ -13,13 +13,15 @@ try:
     git_repo = git.Repo(search_parent_directories=True)
     uncommitted = git_repo.is_dirty()
     git_commits = list(git_repo.iter_commits('HEAD'))
+    # Increment git_count as changing the productVersion in configFilename will require another commit.
     git_count = len(git_commits)
+    if uncommitted:
+      git_count = git_count + 1
 except Exception as git_exception:
-    git_count = 9998
+    git_count = 9999
     raise Exception("[ERROR] Couldn't calculate the GIT commit count! Is this a git checkout?")
 
-# Increment git_count as changing the productVersion in configFilename will require another commit.
-productVersion = "%s.%s" % (PRODUCT_BASE_VERSION, git_count + 1)
+productVersion = "%s.%s" % (PRODUCT_BASE_VERSION, git_count)
 configFilename = "gnucash_uk_vat/config.py"
 
 # Inject the product_version into configFilename
