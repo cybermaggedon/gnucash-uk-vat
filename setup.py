@@ -15,10 +15,11 @@ try:
     git_commits = list(git_repo.iter_commits('HEAD'))
     git_count = len(git_commits)
 except Exception as git_exception:
-    git_count = 9999
+    git_count = 9998
     raise Exception("[ERROR] Couldn't calculate the GIT commit count! Is this a git checkout?")
 
-productVersion = "%s.%s" % (PRODUCT_BASE_VERSION, git_count)
+# Increment git_count as changing the productVersion in configFilename will require another commit.
+productVersion = "%s.%s" % (PRODUCT_BASE_VERSION, git_count + 1)
 configFilename = "gnucash_uk_vat/config.py"
 
 # Inject the product_version into configFilename
