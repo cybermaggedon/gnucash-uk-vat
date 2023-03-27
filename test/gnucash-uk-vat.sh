@@ -3,8 +3,6 @@
 # This should work on linux and Windows Git Bash
 
 # This uses the HMRC test sandbox
-default_profile=test
-default_gnucash_file=hmrc-test.sqlite3.gnucash
 default_config_file=config.json
 
 # Indexed test data. Stored in gnuCash accounts and MTD test system.
@@ -61,9 +59,9 @@ The first time the '$0 config' command is run, it checks for:
      c) 'identity' section: can be removed, as it is not used to initialise a config.json.
 
 # Create Config File
-The test config file can be created or updated using the command:
-    '$0 config [config_file] [profile] [gnucash_file] [private_config_file]'
-This will create a local config file using the defaults or with the provided values.
+The config.json file can be created or updated using the command:
+    '$0 config <config_file>'
+This will create a local config file using the defaults from config_file and config_private_file.
 
 NOTE#1: The name of the config file is stored in the file .config_file and will be loaded by all other commands
 NOTE#2: The 'identity.vrn' field can't be populated until there is an 
@@ -83,7 +81,7 @@ NOTE: This command assumes the application associated with the client-id in
 
 # Update ${config_file} with VRN
 After updating the user.json file, update the config file to use the new test VRN.
-    '$0 config'
+    '$0 config <config_file>'
 
 # Authenticate with HMRC
 Run this command to authenticate with HMRC MTD sandbox application.:
@@ -147,16 +145,14 @@ HEREDOC
 )
 
 
-# Check for a json configuration file with user specific configuration 
+# Check for a json configuration file in $HOME with user specific configuration 
 check_private_config() {
   pushd ${HOME} 2>&1 > /dev/null
   if [[ ! -f ${private_config_file} ]]; then
-      # Create the user config file
-      if [[ ! -f $(dirname $(which python))/scripts/gnucash-uk-vat ]]; then
-        echo "ERROR: Missing python script '$(dirname $(which python))/scripts/gnucash-uk-vat'. Run the setup"
-      else
-        # Create a default user config file for testing
-        python $(dirname $(which python))/scripts/gnucash-uk-vat --init-config --config ${private_config_file} --profile ${profile} --gnucash ${gnucash_file}
+      #  If missing, create the private_config_file
+      if [[ -f $(dirname $(which python))/scripts/gnucash-uk-vat ]]; then
+        # Create a private_config_file
+        python $(dirname $(which python))/scripts/gnucash-uk-vat --init-config --config ${private_config_file}
         return_code=$?
         if [[ $return_code -ne 0 ]]; then
             echo "[ERROR] Failed to create users static gnucash config file: ${private_config_file}"
@@ -167,8 +163,11 @@ check_private_config() {
             echo "NOTE: Fields missing from the private user config file will be ignored, leaving the existing config value in-place."
             echo "Once configured to your requirements, re-run the 'config' command and these fields will update the config file."
         fi
+      else
+        echo "ERROR: Missing python script '$(dirname $(which python))/scripts/gnucash-uk-vat'. Run the setup"
       fi
       popd 2>&1 > /dev/null
+      # Always stop the script here. Check logs for error or do manual changes to the configuration files.
       exit 1
   fi
   popd 2>&1 > /dev/null
@@ -179,8 +178,8 @@ print_help() {
 }
 
 config() {
-  echo "Creating ${config_file}..."
-  python $(dirname $(which python))/scripts/gnucash-uk-vat --init-config --config ${config_file} --profile ${profile} --gnucash ${gnucash_file}
+  echo "Configuring gnucash-uk-vat using ${config_file}..."
+  python $(dirname $(which python))/scripts/gnucash-uk-vat --init-config --config ${config_file}
 }
 
 user() {
@@ -287,7 +286,8 @@ submit_vat_return() {
   python -u $(dirname $(which python))/scripts/gnucash-uk-vat --due-date "${due_date}" --submit-vat-return --config ${config_file} --json
 }
 
-# This is only overidden by 'config', all other commands read from here.
+# Use the default_config_file name for all commands. 
+# NOTE: Can only be overidden by 'config' command.
 config_file=${default_config_file}
 
 
@@ -309,22 +309,11 @@ fi
 
 case $command in
   config)
+    # Specifiies the config file to copy to default_config_file
     config_file=$2
-    profile=${3:-"${default_profile}"}
-    gnucash_file=${4:-"${default_gnucash_file}"}
     
     if [[ -z "$config_file" ]]; then
        echo "Invalid config_file: EMPTY_VARIABLE"
-       exit 1
-    fi
-
-    if [[ -z "$profile" ]] || [[ ! " test prod " =~ " $profile " ]]; then
-       echo "Invalid profile: ${profile:-'EMPTY_VARIABLE'}"
-       exit 1
-    fi
-
-    if [[ -z "${gnucash_file}" ]] || [[ ! -f "${gnucash_file}" ]]; then
-       echo "Invalid gnucash_file: ${gnucash_file:-'EMPTY_VARIABLE'}"
        exit 1
     fi
 
