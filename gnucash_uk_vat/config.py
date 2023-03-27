@@ -13,7 +13,7 @@ from pathlib import Path
 from . device import get_device
 
 # BEWARE: This version number is injected by setup.py
-product_version = "1.5.149"
+product_version = "1.5.150"
 
 # Configuration object, loads configuration from a JSON file, and then
 # supports path navigate with config.get("part1.part2.part3")
