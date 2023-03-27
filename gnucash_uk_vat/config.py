@@ -13,7 +13,7 @@ from pathlib import Path
 from . device import get_device
 
 # BEWARE: This version number is injected by setup.py
-product_version = "1.5.148"
+product_version = "1.5.149"
 
 # Configuration object, loads configuration from a JSON file, and then
 # supports path navigate with config.get("part1.part2.part3")
@@ -71,7 +71,7 @@ def get_gateway_mac():
 #    2. current config, if exists
 #    3. static config defaults from this function
 # Also, collate personal information for the Fraud API.
-def initialise_config(config_file, profile_name, gnucashFile, user):
+def initialise_config(config_file, user):
 
     # Strip away the path if present
     config_filename = Path(config_file).name
@@ -116,7 +116,7 @@ def initialise_config(config_file, profile_name, gnucashFile, user):
         },
         "accounts": {
             "kind": "piecash",
-            "file": gnucashFile,
+            "file": "<ACCOUNTS_FILE>",
             "vatDueSales": "VAT:Output:Sales",
             "vatDueAcquisitions": "VAT:Output:EU",
             "totalVatDue": "VAT:Output",
@@ -130,7 +130,7 @@ def initialise_config(config_file, profile_name, gnucashFile, user):
             "bills": "Accounts Payable"
         },
         "application": {
-            "profile": profile_name,
+            "profile": "<APPLICATION_PROFILE>",
             "product-name": "gnucash-uk-vat",
             "product-version": "gnucash-uk-vat-%s" % product_version,
             "client-id": "<CLIENT ID>",
@@ -147,9 +147,9 @@ def initialise_config(config_file, profile_name, gnucashFile, user):
     }
 
 
-    # LOAD PRIVATE CONFIG
     creating_config_private_filename = ( user_home == config_path and config_filename.startswith('.') and not os.path.exists(config_file) )
     if creating_config_private_filename:
+        # Create new config_private_filename from configDefaults
         print("Creating private config from defaults", end="\n")
         config_private = Config(config_private_filename, configDefaults)
 
@@ -160,6 +160,7 @@ def initialise_config(config_file, profile_name, gnucashFile, user):
         return
 
     else:
+        # load existing config_private_filename
         if os.path.exists(config_private_filename):
             config_private = Config(config_private_filename)
         else:
@@ -176,7 +177,10 @@ def initialise_config(config_file, profile_name, gnucashFile, user):
         config_current = Config(config_file, configDefaults)
 
     if config_private:
+        # config_private_filename has been loaded
         if config_private.get("accounts"):
+            # Don't override 'accounts.file' from config_private_filename. Must be defined in the config template.
+            
             config_current.set("accounts.vatDueSales", config_private.get("accounts.vatDueSales"), applyNone=False)
             config_current.set("accounts.vatDueAcquisitions", config_private.get("accounts.vatDueAcquisitions"), applyNone=False)
             config_current.set("accounts.totalVatDue", config_private.get("accounts.totalVatDue"), applyNone=False)
@@ -189,16 +193,18 @@ def initialise_config(config_file, profile_name, gnucashFile, user):
             config_current.set("accounts.liabilities", config_private.get("accounts.liabilities"), applyNone=False)
             config_current.set("accounts.bills", config_private.get("accounts.bills"), applyNone=False)
         if config_private.get("application"):
+            # Don't override 'application.profile' from config_private_filename. Must be defined in the config template.
+            
             config_current.set("application.product-name", config_private.get("application.product-name"), applyNone=False)
             config_current.set("application.product-version", product_version, applyNone=False)
             config_current.set("application.client-id", config_private.get("application.client-id"), applyNone=False)
             config_current.set("application.client-secret", config_private.get("application.client-secret"), applyNone=False)
             config_current.set("application.terms-and-conditions-url", config_private.get("application.terms-and-conditions-url"), applyNone=False)
-        if config_private.get("identity") and profile_name == "prod":
+        if config_private.get("identity") and config_current.get("application") and config_current.get("application.profile") == "prod":
             config_current.set("identity.vrn", config_private.get("identity.vrn"), applyNone=False)
 
-    # For test environments
-    if profile_name != "prod" and user:
+    # ONLY FOR TEST ENVIRONMENTS
+    if config_current.get("application") and config_current.get("application.profile") != "prod" and user:
         # Use the test-user VRN
         config_current.set("identity.vrn", user.get("vrn"), applyNone=False)
 

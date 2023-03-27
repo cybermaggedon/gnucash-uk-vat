@@ -27,12 +27,6 @@ parser.add_argument('--json', '-j',
 parser.add_argument('--userfile', '-u',
             default='user.json',
                     help='MTD test user file returned by ./get-test-user (default: user.json)')
-parser.add_argument('--gnucash', '-g',
-            default='accounts.sqlite3.gnucash',
-                    help='Target profile (default: test)')
-parser.add_argument('--profile', '-p',
-            default='test',
-                    help='Target profile (default: test)')
 parser.add_argument('--config', '-c',
             default='config.json',
                     help='Configuration file (default: config.json)')
@@ -95,7 +89,7 @@ async def run():
     # can be initialised if no auth has been performed
     if args.init_config:
         # NOTE: user may be none 
-        initialise_config(args.config, args.profile, args.gnucash, user)
+        initialise_config(args.config, user)
         sys.exit(0)
 
     # Initialise config and auth.  
