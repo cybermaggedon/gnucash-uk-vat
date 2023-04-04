@@ -1,5 +1,7 @@
 accounts/*.gnucash.*.gnucash
 accounts/*.gnucash.*.log
+test/*.gnucash.*.gnucash
+test/*.gnucash.*.log
 *~
 build/
 dist/
@@ -8,3 +10,10 @@ gnucash_uk_vat.egg-info/
 auth.json
 config.json
 __pycache__
+/test/gnucash-uk-vat-test.json
+/setup.log
+/test/user.json
+/test/setup.log
+/test/hmrc-test.sqlite3.gnucash.test.json
+/test/.config_file
+/test/test-config.json

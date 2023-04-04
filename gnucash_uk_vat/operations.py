@@ -1,5 +1,7 @@
 
 import sys
+import json
+
 from tabulate import tabulate
 from datetime import datetime, timedelta
 
@@ -19,7 +21,7 @@ async def authenticate(h, auth):
     sys.stderr.write("Wrote %s.\n" % auth.file)
 
 # Show obligations with the O state
-async def show_open_obligations(h, config):
+async def show_open_obligations(h, config, print_json):
 
     obs = await h.get_open_obligations(config.get("identity.vrn"))
 
@@ -27,16 +29,29 @@ async def show_open_obligations(h, config):
         print("No obligations matched.")
         return
 
-    tbl = [
-        [v.start, v.end, v.due, v.status]
-        for v in obs
-    ]
+    if print_json:
+        tbl = [
+            { 
+               "start": v.start.strftime("%Y-%m-%d") if v.start else "", 
+               "end": v.end.strftime("%Y-%m-%d") if v.end else "", 
+               "due": v.due.strftime("%Y-%m-%d") if v.due else "", 
+               "status": v.status if v.status else "" 
+            }
+            for v in obs
+        ]
+        print(json.dumps(tbl, indent=4))
+    else:
+        tbl = [
+            [v.start, v.end, v.due, v.status]
+            for v in obs
+        ]
 
-    print(tabulate(tbl, ["Start", "End", "Due", "Status"],
+        print(tabulate(tbl,
+                   ["Start", "End", "Due", "Status"],
                    tablefmt="pretty"))
 
 # Show obligations in a time period
-async def show_obligations(start, end, h, config):
+async def show_obligations(start, end, h, config, print_json):
 
     obs = await h.get_obligations(config.get("identity.vrn"), start, end)
 
@@ -44,12 +59,25 @@ async def show_obligations(start, end, h, config):
         print("No obligations matched.")
         return
 
-    tbl = [
-        [v.start, v.end, v.due, v.received, v.status]
-        for v in obs
-    ]
+    if print_json:
+        tbl = [
+            { 
+               "start": v.start.strftime("%Y-%m-%d") if v.start else "", 
+               "end": v.end.strftime("%Y-%m-%d") if v.end else "", 
+               "due": v.due.strftime("%Y-%m-%d") if v.due else "", 
+               "received": v.received.strftime("%Y-%m-%d") if v.received else "", 
+               "status": v.status if v.status else "" 
+            }
+            for v in obs
+        ]
+        print(json.dumps(tbl, indent=4))
+    else:
+        tbl = [
+            [v.start, v.end, v.due, v.received, v.status]
+            for v in obs
+        ]
 
-    print(tabulate(tbl,
+        print(tabulate(tbl,
                    ["Start", "End", "Due", "Received", "Status"],
                    tablefmt="pretty"))
 
@@ -190,13 +218,15 @@ async def show_account_data(h, config, due, detail=False):
     if obl == None:
         raise RuntimeError("Due date '%s' does not match any obligations" % due)
 
+    print("Found Obligation that is due on '%s'" % due)
     # Get accounts
     cls = accounts.get_class(config.get("accounts.kind"))
     accts = cls(config.get("accounts.file"))
 
     # Write out obligation header
-    print("VAT due: %-10s    Start: %-10s     End: %-10s" % (
-        obl.due, obl.start, obl.end
+    print()
+    print("Search for account data in '%s' from '%-10s' to '%-10s'" % (
+        config.get("accounts.file"), obl.start, obl.end
     ))
     print()
 

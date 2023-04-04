@@ -21,3 +21,11 @@ databases.
 There are instructions for MacOS installation which I have not tested on the
 wiki page.
 
+## Windows 8
+Installing on:
+* Windows 8 
+* Python 3.11
+causes a rebuild and VC 14 to throw a linker error when building the aiohttp dependancy:
+      _http_parser.obj : error LNK2001: unresolved external symbol _PyUnicode_Ready
+
+Using Python 3.8 seems to resolve the problem.

@@ -101,8 +101,16 @@ the `application` section placeholders.
 
 ## Installing
 
+To install directly from a git repository:
+
 ```
 pip3 install git+https://github.com/cybermaggedon/gnucash-uk-vat
+```
+
+To install/update from the local checkout, a wrapper script can be used:
+
+```
+[git-bash-prompt]> ./setup.sh
 ```
 
 See [Installing](docs/installation.md).

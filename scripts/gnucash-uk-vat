@@ -1,5 +1,6 @@
 #!/usr/bin/env python3
 
+import os
 import sys
 import argparse
 import json
@@ -20,11 +21,17 @@ default_end = str(datetime.utcnow().date())
 
 # Command-line argument parser
 parser = argparse.ArgumentParser(description="Gnucash to HMRC VAT API")
+parser.add_argument('--json', '-j',
+            action='store_true',
+                    help='Print output as json for automated testing (default: False)')
+parser.add_argument('--userfile', '-u',
+            default='user.json',
+                    help='MTD test user file returned by ./get-test-user (default: user.json)')
 parser.add_argument('--config', '-c',
-		    default='config.json',
+            default='config.json',
                     help='Configuration file (default: config.json)')
 parser.add_argument('--auth', '-a',
-		    default='auth.json',
+            default='auth.json',
                     help='File to store auth credentials (default: auth.json)')
 parser.add_argument('--init-config', action='store_true',
                     help='Initialise configuration file with template')
@@ -73,19 +80,26 @@ async def run():
         assist.run(args.config, args.auth)
         sys.exit(0)
 
+    if  os.path.exists(args.userfile):
+      user = Config(args.userfile)
+    else:
+      user = None
+
     # Initialise configuration operation.  This goes here as configuration
     # can be initialised if no auth has been performed
     if args.init_config:
-        initialise_config(args.config)
+        # NOTE: user may be none 
+        initialise_config(args.config, user)
         sys.exit(0)
 
     # Initialise config and auth.  
     config = Config(args.config)
     auth = Auth(args.auth)
 
-    h = hmrc.create(config, auth)
+    print_json = args.json
+    h = hmrc.create(config, auth, user)
 
-    # Authentication operation goes here.
+    # Authenticate HMRC [test]user with MTD API.
     if args.authenticate:
         await authenticate(h, auth)
         sys.exit(0)
@@ -96,12 +110,12 @@ async def run():
 
     # Call appropriate function to implement operations
     if args.show_open_obligations:
-        await show_open_obligations(h, config)
+        await show_open_obligations(h, config, print_json)
         sys.exit(0)
     elif args.show_obligations:
         start = datetime.fromisoformat(args.start).date()
         end = datetime.fromisoformat(args.end).date()
-        await show_obligations(start, end, h, config)
+        await show_obligations(start, end, h, config, print_json)
         sys.exit(0)
     elif args.submit_vat_return:
         if args.due_date == None:
@@ -151,6 +165,9 @@ async def run():
         raise RuntimeError("No operation specified.  Try --assist option.")
 
 def asyncrun(coro):
+    if os.name == 'nt':
+        # Prevent "RuntimeError: Event loop is closed" on Windows
+        asyncio.set_event_loop_policy(asyncio.WindowsSelectorEventLoopPolicy())
 
     # asyncio.run introduced in Python 3.7, just use that.
     if sys.version_info >= (3, 7):
