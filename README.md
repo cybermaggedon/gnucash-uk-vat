@@ -91,7 +91,9 @@ https://developer.service.hmrc.gov.uk/api-documentation/docs/using-the-hub
 You click 'Get production credentials' and enter details about the
 application.  I call this application `gnucash-uk-vat`, you should call
 it something different.  When you apply for credentials, HMRC will contact
-you to fill in an application.
+you to fill in an application.  As I understand it, this involves going
+through a full acceptance test which involves testing against the
+sandbox.
 
 Once you have credentials, you should put them in the `config.json` file in
 the `application` section placeholders.
