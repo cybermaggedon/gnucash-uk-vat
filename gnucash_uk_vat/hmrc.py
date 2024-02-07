@@ -75,7 +75,7 @@ class AuthCollector:
 class Vat:
 
     # Constructor
-    def __init__(self, config, auth, user):
+    def __init__(self, config, auth, user=None):
         self.config = config
         self.auth = auth
         self.user = user
