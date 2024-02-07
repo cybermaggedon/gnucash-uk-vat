@@ -2,26 +2,28 @@ import setuptools
 import re
 import git
 
-PRODUCT_BASE_VERSION = "1.5"
+PRODUCT_BASE_VERSION = "1.6"
 
 with open("README.md", "r") as fh:
     long_description = fh.read()
 
-uncommitted = True
-try:
-    # Use git commit count as a build number in product-version
-    git_repo = git.Repo(search_parent_directories=True)
-    uncommitted = git_repo.is_dirty()
-    git_commits = list(git_repo.iter_commits('HEAD'))
-    # Increment git_count as changing the productVersion in configFilename will require another commit.
-    git_count = len(git_commits)
-    if uncommitted:
-      git_count = git_count + 1
-except Exception as git_exception:
-    git_count = 9999
-    raise Exception("[ERROR] Couldn't calculate the GIT commit count! Is this a git checkout?")
+# uncommitted = True
+# try:
+#     # Use git commit count as a build number in product-version
+#     git_repo = git.Repo(search_parent_directories=True)
+#     uncommitted = git_repo.is_dirty()
+#     git_commits = list(git_repo.iter_commits('HEAD'))
+#     # Increment git_count as changing the productVersion in configFilename will require another commit.
+#     git_count = len(git_commits)
+#     if uncommitted:
+#       git_count = git_count + 1
+# except Exception as git_exception:
+#     git_count = 9999
+#     raise Exception("[ERROR] Couldn't calculate the GIT commit count! Is this a git checkout?")
 
-productVersion = "%s.%s" % (PRODUCT_BASE_VERSION, git_count)
+# productVersion = "%s.%s" % (PRODUCT_BASE_VERSION, git_count)
+productVersion = "1.6.0"
+
 configFilename = "gnucash_uk_vat/config.py"
 
 # Inject the product_version into configFilename
