@@ -156,7 +156,7 @@ files as you would any password or other secret.
 ## Licence
 
 Copyright (c) 2020-2021, Cyberapocalypse Limited
-Copyright (c) 2021-2022, Accounts Machine Limited
+Copyright (c) 2021-2024, Accounts Machine Limited
 
 This program is free software: you can redistribute it and/or modify
 it under the terms of the GNU General Public License as published by
@@ -170,4 +170,8 @@ GNU General Public License for more details.
 
 You should have received a copy of the GNU General Public License
 along with this program.  If not, see <https://www.gnu.org/licenses/>.
+
+# Tests
+
+Run `pytest` or `make test`
 
