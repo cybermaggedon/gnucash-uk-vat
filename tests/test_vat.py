@@ -123,6 +123,9 @@ expected_headers={
     'Authorization': 'Bearer l1kj23k1j31k2hu31k2hj3lkl12j3j123jklk23jl12k3j',
 }
 
+example_api_base = "https://example.com.nonexistent"
+example_oauth_base = "ftp://asdlkjasd.nonexistent.asdklasdasda"
+
 class MockResponse:
     def __init__(self, text, status):
         self.obj = text
@@ -140,17 +143,23 @@ class MockResponse:
     async def __aenter__(self):
         return self
 
+def create_vat_client():
+    vat = Vat(example_config, example_auth)
+    vat.oauth_base = example_api_base
+    vat.api_base = example_api_base
+    return vat
+
 def test_url():
 
-    vat = Vat(example_config, example_auth)
+    vat = create_vat_client()
 
     url = vat.get_auth_url()
 
-    assert(url == f"https://www.tax.service.gov.uk/oauth/authorize?response_type=code&client_id={example_client_id}&scope=read%3Avat+write%3Avat&redirect_uri=http%3A%2F%2Flocalhost%3A9876%2Fauth")
+    assert(url == f"{example_api_base}/oauth/authorize?response_type=code&client_id={example_client_id}&scope=read%3Avat+write%3Avat&redirect_uri=http%3A%2F%2Flocalhost%3A9876%2Fauth")
 
 def test_fraud_headers():
 
-    vat = Vat(example_config, example_auth)
+    vat = create_vat_client()
 
     headers = vat.build_fraud_headers()
 
@@ -190,7 +199,7 @@ def test_fraud_headers():
 @pytest.mark.asyncio    
 async def test_get_vat_liabilities(mocker):
 
-    vat = Vat(example_config, example_auth)
+    vat = create_vat_client()
 
     resp = MockResponse(example_liabilities, 200)
 
@@ -201,7 +210,7 @@ async def test_get_vat_liabilities(mocker):
     )
 
     aiohttp.ClientSession.get.assert_called_once_with(
-        "https://api.service.hmrc.gov.uk/organisations/vat/918273645/liabilities?from=2019-04-06&to=2023-12-29",
+        f"{example_api_base}/organisations/vat/918273645/liabilities?from=2019-04-06&to=2023-12-29",
         headers=expected_headers | {
             'Accept': 'application/vnd.hmrc.1.0+json'
         }
@@ -216,7 +225,6 @@ async def test_get_vat_liabilities(mocker):
         str(liabs[0].end) ==
         example_liabilities["liabilities"][0]["taxPeriod"]["to"]
     )
-
 
     assert(
         str(liabs[0].typ) ==
@@ -241,7 +249,7 @@ async def test_get_vat_liabilities(mocker):
 @pytest.mark.asyncio    
 async def test_get_vat_return(mocker):
 
-    vat = Vat(example_config, example_auth)
+    vat = create_vat_client()
 
     resp = MockResponse(example_return, 200)
 
@@ -250,7 +258,7 @@ async def test_get_vat_return(mocker):
     rtn = await vat.get_vat_return(example_vrn, example_period_key)
 
     aiohttp.ClientSession.get.assert_called_once_with(
-        "https://api.service.hmrc.gov.uk/organisations/vat/918273645/returns/K1234",
+        f"{example_api_base}/organisations/vat/918273645/returns/K1234",
         headers=expected_headers | {
             'Accept': 'application/vnd.hmrc.1.0+json'
         }
@@ -271,7 +279,7 @@ async def test_get_vat_return(mocker):
 @pytest.mark.asyncio    
 async def test_submit_vat_return(mocker):
 
-    vat = Vat(example_config, example_auth)
+    vat = create_vat_client()
 
     resp = MockResponse(example_submission_response, 201)
 
@@ -283,7 +291,7 @@ async def test_submit_vat_return(mocker):
     )
 
     aiohttp.ClientSession.post.assert_called_once_with(
-        "https://api.service.hmrc.gov.uk/organisations/vat/918273645/returns",
+        f"{example_api_base}/organisations/vat/918273645/returns",
         headers=expected_headers | {
             'Accept': 'application/vnd.hmrc.1.0+json'
         },
@@ -292,4 +300,3 @@ async def test_submit_vat_return(mocker):
 
     assert(resp == example_submission_response)
 
-    
