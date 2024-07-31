@@ -11,9 +11,7 @@ from datetime import datetime
 from pathlib import Path
 
 from . device import get_device
-
-# BEWARE: This version number is injected by setup.py
-product_version = "1.5.155"
+from . version import version as product_version
 
 # Configuration object, loads configuration from a JSON file, and then
 # supports path navigate with config.get("part1.part2.part3")
