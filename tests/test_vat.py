@@ -2,7 +2,7 @@
 import pytest
 
 from gnucash_uk_vat.hmrc import Vat
-from gnucash_uk_vat.model import Liability
+from gnucash_uk_vat.model import Liability, Return
 import datetime
 from urllib.parse import urlencode, quote_plus
 import hashlib
@@ -22,6 +22,17 @@ example_user = "fred-bloggs"
 example_local_ip = "89.42.61.251"
 example_identity_time = datetime.datetime.fromisoformat("2045-03-30T15:34:51Z")
 example_access_token = "l1kj23k1j31k2hu31k2hj3lkl12j3j123jklk23jl12k3j"
+example_period_key = "K1234"
+
+example_box_1 = 0.51
+example_box_2 = 125.51
+example_box_3 = 90851.15
+example_box_4 = 985615915.23
+example_box_5 = 2789313.77
+example_box_6 = 21873
+example_box_7 = 18954
+example_box_8 = 1239087123
+example_box_9 = 1023123093
 
 example_start = datetime.date.fromisoformat("2019-04-06")
 example_end = datetime.date.fromisoformat("2023-12-29")
@@ -50,6 +61,24 @@ example_liabilities = {
             "due": "2046-04-12",
         }
     ]
+}
+
+example_return = {
+    "periodKey": example_period_key,
+    "vatDueSales": example_box_1,
+    "vatDueAcquisitions": example_box_2,
+    "totalVatDue": example_box_3,
+    "vatReclaimedCurrPeriod": example_box_4,
+    "netVatDue": example_box_5,
+    "totalValueSalesExVAT": example_box_6,
+    "totalValuePurchasesExVAT": example_box_7,
+    "totalValueGoodsSuppliedExVAT": example_box_8,
+    "totalAcquisitionsExVAT": example_box_9,
+    "finalised": True,
+}
+
+example_submission_response = {
+    "example": "dunno"
 }
 
 example_config = {
@@ -93,6 +122,23 @@ expected_headers={
     'Gov-Client-Multi-Factor': '',
     'Authorization': 'Bearer l1kj23k1j31k2hu31k2hj3lkl12j3j123jklk23jl12k3j',
 }
+
+class MockResponse:
+    def __init__(self, text, status):
+        self.obj = text
+        self.status = status
+
+    async def text(self):
+        return json.dumps(self.obj)
+
+    async def json(self):
+        return self.obj
+
+    async def __aexit__(self, exc_type, exc, tb):
+        pass
+
+    async def __aenter__(self):
+        return self
 
 def test_url():
 
@@ -146,23 +192,6 @@ async def test_get_vat_liabilities(mocker):
 
     vat = Vat(example_config, example_auth)
 
-    class MockResponse:
-        def __init__(self, text, status):
-            self.obj = text
-            self.status = status
-
-        async def text(self):
-            return json.dumps(self.obj)
-
-        async def json(self):
-            return self.obj
-
-        async def __aexit__(self, exc_type, exc, tb):
-            pass
-
-        async def __aenter__(self):
-            return self
-
     resp = MockResponse(example_liabilities, 200)
 
     mocker.patch('aiohttp.ClientSession.get', return_value=resp)
@@ -173,20 +202,7 @@ async def test_get_vat_liabilities(mocker):
 
     aiohttp.ClientSession.get.assert_called_once_with(
         "https://api.service.hmrc.gov.uk/organisations/vat/918273645/liabilities?from=2019-04-06&to=2023-12-29",
-        headers={
-            'Gov-Client-Connection-Method': 'OTHER_DIRECT',
-            'Gov-Client-Device-ID': 'lasueno9l2nx987[n',
-            'Gov-Client-User-Ids': 'os=fred-bloggs',
-            'Gov-Client-Timezone': 'UTC+00:00',
-            'Gov-Client-Local-IPs': '89.42.61.251',
-            'Gov-Client-Local-IPs-Timestamp': '2045-03-30 15:34:51+00:00',
-            'Gov-Client-MAC-Addresses': '01%3A23%3A45%3A67%3A89%3Aab',
-            'Gov-Client-User-Agent': 'os-family=Aardvark+Bunches&os-version=1.23.5.15-12312.515&device-manufacturer=Aardvark+Limited&device-model=Turtledove+Power+Buncher',
-            'Gov-Vendor-Version': 'gnucash-UK-vAt=12.412.41.251',
-            'Gov-Vendor-Product-Name': 'gnucash-UK-vAt',
-            'Gov-Vendor-License-Ids': 'gnucash-UK-vAt=c56950db1ed4422dd0a597779b4362613e6aee57',
-            'Gov-Client-Multi-Factor': '',
-            'Authorization': 'Bearer l1kj23k1j31k2hu31k2hj3lkl12j3j123jklk23jl12k3j',
+        headers=expected_headers | {
             'Accept': 'application/vnd.hmrc.1.0+json'
         }
     )
@@ -222,3 +238,58 @@ async def test_get_vat_liabilities(mocker):
         example_liabilities["liabilities"][0]["due"]
     )
 
+@pytest.mark.asyncio    
+async def test_get_vat_return(mocker):
+
+    vat = Vat(example_config, example_auth)
+
+    resp = MockResponse(example_return, 200)
+
+    mocker.patch('aiohttp.ClientSession.get', return_value=resp)
+
+    rtn = await vat.get_vat_return(example_vrn, example_period_key)
+
+    aiohttp.ClientSession.get.assert_called_once_with(
+        "https://api.service.hmrc.gov.uk/organisations/vat/918273645/returns/K1234",
+        headers=expected_headers | {
+            'Accept': 'application/vnd.hmrc.1.0+json'
+        }
+    )
+
+    assert(rtn.periodKey == example_return["periodKey"])
+    assert(rtn.vatDueSales == example_return["vatDueSales"])
+    assert(rtn.vatDueAcquisitions == example_return["vatDueAcquisitions"])
+    assert(rtn.totalVatDue == example_return["totalVatDue"])
+    assert(rtn.vatReclaimedCurrPeriod == example_return["vatReclaimedCurrPeriod"])
+    assert(rtn.netVatDue == example_return["netVatDue"])
+    assert(rtn.totalValueSalesExVAT == example_return["totalValueSalesExVAT"])
+    assert(rtn.totalValuePurchasesExVAT == example_return["totalValuePurchasesExVAT"])
+    assert(rtn.totalValueGoodsSuppliedExVAT == example_return["totalValueGoodsSuppliedExVAT"])
+    assert(rtn.totalAcquisitionsExVAT == example_return["totalAcquisitionsExVAT"])
+    assert(rtn.finalised == example_return["finalised"])
+    
+@pytest.mark.asyncio    
+async def test_submit_vat_return(mocker):
+
+    vat = Vat(example_config, example_auth)
+
+    resp = MockResponse(example_submission_response, 201)
+
+    mocker.patch('aiohttp.ClientSession.post', return_value=resp)
+
+    resp = await vat.submit_vat_return(
+        example_vrn,
+        Return.from_dict(example_return)
+    )
+
+    aiohttp.ClientSession.post.assert_called_once_with(
+        "https://api.service.hmrc.gov.uk/organisations/vat/918273645/returns",
+        headers=expected_headers | {
+            'Accept': 'application/vnd.hmrc.1.0+json'
+        },
+        json=example_return,
+    )
+
+    assert(resp == example_submission_response)
+
+    
