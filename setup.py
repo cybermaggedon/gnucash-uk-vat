@@ -1,11 +1,17 @@
 
 import setuptools
-import imp
+import importlib
 
 with open("README.md", "r") as fh:
     long_description = fh.read()
-    
-version_module = imp.load_source('version', 'gnucash_uk_vat/version.py')
+
+# Load a version number module?!
+spec = importlib.util.spec_from_file_location(
+    'version', 'gnucash_uk_vat/version.py'
+)
+version_module = importlib.util.module_from_spec(spec)
+spec.loader.exec_module(version_module)
+
 version = version_module.version
 
 setuptools.setup(
