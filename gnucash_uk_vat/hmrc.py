@@ -5,7 +5,6 @@ import aiohttp.web
 import time
 import asyncio
 from datetime import datetime, timedelta, date
-import requests
 import json
 import hashlib
 
