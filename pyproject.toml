@@ -1,0 +1,105 @@
+[build-system]
+requires = ["setuptools>=61.0", "wheel"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "gnucash-uk-vat"
+dynamic = ["version"]
+authors = [
+    {name = "Cybermaggedon", email = "mark@cyberapocalypse.co.uk"},
+]
+description = "UK HMRC VAT submission bridge for GnuCash users"
+readme = "README.md"
+license = {text = "GPL-3.0-or-later"}
+requires-python = ">=3.9"
+classifiers = [
+    "Programming Language :: Python :: 3",
+    "Programming Language :: Python :: 3.9",
+    "Programming Language :: Python :: 3.10",
+    "Programming Language :: Python :: 3.11",
+    "Programming Language :: Python :: 3.12",
+    "Programming Language :: Python :: 3.13",
+    "License :: OSI Approved :: GNU General Public License v3 or later (GPLv3+)",
+    "Operating System :: OS Independent",
+    "Development Status :: 4 - Beta",
+    "Intended Audience :: End Users/Desktop",
+    "Topic :: Office/Business :: Financial :: Accounting",
+]
+keywords = ["vat", "hmrc", "gnucash", "accounting", "uk", "tax"]
+dependencies = [
+    "aiohttp",
+    "py-dmidecode",
+    "piecash",
+    "netifaces",
+    "tabulate",
+]
+
+[project.urls]
+Homepage = "https://github.com/cybermaggedon/gnucash-uk-vat"
+Repository = "https://github.com/cybermaggedon/gnucash-uk-vat"
+Issues = "https://github.com/cybermaggedon/gnucash-uk-vat/issues"
+Documentation = "https://github.com/cybermaggedon/gnucash-uk-vat/blob/main/README.md"
+
+[project.scripts]
+gnucash-uk-vat = "gnucash_uk_vat.cli:main"
+vat-test-service = "gnucash_uk_vat.test_service:main"
+
+[project.optional-dependencies]
+dev = [
+    "pytest>=7.0.0",
+    "pytest-asyncio>=0.18.0",
+    "pytest-cov>=3.0.0",
+    "pytest-mock>=3.6.0",
+    "mypy>=1.0.0",
+    "types-tabulate",
+    "netifaces",
+    "aiohttp",
+]
+
+[tool.setuptools.dynamic]
+version = {attr = "gnucash_uk_vat.version.version"}
+
+[tool.setuptools.packages.find]
+# By default, include all packages under src/
+where = ["."]
+include = ["gnucash_uk_vat*"]
+exclude = ["tests*"]
+
+[tool.mypy]
+python_version = "3.9"
+warn_return_any = true
+warn_unused_configs = true
+disallow_untyped_defs = false
+disallow_incomplete_defs = false
+
+[[tool.mypy.overrides]]
+module = "dmidecode"
+ignore_missing_imports = true
+
+[[tool.mypy.overrides]]
+module = "piecash"
+ignore_missing_imports = true
+
+[[tool.mypy.overrides]]
+module = "gnucash"
+ignore_missing_imports = true
+
+[[tool.mypy.overrides]]
+module = "netifaces"
+ignore_missing_imports = true
+
+[[tool.mypy.overrides]]
+module = "tabulate"
+ignore_missing_imports = true
+
+[[tool.mypy.overrides]]
+module = "gi.*"
+ignore_missing_imports = true
+
+[tool.pytest.ini_options]
+minversion = "7.0"
+addopts = "-ra -q"
+testpaths = [
+    "tests",
+]
+asyncio_mode = "auto"

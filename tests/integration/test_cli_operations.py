@@ -19,26 +19,23 @@ class TestCLIIntegration:
     
     async def test_cli_help_command(self, vat_test_service):
         """Test that CLI help command works"""
-        script_path = Path(__file__).parent.parent.parent / "scripts" / "gnucash-uk-vat"
-        
         result = subprocess.run(
-            ['python', str(script_path), '--help'],
+            ['python', '-m', 'gnucash_uk_vat', '--help'],
             capture_output=True,
             text=True
         )
         
         assert result.returncode == 0
         assert "usage:" in result.stdout.lower()
-        assert "gnucash-uk-vat" in result.stdout
+        assert "Gnucash to HMRC VAT API" in result.stdout
     
     async def test_cli_init_config(self, vat_test_service, tmp_path):
         """Test CLI config initialization"""
-        script_path = Path(__file__).parent.parent.parent / "scripts" / "gnucash-uk-vat"
         config_file = tmp_path / "test_cli_config.json"
         
         # Test config initialization
         result = subprocess.run([
-            'python', str(script_path),
+            'python', '-m', 'gnucash_uk_vat',
             '-c', str(config_file),
             '--init-config'
         ], capture_output=True, text=True, env={**os.environ, 'HOME': str(tmp_path)})
@@ -57,22 +54,20 @@ class TestCLIIntegration:
     
     async def test_cli_version_display(self, vat_test_service):
         """Test CLI version display via help command"""
-        script_path = Path(__file__).parent.parent.parent / "scripts" / "gnucash-uk-vat"
         
         result = subprocess.run([
-            'python', str(script_path),
+            'python', '-m', 'gnucash_uk_vat',
             '--help'
         ], capture_output=True, text=True)
         
         assert result.returncode == 0
-        assert "gnucash-uk-vat" in result.stdout
+        assert "Gnucash to HMRC VAT API" in result.stdout
     
     async def test_cli_show_obligations(self, vat_test_service, integration_test_env):
         """Test CLI show obligations command"""
-        script_path = Path(__file__).parent.parent.parent / "scripts" / "gnucash-uk-vat"
         
         result = subprocess.run([
-            'python', str(script_path),
+            'python', '-m', 'gnucash_uk_vat',
             '-c', integration_test_env['config'],
             '-a', integration_test_env['auth'],
             '--show-obligations',
@@ -91,10 +86,9 @@ class TestCLIIntegration:
     
     async def test_cli_show_open_obligations(self, vat_test_service, integration_test_env):
         """Test CLI show open obligations command"""
-        script_path = Path(__file__).parent.parent.parent / "scripts" / "gnucash-uk-vat"
         
         result = subprocess.run([
-            'python', str(script_path),
+            'python', '-m', 'gnucash_uk_vat',
             '-c', integration_test_env['config'],
             '-a', integration_test_env['auth'],
             '--show-open-obligations',
@@ -114,10 +108,9 @@ class TestCLIIntegration:
     
     async def test_cli_show_liabilities(self, vat_test_service, integration_test_env):
         """Test CLI show liabilities command"""
-        script_path = Path(__file__).parent.parent.parent / "scripts" / "gnucash-uk-vat"
         
         result = subprocess.run([
-            'python', str(script_path),
+            'python', '-m', 'gnucash_uk_vat',
             '-c', integration_test_env['config'],
             '-a', integration_test_env['auth'],
             '--show-liabilities',
@@ -133,10 +126,9 @@ class TestCLIIntegration:
     
     async def test_cli_show_payments(self, vat_test_service, integration_test_env):
         """Test CLI show payments command"""
-        script_path = Path(__file__).parent.parent.parent / "scripts" / "gnucash-uk-vat"
         
         result = subprocess.run([
-            'python', str(script_path),
+            'python', '-m', 'gnucash_uk_vat',
             '-c', integration_test_env['config'],
             '-a', integration_test_env['auth'],
             '--show-payments',
@@ -152,10 +144,9 @@ class TestCLIIntegration:
     
     async def test_cli_show_vat_return(self, vat_test_service, integration_test_env):
         """Test CLI show VAT return command"""
-        script_path = Path(__file__).parent.parent.parent / "scripts" / "gnucash-uk-vat"
         
         result = subprocess.run([
-            'python', str(script_path),
+            'python', '-m', 'gnucash_uk_vat',
             '-c', integration_test_env['config'],
             '-a', integration_test_env['auth'],
             '--show-vat-return',
@@ -176,7 +167,6 @@ class TestCLIIntegration:
     
     async def test_cli_invalid_config_file(self, vat_test_service, tmp_path):
         """Test CLI with invalid config file"""
-        script_path = Path(__file__).parent.parent.parent / "scripts" / "gnucash-uk-vat"
         invalid_config = tmp_path / "invalid_config.json"
         
         # Create invalid JSON file
@@ -184,7 +174,7 @@ class TestCLIIntegration:
             f.write("{ invalid json }")
         
         result = subprocess.run([
-            'python', str(script_path),
+            'python', '-m', 'gnucash_uk_vat',
             '-c', str(invalid_config),
             '--show-obligations'
         ], capture_output=True, text=True)
@@ -194,11 +184,10 @@ class TestCLIIntegration:
     
     async def test_cli_missing_config_file(self, vat_test_service, tmp_path):
         """Test CLI with missing config file"""
-        script_path = Path(__file__).parent.parent.parent / "scripts" / "gnucash-uk-vat"
         missing_config = tmp_path / "missing_config.json"
         
         result = subprocess.run([
-            'python', str(script_path),
+            'python', '-m', 'gnucash_uk_vat',
             '-c', str(missing_config),
             '--show-obligations'
         ], capture_output=True, text=True)
@@ -208,11 +197,10 @@ class TestCLIIntegration:
     
     async def test_cli_missing_auth_file(self, vat_test_service, integration_test_env, tmp_path):
         """Test CLI with missing auth file"""
-        script_path = Path(__file__).parent.parent.parent / "scripts" / "gnucash-uk-vat"
         missing_auth = tmp_path / "missing_auth.json"
         
         result = subprocess.run([
-            'python', str(script_path),
+            'python', '-m', 'gnucash_uk_vat',
             '-c', integration_test_env['config'],
             '-a', str(missing_auth),
             '--show-obligations'
@@ -223,13 +211,12 @@ class TestCLIIntegration:
     
     async def test_cli_authentication_url_display(self, vat_test_service, integration_test_env, tmp_path):
         """Test CLI authentication URL display"""
-        script_path = Path(__file__).parent.parent.parent / "scripts" / "gnucash-uk-vat"
         
         # Use a non-existent auth file to trigger authentication
         missing_auth = tmp_path / "missing_auth.json"
         
         result = subprocess.run([
-            'python', str(script_path),
+            'python', '-m', 'gnucash_uk_vat',
             '-c', integration_test_env['config'],
             '-a', str(missing_auth),
             '--show-obligations'
@@ -241,10 +228,9 @@ class TestCLIIntegration:
     
     async def test_cli_date_range_parameters(self, vat_test_service, integration_test_env):
         """Test CLI with date range parameters"""
-        script_path = Path(__file__).parent.parent.parent / "scripts" / "gnucash-uk-vat"
         
         result = subprocess.run([
-            'python', str(script_path),
+            'python', '-m', 'gnucash_uk_vat',
             '-c', integration_test_env['config'],
             '-a', integration_test_env['auth'],
             '--show-obligations',
@@ -260,10 +246,9 @@ class TestCLIIntegration:
     
     async def test_cli_json_output(self, vat_test_service, integration_test_env):
         """Test CLI with JSON output"""
-        script_path = Path(__file__).parent.parent.parent / "scripts" / "gnucash-uk-vat"
         
         result = subprocess.run([
-            'python', str(script_path),
+            'python', '-m', 'gnucash_uk_vat',
             '-c', integration_test_env['config'],
             '-a', integration_test_env['auth'],
             '--json',
