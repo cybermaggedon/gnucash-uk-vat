@@ -34,7 +34,6 @@ setuptools.setup(
     install_requires=[
         'aiohttp',
         'py-dmidecode',
-        'requests',
         'piecash',
         'netifaces',
         'tabulate',
