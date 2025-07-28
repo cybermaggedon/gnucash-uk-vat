@@ -9,6 +9,7 @@ import netifaces
 
 import datetime
 from pathlib import Path
+from typing import Optional
 
 from . device import get_device
 from . version import version as product_version
@@ -72,14 +73,14 @@ def get_gateway_mac():
 #    2. current config, if exists
 #    3. static config defaults from this function
 # Also, collate personal information for the Fraud API.
-def initialise_config(config_file, user):
+def initialise_config(config_file: str, user: Optional['Config']) -> None:
 
     # Strip away the path if present
     config_filename = Path(config_file).name
     config_path = Path(config_file).parent
     user_home = os.environ.get('HOME')
     
-    config_private_filename = os.path.join(os.environ.get('HOME'),".%s" % (config_filename))
+    config_private_filename = os.path.join(user_home or os.path.expanduser("~"), ".%s" % (config_filename))
     config_private = None
     config_current = None
 
