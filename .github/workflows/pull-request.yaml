@@ -29,13 +29,7 @@ jobs:
       - name: Install system dependencies
         run: |
           sudo apt-get update
-          sudo apt-get install -y \
-            dmidecode \
-            libxml2-dev \
-            libxslt1-dev \
-            libffi-dev \
-            libssl-dev \
-            zlib1g-dev
+          sudo apt-get install -y dmidecode
 
       - name: Install Python dependencies
         run: |
@@ -69,7 +63,7 @@ jobs:
         run: |
           python -m pip install --upgrade pip
           pip install pytest pytest-asyncio pytest-mock
-          pip install aiohttp tabulate
+          pip install aiohttp tabulate netifaces
 
       - name: Run core unit tests (without hardware-dependent tests)
         run: |
