@@ -7,12 +7,15 @@ import socket
 import sys
 import netifaces
 
-from datetime import datetime
+import datetime
 from pathlib import Path
 
 from . device import get_device
 from . version import version as product_version
 
+def now():
+    return datetime.datetime.now(datetime.UTC)
+    
 # Configuration object, loads configuration from a JSON file, and then
 # supports path navigate with config.get("part1.part2.part3")
 class Config:
@@ -140,7 +143,7 @@ def initialise_config(config_file, user):
             "user": getpass.getuser(),
             "local-ip": local_ip,
             "mac-address": mac,
-            "time": datetime.utcnow().isoformat()[:-3] + "Z"
+            "time": now().isoformat()[:-3] + "Z"
         }
     }
 
@@ -162,7 +165,7 @@ def initialise_config(config_file, user):
         if os.path.exists(config_private_filename):
             config_private = Config(config_private_filename)
         else:
-            print("Private config file is missing: %s" % config_private_filename, end="\n")
+            print("Private config file is not present: %s" % config_private_filename, end="\n")
 
 
     # LOAD CURRENT CONFIG

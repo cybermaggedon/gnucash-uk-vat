@@ -3,7 +3,7 @@ import sys
 import json
 
 from tabulate import tabulate
-from datetime import datetime, timedelta
+from datetime import timedelta
 
 from . import accounts
 from . import model
