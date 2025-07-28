@@ -386,6 +386,17 @@ class Api:
 
         data = await request.post()
         grant = data['grant_type']
+        
+        # Validate client credentials for all grant types
+        client_id = data.get('client_id', '')
+        client_secret = data.get('client_secret', '')
+        
+        # For testing, accept specific test client credentials
+        valid_client_id = "test-client-id"
+        valid_client_secret = "test-client-secret"
+        
+        if client_id != valid_client_id or client_secret != valid_client_secret:
+            raise web.HTTPUnauthorized()
 
         if grant == "refresh_token":
             if data["refresh_token"] != self.refresh_token:
