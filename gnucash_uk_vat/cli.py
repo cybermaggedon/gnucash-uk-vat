@@ -10,7 +10,7 @@ import argparse
 import json
 import asyncio
 import types
-from typing import Optional, List
+from typing import Optional
 
 import datetime
 
@@ -57,24 +57,25 @@ def create_parser() -> argparse.ArgumentParser:
                         )
     parser.add_argument('--end',
                         default=default_end,
-                        help='End of working range (default: %s)' % default_end
-                        )
-    parser.add_argument('--due-date',
-                        help='Show VAT due on specified due date (YYYY-MM-DD)')
+                        help='End of working range (default: %s)' % default_end)
+    parser.add_argument('--show-account-detail', action='store_true',
+                        help='Show account detail for VAT obligations')
+    parser.add_argument('--show-account-summary', action='store_true',
+                        help='Show account summary for VAT obligations')
     parser.add_argument('--show-vat-return', action='store_true',
-                        help='Show VAT return for the specified due date')
-    parser.add_argument('--show-liabilities', action='store_true',
-                        help='Show VAT liabilities in start/end period')
-    parser.add_argument('--show-payments', action='store_true',
-                        help='Show VAT payments in start/end period')
-    parser.add_argument('--show-account-data', action='store_true',
-                        help='Show account data used in VAT return submission')
+                        help='Show VAT return for start/end period')
+    parser.add_argument('--due-date', default=None,
+                        help='Define obligation by specifying due date')
     parser.add_argument('--submit-vat-return', action='store_true',
-                        help='Submit VAT return for the specified due date')
-    parser.add_argument('--post-vat-bill', action='store_true',
-                        help='Post VAT bill entry to accounting ledger')
-    parser.add_argument('--version', action='store_true',
-                        help='Show version number')
+                        help='Submit VAT return for obligation due date')
+    #parser.add_argument('--post-vat-bill', action='store_true',
+    #                    help='Post a VAT bill to accounts for due date')
+    parser.add_argument('--show-liabilities', action='store_true',
+                        help='Show VAT liabilities')
+    parser.add_argument('--show-payments', action='store_true',
+                        help='Show VAT payments')
+    parser.add_argument('--assist', action='store_true',
+                        help='Launch assistant')
 
     return parser
 
@@ -82,15 +83,15 @@ async def run() -> None:
     """Main async entry point for gnucash-uk-vat CLI."""
     
     parser = create_parser()
-    args = parser.parse_args()
+    args = parser.parse_args(sys.argv[1:])
 
-    if args.version:
-        from .version import version
-        print(f"gnucash-uk-vat {version}")
+    if args.assist:
+        # Doing the import here so that command-line stuff still works if
+        # GTK is not installed.
+        import gnucash_uk_vat.assist as assist
+        assist.run(args.config, args.auth)
         sys.exit(0)
 
-    # Load user from file
-    user: Optional[Config] = None
     if os.path.exists(args.userfile):
         user = Config(args.userfile)
     else:
@@ -103,89 +104,109 @@ async def run() -> None:
         initialise_config(args.config, user)
         sys.exit(0)
 
-    # Create configuration object
+    # Initialise config and auth.  
     config = Config(args.config)
-
-    # Create auth object
     auth = Auth(args.auth)
 
-    # Perform authentication
+    print_json = args.json
+    h = hmrc.create(config, auth, user)
+
+    # Authenticate HMRC [test]user with MTD API.
     if args.authenticate:
-        await authenticate(config, auth, user)
+        await authenticate(h, auth)
         sys.exit(0)
 
-    # Create VAT service wrapper
-    vat = hmrc.create(config, auth, user)
+    # All following operations require a valid token, so refresh token if
+    # expired.
+    await auth.maybe_refresh(h)
 
-    # Parse date arguments
-    start_date = datetime.datetime.fromisoformat(args.start).date()
-    end_date = datetime.datetime.fromisoformat(args.end).date()
-
-    # Show open obligations
+    # Call appropriate function to implement operations
     if args.show_open_obligations:
-        await show_open_obligations(vat, config, args.json)
-
-    # Show all obligations in date range
-    if args.show_obligations:
-        await show_obligations(vat, config, start_date, end_date, args.json)
-
-    # Show VAT return
-    if args.show_vat_return:
-        if not args.due_date:
-            print("Error: --due-date required with --show-vat-return", file=sys.stderr)
-            sys.exit(1)
-        due_date = datetime.datetime.fromisoformat(args.due_date).date()
-        await show_vat_return(vat, config, due_date, args.json)
-
-    # Show liabilities
-    if args.show_liabilities:
-        await show_liabilities(vat, config, start_date, end_date, args.json)
-
-    # Show payments
-    if args.show_payments:
-        await show_payments(vat, config, start_date, end_date, args.json)
-
-    # Show account data
-    if args.show_account_data:
-        if not args.due_date:
-            print("Error: --due-date required with --show-account-data", file=sys.stderr)
-            sys.exit(1)
-        due_date = datetime.datetime.fromisoformat(args.due_date).date()
-        await show_account_data(vat, config, due_date, args.json)
-
-    # Submit VAT return
-    if args.submit_vat_return:
-        if not args.due_date:
-            print("Error: --due-date required with --submit-vat-return", file=sys.stderr)
-            sys.exit(1)
-        due_date = datetime.datetime.fromisoformat(args.due_date).date()
-        await submit_vat_return(vat, config, due_date, args.json)
-
-    # Post VAT bill
-    if args.post_vat_bill:
-        if not args.due_date:
-            print("Error: --due-date required with --post-vat-bill", file=sys.stderr)
-            sys.exit(1)
-        due_date = datetime.datetime.fromisoformat(args.due_date).date()
-        await post_vat_bill(vat, config, due_date, args.json)
+        await show_open_obligations(h, config, print_json)
+        sys.exit(0)
+    elif args.show_obligations:
+        start = datetime.datetime.fromisoformat(args.start).date()
+        end = datetime.datetime.fromisoformat(args.end).date()
+        await show_obligations(start, end, h, config, print_json)
+        sys.exit(0)
+    elif args.submit_vat_return:
+        if args.due_date == None:
+            raise RuntimeError("--due-date must be specified")
+        due = datetime.datetime.fromisoformat(args.due_date).date()
+        await submit_vat_return(due, h, config)
+        sys.exit(0)
+#    elif args.post_vat_bill:
+#        start = datetime.datetime.fromisoformat(args.start).date()
+#        end = datetime.datetime.fromisoformat(args.end).date()
+#        if args.due_date == None:
+#            raise RuntimeError("--due-date must be specified")
+#        due = datetime.datetime.fromisoformat(args.due_date).date()
+#        post_vat_bill(start, end, due, h, config)
+#        sys.exit(0)
+    elif args.show_account_detail:
+        if args.due_date == None:
+            raise RuntimeError("--due-date must be specified")
+        due = datetime.datetime.fromisoformat(args.due_date).date()
+        await show_account_data(h, config, due, detail=True)
+        sys.exit(0)
+    elif args.show_account_summary:
+        if args.due_date == None:
+            raise RuntimeError("--due-date must be specified")
+        due = datetime.datetime.fromisoformat(args.due_date).date()
+        await show_account_data(h, config, due)
+        sys.exit(0)
+    elif args.show_vat_return:
+        start = datetime.datetime.fromisoformat(args.start).date()
+        end = datetime.datetime.fromisoformat(args.end).date()
+        if args.due_date == None:
+            raise RuntimeError("--due-date must be specified")
+        due = datetime.datetime.fromisoformat(args.due_date).date()
+        await show_vat_return(start, end, due, h, config)
+        sys.exit(0)
+    elif args.show_liabilities:
+        start = datetime.datetime.fromisoformat(args.start).date()
+        end = datetime.datetime.fromisoformat(args.end).date()
+        await show_liabilities(start, end, h, config)
+        sys.exit(0)
+    elif args.show_payments:
+        start = datetime.datetime.fromisoformat(args.start).date()
+        end = datetime.datetime.fromisoformat(args.end).date()
+        await show_payments(start, end, h, config)
+        sys.exit(0)
+    else:
+        raise RuntimeError("No operation specified.  Try --assist option.")
 
 def asyncrun(coro):
     """Run async coroutine with proper event loop handling."""
-    try:
-        loop = asyncio.get_running_loop()
-    except RuntimeError:
-        loop = None
-    
-    if loop and loop.is_running():
-        # If we're already in an event loop, we can't use asyncio.run()
-        # This shouldn't happen in CLI usage, but handle it gracefully
-        raise RuntimeError("Cannot run CLI from within an existing event loop")
-    else:
+    if os.name == 'nt':
+        # Prevent "RuntimeError: Event loop is closed" on Windows
+        asyncio.set_event_loop_policy(asyncio.WindowsSelectorEventLoopPolicy())
+
+    # asyncio.run introduced in Python 3.7, just use that.
+    if sys.version_info >= (3, 7):
         return asyncio.run(coro)
+
+    # Emulate asyncio.run()
+
+    # asyncio.run() requires a coro, so require it here as well
+    if not isinstance(coro, types.CoroutineType):
+        raise TypeError("run() requires a coroutine object")
+
+    loop = asyncio.new_event_loop()
+    asyncio.set_event_loop(loop)
+    try:
+        return loop.run_until_complete(coro)
+    finally:
+        loop.close()
+        asyncio.set_event_loop(None)
 
 def main() -> None:
     """Main CLI entry point."""
-    asyncrun(run())
+    try:
+        asyncrun(run())
+    except Exception as e:
+        sys.stderr.write("Exception: %s\n" % e)
+        sys.exit(1)
 
 if __name__ == "__main__":
     main()
