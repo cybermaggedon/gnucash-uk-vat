@@ -204,11 +204,17 @@ class TestVat:
             "expires_in": "3600"
         }
         
-        with patch('aiohttp.ClientSession') as mock_session:
+        with patch('aiohttp.ClientSession') as mock_session_class:
+            # Create properly mocked async context managers
+            mock_session = AsyncMock()
             mock_resp = AsyncMock()
-            mock_resp.json = AsyncMock(return_value=mock_response)
+            mock_resp.json.return_value = mock_response
             
-            mock_session.return_value.__aenter__.return_value.post.return_value.__aenter__.return_value = mock_resp
+            # Mock the async context manager chain
+            mock_session.post.return_value.__aenter__ = AsyncMock(return_value=mock_resp)
+            mock_session.post.return_value.__aexit__ = AsyncMock(return_value=None)
+            mock_session_class.return_value.__aenter__ = AsyncMock(return_value=mock_session)
+            mock_session_class.return_value.__aexit__ = AsyncMock(return_value=None)
             
             result = await vat_client.get_auth_coro("test_code")
         
@@ -226,11 +232,16 @@ class TestVat:
             "expires_in": "3600"
         }
         
-        with patch('aiohttp.ClientSession') as mock_session:
+        with patch('aiohttp.ClientSession') as mock_session_class:
+            mock_session = AsyncMock()
             mock_resp = AsyncMock()
-            mock_resp.json = AsyncMock(return_value=mock_response)
+            mock_resp.json.return_value = mock_response
             
-            mock_session.return_value.__aenter__.return_value.post.return_value.__aenter__.return_value = mock_resp
+            # Mock the async context manager chain
+            mock_session.post.return_value.__aenter__ = AsyncMock(return_value=mock_resp)
+            mock_session.post.return_value.__aexit__ = AsyncMock(return_value=None)
+            mock_session_class.return_value.__aenter__ = AsyncMock(return_value=mock_session)
+            mock_session_class.return_value.__aexit__ = AsyncMock(return_value=None)
             
             result = await vat_client.refresh_token_coro("refresh_token")
         
