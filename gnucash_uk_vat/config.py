@@ -14,7 +14,7 @@ from . device import get_device
 from . version import version as product_version
 
 def now():
-    return datetime.datetime.now(datetime.UTC)
+    return datetime.datetime.now(datetime.timezone.utc)
     
 # Configuration object, loads configuration from a JSON file, and then
 # supports path navigate with config.get("part1.part2.part3")

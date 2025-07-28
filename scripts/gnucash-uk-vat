@@ -17,7 +17,7 @@ from gnucash_uk_vat import hmrc
 from gnucash_uk_vat import accounts
 
 def now():
-    return datetime.datetime.now(datetime.UTC)
+    return datetime.datetime.now(datetime.timezone.utc)
     
 default_start = str(now().date() - datetime.timedelta(days=356))
 default_end = str(now().date())

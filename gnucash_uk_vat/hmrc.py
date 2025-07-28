@@ -4,7 +4,7 @@ import aiohttp
 import aiohttp.web
 import time
 import asyncio
-from datetime import datetime, timedelta, date
+from datetime import datetime, timedelta, date, timezone
 import json
 import hashlib
 
@@ -168,7 +168,7 @@ class Vat:
             'Content-Type': 'application/x-www-form-urlencoded',
         }
 
-        now = datetime.now(datetime.UTC)
+        now = datetime.now(timezone.utc)
 
         # Issue request
         async with aiohttp.ClientSession() as client:
@@ -213,7 +213,7 @@ class Vat:
             'Content-Type': 'application/x-www-form-urlencoded',
         }
 
-        now = datetime.now(datetime.UTC)
+        now = datetime.now(timezone.utc)
 
         async with aiohttp.ClientSession() as client:
             async with client.post(url, headers=headers, data=params) as resp:
@@ -349,10 +349,10 @@ class Vat:
     async def get_obligations(self, vrn, start=None, end=None):
 
         if start == None:
-            start = datetime.now(datetime.UTC) - timedelta(days=(2 * 356))
+            start = datetime.now(timezone.utc) - timedelta(days=(2 * 356))
 
         if end == None:
-            end = datetime.now(datetime.UTC)
+            end = datetime.now(timezone.utc)
 
         headers = self.build_fraud_headers()
         headers['Accept'] = 'application/vnd.hmrc.1.0+json'
