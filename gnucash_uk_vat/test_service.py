@@ -15,13 +15,13 @@ import argparse
 from urllib.parse import urlencode, quote_plus
 import secrets
 import copy
-from typing import Optional, Dict, Any
+from typing import Optional, Dict, Any, Union
 
 from .model import *
 
 class Api:
 
-    def __init__(self, template: Dict[str, Any], listen: str = "0.0.0.0:8080",
+    def __init__(self, template: Any, listen: str = "0.0.0.0:8080",
                  username: Optional[str] = None, password: Optional[str] = None,
                  headers: bool = False, secret: Optional[str] = None) -> None:
         self.listen = listen
@@ -60,7 +60,7 @@ class Api:
 
         return web.json_response(self.captured_headers)
 
-    def fab_data(self, dt: str) -> Dict[str, Any]:
+    def fab_data(self, dt: str) -> Any:
 
         dt_parsed = datetime.strptime(dt, "%d%m%y").date()
 
@@ -551,7 +551,7 @@ class Api:
 
         host = self.listen.split(":", 2)
 
-        site = web.TCPSite(runner, host[0], host[1])
+        site = web.TCPSite(runner, host[0], int(host[1]))
         await site.start()
 
         while True:
