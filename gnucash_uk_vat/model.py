@@ -1,6 +1,6 @@
 
 import json
-from datetime import datetime, timedelta
+from datetime import datetime, timedelta, timezone
 
 vat_fields = [
 
@@ -279,7 +279,7 @@ class VATUser:
         if obl == None:
             raise RuntimeError("periodKey does not match an open obligation")
 
-        obl.received = datetime.utcnow().date()
+        obl.received = datetime.now(timezone.utc).date()
         obl.status = 'F'
 
         due =  obl.end + timedelta(days=30)

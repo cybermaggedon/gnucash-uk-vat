@@ -5,7 +5,7 @@ from aiohttp import web
 import json
 import os
 import uuid
-from datetime import date, datetime, timedelta
+from datetime import date, datetime, timedelta, timezone
 import sys
 import argparse
 from urllib.parse import urlencode, quote_plus
@@ -371,7 +371,7 @@ class Api:
         self.get_data(vrn).add_return(rtn)
 
         resp = {
-            "processingDate": datetime.utcnow().isoformat(),
+            "processingDate": datetime.now(timezone.utc).isoformat(),
             "paymentIndicator": "BANK",
             "formBundleNumber": str(uuid.uuid1()),
             "chargeRefNumber": str(uuid.uuid1()),
@@ -386,6 +386,17 @@ class Api:
 
         data = await request.post()
         grant = data['grant_type']
+        
+        # Validate client credentials for all grant types
+        client_id = data.get('client_id', '')
+        client_secret = data.get('client_secret', '')
+        
+        # For testing, accept specific test client credentials
+        valid_client_id = "test-client-id"
+        valid_client_secret = "test-client-secret"
+        
+        if client_id != valid_client_id or client_secret != valid_client_secret:
+            raise web.HTTPUnauthorized()
 
         if grant == "refresh_token":
             if data["refresh_token"] != self.refresh_token:

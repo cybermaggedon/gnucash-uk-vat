@@ -4,7 +4,7 @@ import aiohttp
 import aiohttp.web
 import time
 import asyncio
-from datetime import datetime, timedelta, date
+from datetime import datetime, timedelta, date, timezone
 import json
 import hashlib
 
@@ -168,7 +168,7 @@ class Vat:
             'Content-Type': 'application/x-www-form-urlencoded',
         }
 
-        now = datetime.utcnow()
+        now = datetime.now(timezone.utc)
 
         # Issue request
         async with aiohttp.ClientSession() as client:
@@ -213,7 +213,7 @@ class Vat:
             'Content-Type': 'application/x-www-form-urlencoded',
         }
 
-        now = datetime.utcnow()
+        now = datetime.now(timezone.utc)
 
         async with aiohttp.ClientSession() as client:
             async with client.post(url, headers=headers, data=params) as resp:
@@ -349,10 +349,10 @@ class Vat:
     async def get_obligations(self, vrn, start=None, end=None):
 
         if start == None:
-            start = datetime.utcnow() - timedelta(days=(2 * 356))
+            start = datetime.now(timezone.utc) - timedelta(days=(2 * 356))
 
         if end == None:
-            end = datetime.utcnow()
+            end = datetime.now(timezone.utc)
 
         headers = self.build_fraud_headers()
         headers['Accept'] = 'application/vnd.hmrc.1.0+json'
@@ -525,12 +525,12 @@ class VatTest(Vat):
         self.oauth_base = 'https://test-www.tax.service.gov.uk'
         self.api_base = 'https://test-api.service.hmrc.gov.uk'
 
-# Like VAT, but talks to an API endpoints on localhost:8080.
+# Like VAT, but talks to an API endpoints on localhost:8081.
 class VatLocalTest(Vat):
     def __init__(self, config, auth, user):
         super().__init__(config, auth, user)
-        self.oauth_base = 'http://localhost:8080'
-        self.api_base = 'http://localhost:8080'
+        self.oauth_base = 'http://localhost:8081'
+        self.api_base = 'http://localhost:8081'
 
 def create(config, auth, user):
 
