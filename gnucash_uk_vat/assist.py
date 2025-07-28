@@ -584,7 +584,7 @@ class UI:
         try:
             self.cfg = Config(config)
         except:
-            initialise_config(config)
+            initialise_config(config, None)
             self.cfg = Config(config)
         self.authz = Auth(auth)
 
