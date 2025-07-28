@@ -564,5 +564,5 @@ class TestEndpointUrlContract:
         vat_local_client = VatLocalTest(mock_config, mock_auth, None)
         
         # Verify local test URLs
-        assert vat_local_client.oauth_base == 'http://localhost:8080'
-        assert vat_local_client.api_base == 'http://localhost:8080'
+        assert vat_local_client.oauth_base == 'http://localhost:8081'
+        assert vat_local_client.api_base == 'http://localhost:8081'

@@ -463,9 +463,9 @@ class TestEnvironmentSpecificContract:
         vat_local = VatLocalTest(mock_config, mock_auth, None)
         
         # Verify local endpoints
-        assert vat_local.oauth_base == 'http://localhost:8080'
-        assert vat_local.api_base == 'http://localhost:8080'
+        assert vat_local.oauth_base == 'http://localhost:8081'
+        assert vat_local.api_base == 'http://localhost:8081'
         
         # Verify OAuth URL construction
         auth_url = vat_local.get_auth_url()
-        assert 'localhost:8080/oauth/authorize' in auth_url
+        assert 'localhost:8081/oauth/authorize' in auth_url
