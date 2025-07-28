@@ -211,8 +211,8 @@ def initialise_config(config_file, user):
         print("    Wrote '%s'" % config_file, end="\n")
         print("    The newly created config file may require some changes to suit your specific environment!", end="\n")
     else:
-        config_current.write("config.json")
-        print("    Wrote 'config.json'", end="\n")
+        config_current.write(config_file)
+        print("    Wrote '%s'" % config_file, end="\n")
     
 
 def get_device_config():
