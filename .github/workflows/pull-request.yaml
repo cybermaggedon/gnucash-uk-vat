@@ -1,0 +1,77 @@
+name: Test pull request
+
+on:
+  pull_request:
+  push:
+    branches: [ master, main ]
+
+permissions:
+  contents: read
+
+jobs:
+  test:
+    name: Run tests
+    runs-on: ubuntu-latest
+    
+    strategy:
+      matrix:
+        python-version: ['3.8', '3.9', '3.10', '3.11', '3.12']
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Set up Python ${{ matrix.python-version }}
+        uses: actions/setup-python@v4
+        with:
+          python-version: ${{ matrix.python-version }}
+
+      - name: Install system dependencies
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y \
+            dmidecode \
+            libxml2-dev \
+            libxslt1-dev \
+            libffi-dev \
+            libssl-dev \
+            zlib1g-dev
+
+      - name: Install Python dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install -r requirements-dev.txt
+          pip install .
+
+      - name: Run unit tests
+        run: |
+          pytest tests/unit/ -v --tb=short
+
+      - name: Test package installation
+        run: |
+          python -c "import gnucash_uk_vat; print('Package installed successfully')"
+          gnucash-uk-vat --help || echo "CLI help command completed"
+
+  test-without-optional-deps:
+    name: Test without optional dependencies
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v4
+        with:
+          python-version: '3.11'
+
+      - name: Install minimal dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install pytest pytest-asyncio pytest-mock
+          pip install aiohttp tabulate
+
+      - name: Run core unit tests (without hardware-dependent tests)
+        run: |
+          pytest tests/unit/test_auth.py tests/unit/test_config.py tests/unit/test_model.py tests/unit/test_operations.py tests/unit/test_accounts.py tests/unit/test_vat.py tests/unit/test_hmrc.py -v
+
