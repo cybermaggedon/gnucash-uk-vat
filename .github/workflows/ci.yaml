@@ -42,6 +42,14 @@ jobs:
         run: |
           pytest tests/unit/ -v --tb=short --cov=gnucash_uk_vat --cov-report=xml --cov-report=term
 
+      - name: Run contract tests
+        run: |
+          pytest tests/contract/ -v --tb=short
+
+      - name: Run integration tests
+        run: |
+          pytest tests/integration/ -v --tb=short
+
       - name: Upload coverage to Codecov
         uses: codecov/codecov-action@v3
         if: success()
