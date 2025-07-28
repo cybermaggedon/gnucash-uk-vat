@@ -29,7 +29,7 @@ async def vat_test_service():
     
     # Start the vat-test-service
     proc = subprocess.Popen([
-        'python', str(Path(__file__).parent.parent.parent / "scripts" / "vat-test-service"),
+        'python', '-m', 'gnucash_uk_vat.test_service',
         '--listen', 'localhost:8081',
         '--data', str(test_data_path),
         '--secret', 'test-secret-12345'
