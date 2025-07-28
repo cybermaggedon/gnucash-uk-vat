@@ -5,6 +5,7 @@ This module provides fixtures for running integration tests with the vat-test-se
 """
 
 import pytest
+import pytest_asyncio
 import asyncio
 import subprocess
 import time
@@ -15,7 +16,7 @@ import signal
 from pathlib import Path
 
 
-@pytest.fixture(scope="function")
+@pytest_asyncio.fixture(scope="function")
 async def vat_test_service():
     """
     Start vat-test-service for integration tests.
