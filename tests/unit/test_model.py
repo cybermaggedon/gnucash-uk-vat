@@ -536,7 +536,8 @@ class TestVATUser:
         ret.netVatDue = 150.0
         
         with patch('gnucash_uk_vat.model.datetime') as mock_datetime:
-            mock_datetime.utcnow.return_value.date.return_value = date(2023, 4, 15)
+            mock_datetime.now.return_value.date.return_value = date(2023, 4, 15)
+            mock_datetime.UTC = timezone.utc
             user.add_return(ret)
         
         # Check obligation was updated
