@@ -121,7 +121,7 @@ def test_auth_file(tmp_path):
         "access_token": "test-secret-12345",  # Matches vat-test-service secret
         "refresh_token": "67890",
         "token_type": "bearer",
-        "expires": "2025-12-31T23:59:59"  # Far future expiry
+        "expires": "2025-12-31T23:59:59+00:00"  # Far future expiry with timezone
     }
     
     auth_file = tmp_path / "test_auth.json"

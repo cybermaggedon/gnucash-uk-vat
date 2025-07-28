@@ -2,5 +2,5 @@
     "access_token": "test-access-token-12345",
     "refresh_token": "test-refresh-token-67890",
     "token_type": "bearer",
-    "expires": "2023-12-31T23:59:59"
+    "expires": "2025-12-31T23:59:59+00:00"
 }
