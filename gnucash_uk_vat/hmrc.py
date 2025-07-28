@@ -168,7 +168,7 @@ class Vat:
             'Content-Type': 'application/x-www-form-urlencoded',
         }
 
-        now = datetime.utcnow()
+        now = datetime.now(datetime.UTC)
 
         # Issue request
         async with aiohttp.ClientSession() as client:
@@ -213,7 +213,7 @@ class Vat:
             'Content-Type': 'application/x-www-form-urlencoded',
         }
 
-        now = datetime.utcnow()
+        now = datetime.now(datetime.UTC)
 
         async with aiohttp.ClientSession() as client:
             async with client.post(url, headers=headers, data=params) as resp:
@@ -349,10 +349,10 @@ class Vat:
     async def get_obligations(self, vrn, start=None, end=None):
 
         if start == None:
-            start = datetime.utcnow() - timedelta(days=(2 * 356))
+            start = datetime.now(datetime.UTC) - timedelta(days=(2 * 356))
 
         if end == None:
-            end = datetime.utcnow()
+            end = datetime.now(datetime.UTC)
 
         headers = self.build_fraud_headers()
         headers['Accept'] = 'application/vnd.hmrc.1.0+json'

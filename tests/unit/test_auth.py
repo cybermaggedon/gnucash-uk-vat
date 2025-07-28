@@ -1,7 +1,7 @@
 import pytest
 import json
 import os
-from datetime import datetime, timedelta
+from datetime import datetime, timedelta, timezone
 from unittest.mock import patch, MagicMock, AsyncMock, mock_open
 import tempfile
 
@@ -203,7 +203,7 @@ class TestAuthMaybeRefresh:
     async def test_maybe_refresh_not_expired(self):
         """Test maybe_refresh does nothing when token not expired"""
         auth = Auth()
-        future_time = datetime.utcnow() + timedelta(hours=1)
+        future_time = datetime.now(timezone.utc) + timedelta(hours=1)
         auth.auth = {
             "access_token": "token",
             "expires": future_time.isoformat()
@@ -221,7 +221,7 @@ class TestAuthMaybeRefresh:
     async def test_maybe_refresh_expired(self):
         """Test maybe_refresh calls refresh when token expired"""
         auth = Auth()
-        past_time = datetime.utcnow() - timedelta(hours=1)
+        past_time = datetime.now(timezone.utc) - timedelta(hours=1)
         auth.auth = {
             "access_token": "old_token",
             "refresh_token": "refresh_token",
@@ -241,7 +241,7 @@ class TestAuthMaybeRefresh:
         """Test maybe_refresh behavior at exact expiry time"""
         auth = Auth()
         # Set expires to current time (edge case)
-        current_time = datetime.utcnow()
+        current_time = datetime.now(timezone.utc)
         auth.auth = {
             "access_token": "token",
             "refresh_token": "refresh_token",
@@ -252,8 +252,9 @@ class TestAuthMaybeRefresh:
         
         with patch.object(auth, 'refresh') as mock_refresh:
             with patch('gnucash_uk_vat.auth.datetime') as mock_datetime:
-                # Mock datetime.utcnow to return exact same time
-                mock_datetime.utcnow.return_value = current_time
+                # Mock datetime.now to return exact same time
+                mock_datetime.now.return_value = current_time
+                mock_datetime.UTC = timezone.utc
                 mock_datetime.fromisoformat = datetime.fromisoformat
                 
                 await auth.maybe_refresh(mock_service)
@@ -272,7 +273,7 @@ class TestAuthIntegration:
         initial_auth = {
             "access_token": "initial_token",
             "refresh_token": "initial_refresh",
-            "expires": (datetime.utcnow() - timedelta(hours=1)).isoformat()
+            "expires": (datetime.now(timezone.utc) - timedelta(hours=1)).isoformat()
         }
         
         auth_file = tmp_path / "lifecycle_auth.json"
@@ -289,7 +290,7 @@ class TestAuthIntegration:
         new_auth = {
             "access_token": "refreshed_token",
             "refresh_token": "refreshed_refresh",
-            "expires": (datetime.utcnow() + timedelta(hours=1)).isoformat()
+            "expires": (datetime.now(timezone.utc) + timedelta(hours=1)).isoformat()
         }
         mock_service.refresh_token.return_value = new_auth
         

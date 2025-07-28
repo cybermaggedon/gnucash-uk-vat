@@ -371,7 +371,7 @@ class Api:
         self.get_data(vrn).add_return(rtn)
 
         resp = {
-            "processingDate": datetime.utcnow().isoformat(),
+            "processingDate": datetime.now(datetime.UTC).isoformat(),
             "paymentIndicator": "BANK",
             "formBundleNumber": str(uuid.uuid1()),
             "chargeRefNumber": str(uuid.uuid1()),
