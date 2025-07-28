@@ -476,8 +476,8 @@ class TestVatLocalTest:
         assert vat.config == mock_config
         assert vat.auth == mock_auth
         assert vat.user == mock_user
-        assert vat.oauth_base == 'http://localhost:8080'
-        assert vat.api_base == 'http://localhost:8080'
+        assert vat.oauth_base == 'http://localhost:8081'
+        assert vat.api_base == 'http://localhost:8081'
 
 
 class TestCreate:
