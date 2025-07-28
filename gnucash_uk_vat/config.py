@@ -9,33 +9,37 @@ import netifaces
 
 import datetime
 from pathlib import Path
-from typing import Optional
+from typing import Optional, Dict, Any, Union
 
 from . device import get_device
 from . version import version as product_version
 
-def now():
+def now() -> datetime.datetime:
     return datetime.datetime.now(datetime.timezone.utc)
     
 # Configuration object, loads configuration from a JSON file, and then
 # supports path navigate with config.get("part1.part2.part3")
 class Config:
-    def __init__(self, file="config.json", config=None):
+    file: str
+    config: Dict[str, Any]
+    
+    def __init__(self, file: str = "config.json", config: Optional[Dict[str, Any]] = None) -> None:
         self.file = file
         if config:
             # Used to populate default values when creating new config
             self.config = config
         else:
             self.config = json.loads(open(file).read())
-    def get(self, key):
-        cfg = self.config
+    def get(self, key: str) -> Any:
+        cfg: Any = self.config
         for v in key.split("."):
-            if v in cfg.keys():
+            if isinstance(cfg, dict) and v in cfg.keys():
                 cfg = cfg[v]
             else:
                 cfg = None
+                break
         return cfg
-    def set(self, key, value, applyNone=True):
+    def set(self, key: str, value: Any, applyNone: bool = True) -> None:
         # Should 'set' ignore value==None
         if value or ( not value and applyNone ):
             cfg = self.config
@@ -44,23 +48,23 @@ class Config:
                 cfg = cfg[v]
             cfg[keys[-1]] = value
     # Write back to file
-    def write(self, fileOverride=None):
+    def write(self, fileOverride: Optional[str] = None) -> None:
         filename = fileOverride if fileOverride else self.file
         with open(filename , "w") as config_file:
             config_file.write(json.dumps(self.config, indent=4))
 
-def get_default_gateway_if():
+def get_default_gateway_if() -> Any:
     gateways = netifaces.gateways()
     default_gateway_if = gateways['default'][netifaces.AF_INET][1]
     ifaddresses = netifaces.ifaddresses(default_gateway_if)
     return ifaddresses
 
-def get_gateway_ip():
+def get_gateway_ip() -> Any:
     default_gateway_if = get_default_gateway_if()
     ip_addr = default_gateway_if[netifaces.AF_INET][0]['addr']
     return ip_addr
 
-def get_gateway_mac():
+def get_gateway_mac() -> Any:
     default_gateway_if = get_default_gateway_if()
     mac_addr = default_gateway_if[netifaces.AF_LINK][0]['addr']
     return mac_addr
@@ -219,7 +223,7 @@ def initialise_config(config_file: str, user: Optional['Config']) -> None:
         print("    Wrote '%s'" % config_file, end="\n")
     
 
-def get_device_config():
+def get_device_config() -> Dict[str, str]:
 
     dmi = get_device()
     if dmi == None:

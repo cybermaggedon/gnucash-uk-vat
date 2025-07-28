@@ -1,8 +1,9 @@
 
 import json
-from datetime import datetime, timedelta, timezone
+from datetime import datetime, timedelta, timezone, date
+from typing import Optional, Dict, Any, List, Union
 
-vat_fields = [
+vat_fields: List[str] = [
 
     # VAT due on sales and other outputs. This corresponds to box 1 on the VAT
     # Return form.
@@ -46,7 +47,7 @@ vat_fields = [
 
 ]
 
-vat_descriptions = {
+vat_descriptions: Dict[str, str] = {
     "vatDueSales": "VAT due on sales",
     "vatDueAcquisitions": "VAT due on acquisitions",
     "totalVatDue": "Total VAT due",
@@ -59,7 +60,14 @@ vat_descriptions = {
 }
 
 class Obligation:
-    def __init__(self, pKey, status, start, end, received=None, due=None):
+    periodKey: str
+    status: str
+    start: date
+    end: date
+    received: Optional[date]
+    due: Optional[date]
+    
+    def __init__(self, pKey: str, status: str, start: date, end: date, received: Optional[date] = None, due: Optional[date] = None) -> None:
         self.periodKey = pKey
         self.status = status
         self.start = start
@@ -67,7 +75,7 @@ class Obligation:
         self.received = received
         self.due = due
     @staticmethod
-    def from_dict(d):
+    def from_dict(d: Dict[str, Any]) -> 'Obligation':
         status  =  d["status"]
         periodKey  =  d["periodKey"]
         start  =  datetime.fromisoformat(d["start"]).date()
@@ -81,7 +89,7 @@ class Obligation:
         else:
             received = None
         return Obligation(periodKey, status, start, end, received, due)
-    def to_dict(self):
+    def to_dict(self) -> Dict[str, Any]:
         obj = {
             "status": self.status,
             "periodKey": self.periodKey,
@@ -93,13 +101,20 @@ class Obligation:
         if self.due != None:
             obj["due"] = self.due.isoformat()
         return obj
-    def in_range(self, start, end):
+    def in_range(self, start: date, end: date) -> bool:
 #        if self.status == "O":
 #            return self.due >= start and self.due <= end
         return self.end >= start and self.end <= end
 
 class Liability:
-    def __init__(self, start, end, typ, original, outstanding=None, due=None):
+    start: date
+    end: date
+    typ: str
+    original: Union[int, float]
+    outstanding: Optional[Union[int, float]]
+    due: Optional[date]
+    
+    def __init__(self, start: date, end: date, typ: str, original: Union[int, float], outstanding: Optional[Union[int, float]] = None, due: Optional[date] = None) -> None:
         self.start = start
         self.end = end
         self.typ = typ
@@ -107,7 +122,7 @@ class Liability:
         self.outstanding = outstanding
         self.due = due
     @staticmethod
-    def from_dict(d):
+    def from_dict(d: Dict[str, Any]) -> 'Liability':
         start  =  datetime.fromisoformat(d["taxPeriod"]["from"]).date()
         end  =  datetime.fromisoformat(d["taxPeriod"]["to"]).date()
         typ  =  d["type"]
@@ -121,8 +136,8 @@ class Liability:
         else:
             due = None
         return Liability(start, end, typ, orig, outs, due)
-    def to_dict(self):
-        obj = {
+    def to_dict(self) -> Dict[str, Any]:
+        obj: Dict[str, Any] = {
             "type": self.typ,
             "originalAmount": self.original,
             "outstandingAmount": self.outstanding,
@@ -136,7 +151,7 @@ class Liability:
         if self.due:
             obj["due"] = self.due.isoformat()
         return obj
-    def in_range(self, start, end):
+    def in_range(self, start: date, end: date) -> bool:
         if self.start >= start and self.start <= end:
             return True
         if self.end >= start and self.end <= end:
@@ -146,26 +161,41 @@ class Liability:
         return False
 
 class Payment:
-    def __init__(self, amount, received):
+    amount: Union[int, float]
+    received: date
+    
+    def __init__(self, amount: Union[int, float], received: date) -> None:
         self.amount = amount
         self.received = received
     @staticmethod
-    def from_dict(d):
+    def from_dict(d: Dict[str, Any]) -> 'Payment':
         amount  =  d["amount"]
         received  =  datetime.fromisoformat(d["received"]).date()
         return Payment(amount, received)
-    def to_dict(self):
+    def to_dict(self) -> Dict[str, Any]:
         return {
             "amount": self.amount,
             "received": self.received.isoformat()
         }
-    def in_range(self, start, end):
+    def in_range(self, start: date, end: date) -> bool:
         if self.received >= start and self.received <= end:
             return True
         return False
 
 class Return:
-    def __init__(self):
+    periodKey: Optional[str]
+    vatDueSales: Optional[Union[int, float]]
+    vatDueAcquisitions: Optional[Union[int, float]]
+    totalVatDue: Optional[Union[int, float]]
+    vatReclaimedCurrPeriod: Optional[Union[int, float]]
+    netVatDue: Optional[Union[int, float]]
+    totalValueSalesExVAT: Optional[int]
+    totalValuePurchasesExVAT: Optional[int]
+    totalValueGoodsSuppliedExVAT: Optional[int]
+    totalAcquisitionsExVAT: Optional[int]
+    finalised: Optional[bool]
+    
+    def __init__(self) -> None:
         self.periodKey = None
         self.vatDueSales = None
         self.vatDueAcquisitions = None
@@ -178,7 +208,7 @@ class Return:
         self.totalAcquisitionsExVAT = None
         self.finalised = None
     @staticmethod
-    def from_dict(d):
+    def from_dict(d: Dict[str, Any]) -> 'Return':
         r = Return()
         r.periodKey = d["periodKey"]
         r.vatDueSales = d["vatDueSales"]
@@ -193,7 +223,7 @@ class Return:
         if "finalised" in d:
             r.finalised = d["finalised"]
         return r
-    def to_dict(self):
+    def to_dict(self) -> Dict[str, Any]:
         d = {
             "periodKey": self.periodKey,
             "vatDueSales": self.vatDueSales,
@@ -209,7 +239,7 @@ class Return:
         if self.finalised:
             d["finalised"] = self.finalised
         return d
-    def to_string(self, show_key=False, indent=True):
+    def to_string(self, show_key: bool = False, indent: bool = True) -> str:
         s = ""
         if show_key:
             if indent:
@@ -236,13 +266,18 @@ class Return:
         return s
 
 class VATUser:
-    def __init__(self):
+    obligations: List[Obligation]
+    returns: List[Return]
+    liabilities: List[Liability]
+    payments: List[Payment]
+    
+    def __init__(self) -> None:
         self.obligations = []
         self.returns = []
         self.liabilities = []
         self.payments = []
     @staticmethod
-    def from_dict(d):
+    def from_dict(d: Dict[str, Any]) -> 'VATUser':
         v = VATUser()
         v.obligations = [
             Obligation.from_dict(v)
@@ -261,14 +296,14 @@ class VATUser:
             for v in d["liabilities"]
         ]
         return v
-    def to_dict(self):
+    def to_dict(self) -> Dict[str, Any]:
         return {
             "obligations": [ v.to_dict() for v in self.obligations ],
             "returns": [ v.to_dict() for v in self.returns ],
             "payments": [ v.to_dict() for v in self.payments ],
             "liabilities": [v.to_dict() for v in self.liabilities ]
         }
-    def add_return(self, rtn):
+    def add_return(self, rtn: Return) -> None:
         
         key = rtn.periodKey
 
@@ -284,29 +319,32 @@ class VATUser:
 
         due =  obl.end + timedelta(days=30)
 
-        self.liabilities.append(
-            Liability(obl.start, obl.end, "Net VAT", rtn.netVatDue,
-                      rtn.netVatDue, due)
-        )
+        if rtn.netVatDue is not None:
+            self.liabilities.append(
+                Liability(obl.start, obl.end, "Net VAT", rtn.netVatDue,
+                          rtn.netVatDue, due)
+            )
         
         self.returns.append(rtn)
 
 class VATData:
-    def __init__(self):
+    data: Dict[str, VATUser]
+    
+    def __init__(self) -> None:
         self.data = {}
     @staticmethod
-    def from_dict(d):
+    def from_dict(d: Dict[str, Any]) -> 'VATData':
         v = VATData()
         for vrn in d:
             v.data[vrn] = VATUser.from_dict(d[vrn])
         return v
-    def to_dict(self):
+    def to_dict(self) -> Dict[str, Any]:
         return {
             k: self.data[k].to_dict()
             for k in self.data
         }
     @staticmethod
-    def from_json(s):
+    def from_json(s: str) -> 'VATData':
         data = json.loads(s)
         return VATData.from_dict(data)
 #    def add_return(self, vrn, rtn):

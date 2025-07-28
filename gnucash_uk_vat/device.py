@@ -1,5 +1,6 @@
+from typing import Optional, Dict, Any
 
-def get_device():
+def get_device() -> Optional[Dict[str, Any]]:
 
     import platform
     p = platform.system()
@@ -13,7 +14,7 @@ def get_device():
     else:
         raise RuntimeError("Can't do get_device on platform " + p)
 
-def get_linux_device():
+def get_linux_device() -> Optional[Dict[str, Any]]:
     try:
         import dmidecode
         d = dmidecode.DMIDecode(command=["sudo",  "dmidecode"])
@@ -29,7 +30,7 @@ def get_linux_device():
         print(e)
         return None
 
-def get_windows_device():
+def get_windows_device() -> Dict[str, Any]:
     import subprocess
     uuid = str(
         subprocess.check_output('wmic csproduct get uuid'), 'utf-8'
@@ -47,14 +48,17 @@ def get_windows_device():
         "serial": id,
     }
 
-def get_darwin_device():
+def get_darwin_device() -> Dict[str, Any]:
     import json
     import subprocess
     system_profile_data = subprocess.Popen(
         ['system_profiler', '-json', 'SPHardwareDataType'],
         stdout=subprocess.PIPE
     )
-    data = json.loads(system_profile_data.stdout.read())
+    if system_profile_data.stdout is not None:
+        data = json.loads(system_profile_data.stdout.read())
+    else:
+        data = {}
     sp = data.get('SPHardwareDataType', {})[0]
 
     return {

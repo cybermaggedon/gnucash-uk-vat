@@ -7,22 +7,27 @@ import asyncio
 from datetime import datetime, timedelta, date, timezone
 import json
 import hashlib
+from typing import Optional, Dict, Any, List, Union
 
 from . model import *
 
 # AuthCollector is a class which provides a temporary web service in order
 # to receive OAUTH credential tokens
 class AuthCollector:
-
+    host: str
+    port: int
+    running: bool
+    result: Optional[Dict[str, Any]]
+    
     # Constructor
-    def __init__(self, host, port):
+    def __init__(self, host: str, port: int) -> None:
         self.host = host
         self.port = port
         self.running = True
         self.result = None
 
     # Main body coroutine
-    async def start(self):
+    async def start(self) -> None:
 
         # Handler, there is only one endpoint, it receives credential
         # tokens
@@ -51,7 +56,7 @@ class AuthCollector:
         self.site = aiohttp.web.TCPSite(self.runner, self.host, self.port)
         await self.site.start()
 
-    async def stop(self):
+    async def stop(self) -> None:
 
         # Close web server
         await self.site.stop()
