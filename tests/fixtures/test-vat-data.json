@@ -1,0 +1,182 @@
+{
+    "TEMPLATE": {
+        "obligations": [
+            {
+                "status": "O",
+                "periodKey": "#001",
+                "start": "2023-01-01",
+                "end": "2023-03-31",
+                "due": "2023-04-30"
+            },
+            {
+                "status": "F",
+                "periodKey": "#002", 
+                "start": "2023-04-01",
+                "end": "2023-06-30",
+                "received": "2023-07-15",
+                "due": "2023-07-31"
+            },
+            {
+                "status": "O",
+                "periodKey": "#003",
+                "start": "2023-07-01", 
+                "end": "2023-09-30",
+                "due": "2023-10-31"
+            }
+        ],
+        "liabilities": [
+            {
+                "type": "Net VAT",
+                "originalAmount": 1200.50,
+                "outstandingAmount": 1200.50,
+                "taxPeriod": {
+                    "from": "2023-01-01",
+                    "to": "2023-03-31"
+                },
+                "due": "2023-04-30"
+            },
+            {
+                "type": "Net VAT",
+                "originalAmount": 800.00,
+                "outstandingAmount": 0.00,
+                "taxPeriod": {
+                    "from": "2023-04-01",
+                    "to": "2023-06-30"
+                },
+                "due": "2023-07-31"
+            }
+        ],
+        "payments": [
+            {
+                "amount": 800.00,
+                "received": "2023-07-15"
+            },
+            {
+                "amount": 450.25,
+                "received": "2023-05-10"
+            }
+        ],
+        "returns": [
+            {
+                "periodKey": "#001",
+                "vatDueSales": 1500.75,
+                "vatDueAcquisitions": 200.50,
+                "totalVatDue": 1701.25,
+                "vatReclaimedCurrPeriod": 450.25,
+                "netVatDue": 1251.00,
+                "totalValueSalesExVAT": 15000,
+                "totalValuePurchasesExVAT": 8000,
+                "totalValueGoodsSuppliedExVAT": 0,
+                "totalAcquisitionsExVAT": 0,
+                "finalised": true
+            },
+            {
+                "periodKey": "#002",
+                "vatDueSales": 1200.00,
+                "vatDueAcquisitions": 150.00,
+                "totalVatDue": 1350.00,
+                "vatReclaimedCurrPeriod": 550.00,
+                "netVatDue": 800.00,
+                "totalValueSalesExVAT": 12000,
+                "totalValuePurchasesExVAT": 6500,
+                "totalValueGoodsSuppliedExVAT": 0,
+                "totalAcquisitionsExVAT": 0,
+                "finalised": true
+            }
+        ],
+        "user": {
+            "userId": "test-user-123",
+            "password": "test-password-456"
+        }
+    },
+    "999150423": {
+        "obligations": [
+            {
+                "status": "O",
+                "periodKey": "#001",
+                "start": "2023-01-01",
+                "end": "2023-03-31",
+                "due": "2023-04-30"
+            },
+            {
+                "status": "F",
+                "periodKey": "#002", 
+                "start": "2023-04-01",
+                "end": "2023-06-30",
+                "received": "2023-07-15",
+                "due": "2023-07-31"
+            },
+            {
+                "status": "O",
+                "periodKey": "#003",
+                "start": "2023-07-01", 
+                "end": "2023-09-30",
+                "due": "2023-10-31"
+            }
+        ],
+        "liabilities": [
+            {
+                "type": "Net VAT",
+                "originalAmount": 1200.50,
+                "outstandingAmount": 1200.50,
+                "taxPeriod": {
+                    "from": "2023-01-01",
+                    "to": "2023-03-31"
+                },
+                "due": "2023-04-30"
+            },
+            {
+                "type": "Net VAT",
+                "originalAmount": 800.00,
+                "outstandingAmount": 0.00,
+                "taxPeriod": {
+                    "from": "2023-04-01",
+                    "to": "2023-06-30"
+                },
+                "due": "2023-07-31"
+            }
+        ],
+        "payments": [
+            {
+                "amount": 800.00,
+                "received": "2023-07-15"
+            },
+            {
+                "amount": 450.25,
+                "received": "2023-05-10"
+            }
+        ],
+        "returns": [
+            {
+                "periodKey": "#001",
+                "vatDueSales": 1500.75,
+                "vatDueAcquisitions": 200.50,
+                "totalVatDue": 1701.25,
+                "vatReclaimedCurrPeriod": 450.25,
+                "netVatDue": 1251.00,
+                "totalValueSalesExVAT": 15000,
+                "totalValuePurchasesExVAT": 8000,
+                "totalValueGoodsSuppliedExVAT": 0,
+                "totalAcquisitionsExVAT": 0,
+                "finalised": true
+            },
+            {
+                "periodKey": "#002",
+                "vatDueSales": 1200.00,
+                "vatDueAcquisitions": 150.00,
+                "totalVatDue": 1350.00,
+                "vatReclaimedCurrPeriod": 550.00,
+                "netVatDue": 800.00,
+                "totalValueSalesExVAT": 12000,
+                "totalValuePurchasesExVAT": 6500,
+                "totalValueGoodsSuppliedExVAT": 0,
+                "totalAcquisitionsExVAT": 0,
+                "finalised": true
+            }
+        ],
+        "user": {
+            "userId": "test-user-123",
+            "password": "test-password-456"
+        }
+    }
+}

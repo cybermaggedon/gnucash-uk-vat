@@ -1,0 +1,44 @@
+{
+    "dates": {
+        "start": "2023-01-01",
+        "end": "2023-03-31",
+        "due": "2023-04-30"
+    },
+    "accounts": {
+        "kind": "piecash",
+        "file": "tests/fixtures/test-gnucash.db",
+        "vatDueSales": "VAT:Output:Sales",
+        "vatDueAcquisitions": "VAT:Output:EU",
+        "totalVatDue": "VAT:Output",
+        "vatReclaimedCurrPeriod": "VAT:Input",
+        "netVatDue": "VAT",
+        "totalValueSalesExVAT": "Income:Sales",
+        "totalValuePurchasesExVAT": "Expenses:VAT Purchases",
+        "totalValueGoodsSuppliedExVAT": "Income:Sales:EU:Goods",
+        "totalAcquisitionsExVAT": "Expenses:VAT Purchases:EU Reverse VAT",
+        "liabilities": "VAT:Liabilities",
+        "bills": "Accounts Payable"
+    },
+    "application": {
+        "profile": "local",
+        "product-name": "gnucash-uk-vat",
+        "product-version": "gnucash-uk-vat-test",
+        "client-id": "test-client-id",
+        "client-secret": "test-client-secret",
+        "terms-and-conditions-url": "http://localhost:8080/terms"
+    },
+    "identity": {
+        "vrn": "999150423",
+        "device": {
+            "os-family": "Linux",
+            "os-version": "Ubuntu 20.04",
+            "device-manufacturer": "Test Manufacturer",
+            "device-model": "Test Model",
+            "id": "test-device-12345"
+        },
+        "user": "test-user",
+        "local-ip": "192.168.1.100",
+        "mac-address": "00:11:22:33:44:55",
+        "time": "2023-04-15T10:30:00Z"
+    }
+}

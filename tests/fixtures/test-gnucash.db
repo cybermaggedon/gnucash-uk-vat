@@ -1,0 +1,4 @@
+# Test GnuCash database placeholder
+# This file represents a minimal GnuCash database for testing purposes
+# In real integration tests, this would be a proper SQLite database
+# with the necessary account structure for VAT calculations

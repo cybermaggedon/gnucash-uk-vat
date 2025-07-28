@@ -525,12 +525,12 @@ class VatTest(Vat):
         self.oauth_base = 'https://test-www.tax.service.gov.uk'
         self.api_base = 'https://test-api.service.hmrc.gov.uk'
 
-# Like VAT, but talks to an API endpoints on localhost:8080.
+# Like VAT, but talks to an API endpoints on localhost:8081.
 class VatLocalTest(Vat):
     def __init__(self, config, auth, user):
         super().__init__(config, auth, user)
-        self.oauth_base = 'http://localhost:8080'
-        self.api_base = 'http://localhost:8080'
+        self.oauth_base = 'http://localhost:8081'
+        self.api_base = 'http://localhost:8081'
 
 def create(config, auth, user):
 
