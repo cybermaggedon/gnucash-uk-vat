@@ -151,7 +151,7 @@ class TestCLIMainFunction:
     """Test CLI main function and entry points"""
 
     @patch('gnucash_uk_vat.cli.asyncrun')
-    @patch('gnucash_uk_vat.cli.run')
+    @patch('gnucash_uk_vat.cli.run', new_callable=Mock)
     @patch('sys.argv', ['gnucash-uk-vat', '--help'])
     def test_main_function_calls_asyncrun(self, mock_run, mock_asyncrun):
         """Test that main function calls asyncrun with run coroutine"""
@@ -166,8 +166,9 @@ class TestCLIMainFunction:
 
     @patch('sys.stderr', new_callable=StringIO)
     @patch('gnucash_uk_vat.cli.asyncrun')
+    @patch('gnucash_uk_vat.cli.run', new_callable=Mock)
     @patch('sys.argv', ['gnucash-uk-vat'])
-    def test_main_function_handles_exceptions(self, mock_asyncrun, mock_stderr):
+    def test_main_function_handles_exceptions(self, mock_run, mock_asyncrun, mock_stderr):
         """Test that main function handles exceptions properly"""
         from gnucash_uk_vat.cli import main
         
