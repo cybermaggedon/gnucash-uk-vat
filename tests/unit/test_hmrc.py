@@ -15,22 +15,27 @@ from gnucash_uk_vat.model import Obligation, Liability, Payment, Return
 
 
 def create_aiohttp_mock(mock_response, status=200):
-    """Helper function to create properly mocked aiohttp session"""
-    mock_session_class = MagicMock()
-    mock_session = AsyncMock()
-    mock_resp = AsyncMock()
+    """Helper function to create a mock that works with aiohttp async context managers"""
     
-    # Set up response
+    # Create mock response
+    mock_resp = AsyncMock()
     mock_resp.status = status
     mock_resp.json.return_value = mock_response
     
-    # Mock the async context manager chain for both GET and POST
-    mock_session.get.return_value.__aenter__ = AsyncMock(return_value=mock_resp)
-    mock_session.get.return_value.__aexit__ = AsyncMock(return_value=None)
-    mock_session.post.return_value.__aenter__ = AsyncMock(return_value=mock_resp)
-    mock_session.post.return_value.__aexit__ = AsyncMock(return_value=None)
-    mock_session_class.return_value.__aenter__ = AsyncMock(return_value=mock_session)
-    mock_session_class.return_value.__aexit__ = AsyncMock(return_value=None)
+    # Create mock for request methods (get/post)
+    mock_request = AsyncMock()
+    mock_request.__aenter__.return_value = mock_resp
+    mock_request.__aexit__.return_value = None
+    
+    # Create mock session
+    mock_session = AsyncMock()
+    mock_session.get.return_value = mock_request
+    mock_session.post.return_value = mock_request
+    
+    # Create mock session class
+    mock_session_class = MagicMock()
+    mock_session_class.return_value.__aenter__.return_value = mock_session
+    mock_session_class.return_value.__aexit__.return_value = None
     
     return mock_session_class
 
@@ -242,17 +247,7 @@ class TestVat:
             "expires_in": "3600"
         }
         
-        with patch('aiohttp.ClientSession') as mock_session_class:
-            mock_session = AsyncMock()
-            mock_resp = AsyncMock()
-            mock_resp.json.return_value = mock_response
-            
-            # Mock the async context manager chain
-            mock_session.post.return_value.__aenter__ = AsyncMock(return_value=mock_resp)
-            mock_session.post.return_value.__aexit__ = AsyncMock(return_value=None)
-            mock_session_class.return_value.__aenter__ = AsyncMock(return_value=mock_session)
-            mock_session_class.return_value.__aexit__ = AsyncMock(return_value=None)
-            
+        with patch('aiohttp.ClientSession', create_aiohttp_mock(mock_response)):
             result = await vat_client.refresh_token_coro("refresh_token")
         
         assert result["access_token"] == "refreshed_access_token"
@@ -263,13 +258,7 @@ class TestVat:
         """Test test_fraud_headers method"""
         mock_response = {"status": "valid"}
         
-        with patch('aiohttp.ClientSession') as mock_session:
-            mock_resp = AsyncMock()
-            mock_resp.status = 200
-            mock_resp.json = AsyncMock(return_value=mock_response)
-            
-            mock_session.return_value.__aenter__.return_value.get.return_value.__aenter__.return_value = mock_resp
-            
+        with patch('aiohttp.ClientSession', create_aiohttp_mock(mock_response)):
             with patch('builtins.print'):  # Suppress print output
                 result = await vat_client.test_fraud_headers()
         
@@ -278,13 +267,9 @@ class TestVat:
     @pytest.mark.asyncio
     async def test_test_fraud_headers_error(self, vat_client):
         """Test test_fraud_headers with error response"""
-        with patch('aiohttp.ClientSession') as mock_session:
-            mock_resp = AsyncMock()
-            mock_resp.status = 400
-            mock_resp.json = AsyncMock(return_value={"message": "Invalid headers"})
-            
-            mock_session.return_value.__aenter__.return_value.get.return_value.__aenter__.return_value = mock_resp
-            
+        mock_response = {"message": "Invalid headers"}
+        
+        with patch('aiohttp.ClientSession', create_aiohttp_mock(mock_response, 400)):
             with pytest.raises(RuntimeError) as exc_info:
                 with patch('builtins.print'):
                     await vat_client.test_fraud_headers()
@@ -306,13 +291,7 @@ class TestVat:
             ]
         }
         
-        with patch('aiohttp.ClientSession') as mock_session:
-            mock_resp = AsyncMock()
-            mock_resp.status = 200
-            mock_resp.json = AsyncMock(return_value=mock_response)
-            
-            mock_session.return_value.__aenter__.return_value.get.return_value.__aenter__.return_value = mock_resp
-            
+        with patch('aiohttp.ClientSession', create_aiohttp_mock(mock_response)):
             result = await vat_client.get_open_obligations("123456789")
         
         assert len(result) == 1
@@ -340,13 +319,7 @@ class TestVat:
             ]
         }
         
-        with patch('aiohttp.ClientSession') as mock_session:
-            mock_resp = AsyncMock()
-            mock_resp.status = 200
-            mock_resp.json = AsyncMock(return_value=mock_response)
-            
-            mock_session.return_value.__aenter__.return_value.get.return_value.__aenter__.return_value = mock_resp
-            
+        with patch('aiohttp.ClientSession', create_aiohttp_mock(mock_response)):
             start = date(2023, 1, 1)
             end = date(2023, 12, 31)
             result = await vat_client.get_obligations("123456789", start, end)
@@ -370,13 +343,7 @@ class TestVat:
             "totalAcquisitionsExVAT": 0
         }
         
-        with patch('aiohttp.ClientSession') as mock_session:
-            mock_resp = AsyncMock()
-            mock_resp.status = 200
-            mock_resp.json = AsyncMock(return_value=mock_response)
-            
-            mock_session.return_value.__aenter__.return_value.get.return_value.__aenter__.return_value = mock_resp
-            
+        with patch('aiohttp.ClientSession', create_aiohttp_mock(mock_response)):
             result = await vat_client.get_vat_return("123456789", "18A1")
         
         assert isinstance(result, Return)
@@ -407,13 +374,7 @@ class TestVat:
             "formBundleNumber": "123456789012"
         }
         
-        with patch('aiohttp.ClientSession') as mock_session:
-            mock_resp = AsyncMock()
-            mock_resp.status = 201
-            mock_resp.json = AsyncMock(return_value=mock_response)
-            
-            mock_session.return_value.__aenter__.return_value.post.return_value.__aenter__.return_value = mock_resp
-            
+        with patch('aiohttp.ClientSession', create_aiohttp_mock(mock_response, 201)):
             result = await vat_client.submit_vat_return("123456789", rtn)
         
         assert result["formBundleNumber"] == "123456789012"
@@ -424,13 +385,9 @@ class TestVat:
         rtn = Return()
         rtn.periodKey = "18A1"
         
-        with patch('aiohttp.ClientSession') as mock_session:
-            mock_resp = AsyncMock()
-            mock_resp.status = 400
-            mock_resp.json = AsyncMock(return_value={"message": "Invalid return"})
-            
-            mock_session.return_value.__aenter__.return_value.post.return_value.__aenter__.return_value = mock_resp
-            
+        mock_response = {"message": "Invalid return"}
+        
+        with patch('aiohttp.ClientSession', create_aiohttp_mock(mock_response, 400)):
             with pytest.raises(RuntimeError) as exc_info:
                 await vat_client.submit_vat_return("123456789", rtn)
             
@@ -454,13 +411,7 @@ class TestVat:
             ]
         }
         
-        with patch('aiohttp.ClientSession') as mock_session:
-            mock_resp = AsyncMock()
-            mock_resp.status = 200
-            mock_resp.json = AsyncMock(return_value=mock_response)
-            
-            mock_session.return_value.__aenter__.return_value.get.return_value.__aenter__.return_value = mock_resp
-            
+        with patch('aiohttp.ClientSession', create_aiohttp_mock(mock_response)):
             start = date(2023, 1, 1)
             end = date(2023, 12, 31)
             result = await vat_client.get_vat_liabilities("123456789", start, end)
@@ -486,13 +437,7 @@ class TestVat:
             ]
         }
         
-        with patch('aiohttp.ClientSession') as mock_session:
-            mock_resp = AsyncMock()
-            mock_resp.status = 200
-            mock_resp.json = AsyncMock(return_value=mock_response)
-            
-            mock_session.return_value.__aenter__.return_value.get.return_value.__aenter__.return_value = mock_resp
-            
+        with patch('aiohttp.ClientSession', create_aiohttp_mock(mock_response)):
             start = date(2023, 1, 1)
             end = date(2023, 12, 31)
             result = await vat_client.get_vat_payments("123456789", start, end)
