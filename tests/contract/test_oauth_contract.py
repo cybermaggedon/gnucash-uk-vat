@@ -128,7 +128,7 @@ class TestTokenExchangeContract:
         assert 'client_id=test-client-id' in encoded_params
         assert 'client_secret=test-client-secret' in encoded_params
         assert 'grant_type=authorization_code' in encoded_params
-        assert 'redirect_uri=http%3A//localhost%3A9876/auth' in encoded_params
+        assert 'redirect_uri=http%3A%2F%2Flocalhost%3A9876%2Fauth' in encoded_params
         assert 'code=test-auth-code' in encoded_params
         
         # Verify Content-Type should be application/x-www-form-urlencoded

@@ -99,7 +99,7 @@ class TestConfigurationContract:
             sample_config["accounts"][field] = f"Accounts:VAT:{field}"
         
         # Verify configuration can be loaded
-        config = Config(sample_config)
+        config = Config(config=sample_config)
         
         # Test required sections exist
         for section in required_sections:
@@ -155,7 +155,7 @@ class TestConfigurationContract:
         for field in vat_fields:
             sample_accounts_config[field] = f"VAT:{field}"
         
-        config = Config({"accounts": sample_accounts_config})
+        config = Config(config={"accounts": sample_accounts_config})
         
         # Verify all VAT fields can be retrieved
         for field in vat_fields:
@@ -173,7 +173,7 @@ class TestConfigurationContract:
                     "profile": profile
                 }
             }
-            config = Config(config_data)
+            config = Config(config=config_data)
             assert config.get("application.profile") == profile
         
         # Verify profile validation would catch invalid profiles
@@ -192,7 +192,7 @@ class TestConfigurationContract:
                     "kind": kind
                 }
             }
-            config = Config(config_data)
+            config = Config(config=config_data)
             assert config.get("accounts.kind") == kind
         
         # Verify invalid kinds would be rejected
@@ -227,7 +227,7 @@ class TestConfigInitializationContract:
             with pytest.MonkeyPatch.context() as m:
                 m.setattr("gnucash_uk_vat.config.get_device_config", mock_get_device_config)
                 
-                result_config = initialise_config(temp_config_path)
+                result_config = initialise_config(temp_config_path, None)
                 
                 # Verify file was created
                 assert os.path.exists(temp_config_path)
@@ -289,7 +289,10 @@ class TestConfigInitializationContract:
                 m.setattr("gnucash_uk_vat.config.get_device_config", mock_get_device_config)
                 
                 # Update config
-                updated_config = initialise_config(temp_config_path)
+                initialise_config(temp_config_path, None)
+                
+                # Load the updated configuration
+                updated_config = Config(temp_config_path)
                 
                 # Verify existing values were preserved
                 assert updated_config.get("application.client-id") == "existing-client-id"
@@ -431,7 +434,7 @@ class TestPrivateConfigContract:
             }
         }
         
-        config = Config(config_data)
+        config = Config(config=config_data)
         
         # Verify sensitive data can be retrieved (when needed)
         assert config.get("application.client-secret") == "super-secret-value"
