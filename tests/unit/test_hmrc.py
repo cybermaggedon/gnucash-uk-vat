@@ -14,6 +14,27 @@ from gnucash_uk_vat.hmrc import (
 from gnucash_uk_vat.model import Obligation, Liability, Payment, Return
 
 
+def create_aiohttp_mock(mock_response, status=200):
+    """Helper function to create properly mocked aiohttp session"""
+    mock_session_class = MagicMock()
+    mock_session = AsyncMock()
+    mock_resp = AsyncMock()
+    
+    # Set up response
+    mock_resp.status = status
+    mock_resp.json.return_value = mock_response
+    
+    # Mock the async context manager chain for both GET and POST
+    mock_session.get.return_value.__aenter__ = AsyncMock(return_value=mock_resp)
+    mock_session.get.return_value.__aexit__ = AsyncMock(return_value=None)
+    mock_session.post.return_value.__aenter__ = AsyncMock(return_value=mock_resp)
+    mock_session.post.return_value.__aexit__ = AsyncMock(return_value=None)
+    mock_session_class.return_value.__aenter__ = AsyncMock(return_value=mock_session)
+    mock_session_class.return_value.__aexit__ = AsyncMock(return_value=None)
+    
+    return mock_session_class
+
+
 class TestAuthCollector:
     """Test the AuthCollector class"""
     
@@ -204,18 +225,7 @@ class TestVat:
             "expires_in": "3600"
         }
         
-        with patch('aiohttp.ClientSession') as mock_session_class:
-            # Create properly mocked async context managers
-            mock_session = AsyncMock()
-            mock_resp = AsyncMock()
-            mock_resp.json.return_value = mock_response
-            
-            # Mock the async context manager chain
-            mock_session.post.return_value.__aenter__ = AsyncMock(return_value=mock_resp)
-            mock_session.post.return_value.__aexit__ = AsyncMock(return_value=None)
-            mock_session_class.return_value.__aenter__ = AsyncMock(return_value=mock_session)
-            mock_session_class.return_value.__aexit__ = AsyncMock(return_value=None)
-            
+        with patch('aiohttp.ClientSession', create_aiohttp_mock(mock_response)):
             result = await vat_client.get_auth_coro("test_code")
         
         assert result["access_token"] == "new_access_token"
