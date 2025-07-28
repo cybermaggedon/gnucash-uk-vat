@@ -61,7 +61,7 @@ class TestCLIIntegration:
         ], capture_output=True, text=True)
         
         assert result.returncode == 0
-        assert "gnucash-uk-vat" in result.stdout
+        assert "Gnucash to HMRC VAT API" in result.stdout
     
     async def test_cli_show_obligations(self, vat_test_service, integration_test_env):
         """Test CLI show obligations command"""
