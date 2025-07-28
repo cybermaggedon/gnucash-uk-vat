@@ -1,6 +1,6 @@
 import pytest
 import json
-from datetime import datetime, date, timedelta
+from datetime import datetime, date, timedelta, timezone
 from unittest.mock import patch
 
 from gnucash_uk_vat.model import (
