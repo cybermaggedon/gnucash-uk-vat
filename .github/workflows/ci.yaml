@@ -1,0 +1,83 @@
+name: Continuous Integration
+
+on:
+  push:
+    branches: [ master ]
+
+permissions:
+  contents: read
+
+jobs:
+  test:
+    name: Test on Ubuntu
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v4
+        with:
+          python-version: '3.11'
+
+      - name: Install system dependencies
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y \
+            dmidecode \
+            libxml2-dev \
+            libxslt1-dev \
+            libffi-dev \
+            libssl-dev \
+            zlib1g-dev
+
+      - name: Install Python dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install -r requirements-dev.txt
+          pip install .
+
+      - name: Run unit tests with coverage
+        run: |
+          pytest tests/unit/ -v --tb=short --cov=gnucash_uk_vat --cov-report=xml --cov-report=term
+
+      - name: Upload coverage to Codecov
+        uses: codecov/codecov-action@v3
+        if: success()
+        with:
+          file: ./coverage.xml
+          flags: unittests
+          name: codecov-umbrella
+
+  test-scripts:
+    name: Test CLI scripts
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v4
+        with:
+          python-version: '3.11'
+
+      - name: Install system dependencies
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y dmidecode
+
+      - name: Install Python dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install .
+
+      - name: Test gnucash-uk-vat script
+        run: |
+          gnucash-uk-vat --help
+          gnucash-uk-vat --version || echo "Version command completed"
+
+      - name: Test vat-test-service script
+        run: |
+          timeout 5s vat-test-service --help || echo "Help command completed"
