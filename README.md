@@ -81,19 +81,20 @@ shared publicly:
 > they can register for their own Developer Hub application and use its
 > credentials with your code.
 
-You can either apply for production credentials using
-the HMRC developer portal (you need to register), or contact me as I can
-share a few credentials privately.
+In order to get credentials you would need to go through the full process to
+register as a VAT MTD provider, which is not a simple process.
+
+You would need to apply for production credentials using the HMRC developer
+portal (you need to register).
 
 Developer hub: 
 https://developer.service.hmrc.gov.uk/api-documentation/docs/using-the-hub
 
 You click 'Get production credentials' and enter details about the
-application.  I call this application `gnucash-uk-vat`, you should call
-it something different.  When you apply for credentials, HMRC will contact
+application.  When you apply for credentials, HMRC will contact
 you to fill in an application.  As I understand it, this involves going
 through a full acceptance test which involves testing against the
-sandbox.
+sandbox (which is what I have done).
 
 Once you have credentials, you should put them in the `config.json` file in
 the `application` section placeholders.
