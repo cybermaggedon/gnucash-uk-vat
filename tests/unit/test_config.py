@@ -45,7 +45,7 @@ class TestConfig:
         config = Config(config=config_data)
         
         assert config.config == config_data
-        assert config.file == "config.json"  # Default file name
+        assert config.file == Path("config.json")  # Default file name
     
     def test_init_file_not_found(self):
         """Test Config initialization with non-existent file"""
@@ -167,7 +167,7 @@ class TestConfigWrite:
         """Test writing to the default file"""
         config_file = tmp_path / "config.json"
         config_data = {"test": "value"}
-        config = Config(str(config_file), config=config_data)
+        config = Config(config_file, config=config_data)
         
         config.write()
         
@@ -180,9 +180,9 @@ class TestConfigWrite:
         config_file = tmp_path / "config.json"
         override_file = tmp_path / "override.json"
         config_data = {"test": "value"}
-        config = Config(str(config_file), config=config_data)
+        config = Config(config_file, config=config_data)
         
-        config.write(str(override_file))
+        config.write(override_file)
         
         # Original file should not exist
         assert not config_file.exists()
@@ -199,7 +199,7 @@ class TestConfigWrite:
                 "key": "value"
             }
         }
-        config = Config(str(config_file), config=config_data)
+        config = Config(config_file, config=config_data)
         
         config.write()
         
