@@ -72,12 +72,10 @@ def get_gateway_mac() -> Any:
 #    2. current config, if exists
 #    3. static config defaults from this function
 # Also, collate personal information for the Fraud API.
-def initialise_config(config_file: str, user: Optional['Config']) -> None:
+def initialise_config(config_path: Path, user: Optional['Config']) -> None:
 
     # Strip away the path if present
-    config_filename = Path(config_file).name
-    config_path = Path(config_file).expanduser()
-    
+    config_filename = config_path.name
     config_private_filename = Path.home() / f".{config_filename}"
     config_private = None
     config_current = None
