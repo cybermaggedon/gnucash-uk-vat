@@ -30,7 +30,7 @@ async def show_open_obligations(h, config, print_json):
         return
 
     if print_json:
-        tbl = [
+        json_tbl = [
             { 
                "start": v.start.strftime("%Y-%m-%d") if v.start else "", 
                "end": v.end.strftime("%Y-%m-%d") if v.end else "", 
@@ -39,14 +39,14 @@ async def show_open_obligations(h, config, print_json):
             }
             for v in obs
         ]
-        print(json.dumps(tbl, indent=4))
+        print(json.dumps(json_tbl, indent=4))
     else:
-        tbl = [
+        list_tbl = [
             [v.start, v.end, v.due, v.status]
             for v in obs
         ]
 
-        print(tabulate(tbl,
+        print(tabulate(list_tbl,
                    ["Start", "End", "Due", "Status"],
                    tablefmt="pretty"))
 
@@ -60,7 +60,7 @@ async def show_obligations(start, end, h, config, print_json):
         return
 
     if print_json:
-        tbl = [
+        json_tbl = [
             { 
                "start": v.start.strftime("%Y-%m-%d") if v.start else "", 
                "end": v.end.strftime("%Y-%m-%d") if v.end else "", 
@@ -70,14 +70,14 @@ async def show_obligations(start, end, h, config, print_json):
             }
             for v in obs
         ]
-        print(json.dumps(tbl, indent=4))
+        print(json.dumps(json_tbl, indent=4))
     else:
-        tbl = [
+        list_tbl = [
             [v.start, v.end, v.due, v.received, v.status]
             for v in obs
         ]
 
-        print(tabulate(tbl,
+        print(tabulate(list_tbl,
                    ["Start", "End", "Due", "Received", "Status"],
                    tablefmt="pretty"))
 
@@ -262,12 +262,12 @@ async def show_account_data(h, config, due, detail=False):
                 ])
 
             # Create table
-            tbl = tabulate(tbl, tablefmt="pretty",
-                           colalign=("left", "right","left"))
+            output = tabulate(tbl, tablefmt="pretty",
+                              colalign=("left", "right","left"))
 
             # Indent table by 8 characters
-            tbl = "        " + tbl.replace("\n", "\n        ")
-            print(tbl)
+            output = "        " + output.replace("\n", "\n        ")
+            print(output)
 
             print()
 
