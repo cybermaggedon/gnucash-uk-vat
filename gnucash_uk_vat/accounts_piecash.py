@@ -113,13 +113,13 @@ class Accounts:
     # Get list of all vendors, list of Vendor objects
     def get_vendors(self):
 
-        query = gnucash.Query()
+        query = piecash.Query()
         query.search_for('gncVendor')
         query.set_book(self.book)
         vendors = []
 
         vnds = [
-            gnucash.gnucash_business.Vendor(instance=result)
+            piecash.gnucash_business.Vendor(instance=result)
             for result in query.run()
         ]
 
