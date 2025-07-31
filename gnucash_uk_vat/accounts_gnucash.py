@@ -21,7 +21,6 @@ class Accounts:
     # to support config.get("key.name") method.
     def __init__(self, file, rw=False):
         self.file = file
-        self.session = None
         if rw:
             self.session = self.open_session(file)
         else:

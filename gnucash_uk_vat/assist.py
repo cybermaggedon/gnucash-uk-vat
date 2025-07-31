@@ -183,7 +183,7 @@ class AccountsSetup:
         lbl.set_halign(Gtk.Align.START)
         grid.attach(lbl, 0, 0, 2, 1)
 
-        tps = [str]
+        tps: list[type[object]] = [str]
         tps.extend([bool] * 9)
         self.store = Gtk.ListStore(*tps)
 
@@ -261,7 +261,7 @@ class AccountsSetup:
                 else:
                     acct_sel.append(set(sel))
             except:
-                acct_sel.append([])
+                acct_sel.append(set())
 
         self.store.clear()
         for acct in acct_list:
@@ -589,7 +589,7 @@ class UI:
             self.cfg = Config(config)
         self.authz = Auth(auth)
 
-        self.vat = hmrc.create(self.cfg, self.authz)
+        self.vat = hmrc.create(self.cfg, self.authz, None)
         self.summary = io.StringIO()
 
     def select_vrn(self, vrn):
@@ -655,7 +655,7 @@ class UI:
             "VAT payment for due date " + str(due)
         )
 
-        self.assistant.set_page_complete(self.post_bill_w.widget, True)
+        # self.assistant.set_page_complete(self.post_bill_w.widget, True)
 
         self.summary.write("Posted bill for period, due %s\n\n" % str(due))
         

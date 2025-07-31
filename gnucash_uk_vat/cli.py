@@ -178,7 +178,7 @@ async def run() -> None:
 
 def asyncrun(coro):
     """Run async coroutine with proper event loop handling."""
-    if os.name == 'nt':
+    if sys.platform == "win32":
         # Prevent "RuntimeError: Event loop is closed" on Windows
         asyncio.set_event_loop_policy(asyncio.WindowsSelectorEventLoopPolicy())
 
