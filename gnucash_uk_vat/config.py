@@ -1,7 +1,6 @@
 
 import json
 import uuid
-import os
 import getpass
 import socket
 import sys
@@ -20,10 +19,7 @@ def now() -> datetime.datetime:
 # Configuration object, loads configuration from a JSON file, and then
 # supports path navigate with config.get("part1.part2.part3")
 class Config:
-    file: str
-    config: Dict[str, Any]
-    
-    def __init__(self, file: str = "config.json", config: Optional[Dict[str, Any]] = None) -> None:
+    def __init__(self, file: Path = Path("config.json"), config: Optional[Dict[str, Any]] = None) -> None:
         self.file = file
         if config:
             # Used to populate default values when creating new config
@@ -48,10 +44,9 @@ class Config:
                 cfg = cfg[v]
             cfg[keys[-1]] = value
     # Write back to file
-    def write(self, fileOverride: Optional[str] = None) -> None:
-        filename = fileOverride if fileOverride else self.file
-        with open(filename , "w") as config_file:
-            config_file.write(json.dumps(self.config, indent=4))
+    def write(self, fileOverride: Optional[Path] = None) -> None:
+        file_path = fileOverride if fileOverride else self.file
+        file_path.write_text(json.dumps(self.config, indent=4))
 
 def get_default_gateway_if() -> Any:
     gateways = netifaces.gateways()
@@ -81,10 +76,9 @@ def initialise_config(config_file: str, user: Optional['Config']) -> None:
 
     # Strip away the path if present
     config_filename = Path(config_file).name
-    config_path = Path(config_file).parent
-    user_home = os.environ.get('HOME')
+    config_path = Path(config_file)
     
-    config_private_filename = os.path.join(user_home or os.path.expanduser("~"), ".%s" % (config_filename))
+    config_private_filename = Path.home() / f".{config_filename}"
     config_private = None
     config_current = None
 
@@ -153,7 +147,7 @@ def initialise_config(config_file: str, user: Optional['Config']) -> None:
     }
 
 
-    creating_config_private_filename = ( user_home == config_path and config_filename.startswith('.') and not os.path.exists(config_file) )
+    creating_config_private_filename = ( Path.home() == config_path.parent and config_filename.startswith('.') and not config_path.exists() )
     if creating_config_private_filename:
         # Create new config_private_filename from configDefaults
         print("Creating private config from defaults", end="\n")
@@ -167,20 +161,20 @@ def initialise_config(config_file: str, user: Optional['Config']) -> None:
 
     else:
         # load existing config_private_filename
-        if os.path.exists(config_private_filename):
+        if config_private_filename.exists():
             config_private = Config(config_private_filename)
         else:
             print("Private config file is not present: %s" % config_private_filename, end="\n")
 
 
     # LOAD CURRENT CONFIG
-    if os.path.exists(config_file):
+    if config_path.exists():
         usingDefaults = False
-        config_current = Config(config_file)
+        config_current = Config(config_path)
     else:
-        print("Create missing config file using defaults: %s" % config_file, end="\n")
+        print("Create missing config file using defaults: %s" % config_path, end="\n")
         usingDefaults = True
-        config_current = Config(config_file, configDefaults)
+        config_current = Config(config_path, configDefaults)
 
     if config_private:
         # config_private_filename has been loaded
@@ -216,11 +210,11 @@ def initialise_config(config_file: str, user: Optional['Config']) -> None:
 
     if usingDefaults:
         config_current.write()
-        print("    Wrote '%s'" % config_file, end="\n")
+        print("    Wrote '%s'" % config_path, end="\n")
         print("    The newly created config file may require some changes to suit your specific environment!", end="\n")
     else:
-        config_current.write(config_file)
-        print("    Wrote '%s'" % config_file, end="\n")
+        config_current.write(config_path)
+        print("    Wrote '%s'" % config_path, end="\n")
     
 
 def get_device_config() -> Dict[str, str]:
