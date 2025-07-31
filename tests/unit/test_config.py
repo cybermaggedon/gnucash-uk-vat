@@ -28,7 +28,7 @@ class TestConfig:
         config_file.write_text(json.dumps(config_data))
         
         # Load the config
-        config = Config(str(config_file))
+        config = Config(config_file)
         
         assert config.file == str(config_file)
         assert config.config == config_data
@@ -50,7 +50,7 @@ class TestConfig:
     def test_init_file_not_found(self):
         """Test Config initialization with non-existent file"""
         with pytest.raises(FileNotFoundError):
-            Config("non_existent_file.json")
+            Config(Path("non_existent_file.json"))
     
     def test_init_invalid_json(self, tmp_path):
         """Test Config initialization with invalid JSON"""
@@ -58,7 +58,7 @@ class TestConfig:
         config_file.write_text("{ invalid json }")
         
         with pytest.raises(json.JSONDecodeError):
-            Config(str(config_file))
+            Config(config_file)
 
 
 class TestConfigGet:
@@ -231,7 +231,7 @@ class TestInitialiseConfig:
         
         # Mock os.environ.get to return a test home directory
         with patch.dict(os.environ, {'HOME': str(tmp_path)}):
-            initialise_config(str(config_file), None)
+            initialise_config(config_file, None)
         
         # Check that the file was created
         assert config_file.exists()
@@ -270,7 +270,7 @@ class TestInitialiseConfig:
         config_file.write_text(json.dumps(existing_data))
         
         with patch.dict(os.environ, {'HOME': str(tmp_path)}):
-            initialise_config(str(config_file), None)
+            initialise_config(config_file, None)
         
         # The file should still be written to the specified path
         assert config_file.exists()
@@ -311,7 +311,7 @@ class TestInitialiseConfig:
         config_file = tmp_path / "test_config.json"
         
         with patch.dict(os.environ, {'HOME': str(tmp_path)}):
-            initialise_config(str(config_file), None)
+            initialise_config(config_file, None)
         
         # Load the created config
         created_config = json.loads(config_file.read_text())
@@ -341,7 +341,7 @@ class TestInitialiseConfig:
         user = Config(config={"vrn": "test-vrn-123"})
         
         with patch.dict(os.environ, {'HOME': str(tmp_path)}):
-            initialise_config(str(config_file), user)
+            initialise_config(config_file, user)
         
         # Load the created config
         created_config = json.loads(config_file.read_text())
