@@ -25,7 +25,7 @@ class Config:
             # Used to populate default values when creating new config
             self.config = config
         else:
-            self.config = json.loads(open(file).read())
+            self.config = json.loads(file.read_text())
     def get(self, key: str) -> Any:
         cfg: Any = self.config
         for v in key.split("."):
@@ -76,7 +76,7 @@ def initialise_config(config_file: str, user: Optional['Config']) -> None:
 
     # Strip away the path if present
     config_filename = Path(config_file).name
-    config_path = Path(config_file)
+    config_path = Path(config_file).expanduser()
     
     config_private_filename = Path.home() / f".{config_filename}"
     config_private = None
