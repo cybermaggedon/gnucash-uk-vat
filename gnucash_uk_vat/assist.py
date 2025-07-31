@@ -655,7 +655,7 @@ class UI:
             "VAT payment for due date " + str(due)
         )
 
-        self.assistant.set_page_complete(self.post_bill.widget, True)
+        # self.assistant.set_page_complete(self.post_bill_w.widget, True)
 
         self.summary.write("Posted bill for period, due %s\n\n" % str(due))
         
