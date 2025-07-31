@@ -10,6 +10,7 @@ import argparse
 import json
 import asyncio
 import types
+from pathlib import Path
 from typing import Optional
 
 import datetime
@@ -35,7 +36,7 @@ def create_parser() -> argparse.ArgumentParser:
                 action='store_true',
                         help='Print output as json for automated testing (default: False)')
     parser.add_argument('--userfile', '-u',
-                default='user.json',
+                default='user.json', type=Path,
                         help='MTD test user file returned by ./get-test-user (default: user.json)')
     parser.add_argument('--config', '-c',
                 default='config.json',
@@ -92,8 +93,8 @@ async def run() -> None:
         assist.run(args.config, args.auth)
         sys.exit(0)
 
-    if os.path.exists(args.userfile):
-        user = Config(args.userfile)
+    if args.userfile.exists():
+        user = Config(args.userfile.expanduser())
     else:
         user = None
 
