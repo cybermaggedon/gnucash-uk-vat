@@ -60,11 +60,6 @@ def test_config_file(tmp_path):
     Returns the path to a config file that points to the test service.
     """
     config_data = {
-        "dates": {
-            "start": "2023-01-01",
-            "end": "2023-03-31",
-            "due": "2023-04-30"
-        },
         "accounts": {
             "kind": "piecash",
             "file": "tests/fixtures/test-gnucash.db",
