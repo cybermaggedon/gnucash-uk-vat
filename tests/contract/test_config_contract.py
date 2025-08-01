@@ -8,8 +8,8 @@ to expected formats and contain all required fields.
 import pytest
 import json
 import tempfile
-import os
 from datetime import datetime, timezone
+from pathlib import Path
 
 from gnucash_uk_vat.config import Config, initialise_config, get_device_config
 from gnucash_uk_vat.model import vat_fields
