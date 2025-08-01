@@ -10,6 +10,7 @@ import asyncio
 import aiohttp
 from urllib.parse import urlparse, parse_qs
 
+from pathlib import Path
 from gnucash_uk_vat.config import Config
 from gnucash_uk_vat.auth import Auth
 from gnucash_uk_vat.hmrc import VatLocalTest
@@ -21,7 +22,7 @@ class TestOAuthIntegration:
     
     async def test_authorization_url_generation(self, vat_test_service, integration_test_env):
         """Test that authorization URL is generated correctly"""
-        config = Config(integration_test_env['config'])
+        config = Config(Path(integration_test_env['config']))
         auth = Auth(integration_test_env['auth'])
         
         vat_client = VatLocalTest(config, auth, None)
@@ -41,7 +42,7 @@ class TestOAuthIntegration:
     
     async def test_authorization_endpoint_responds(self, vat_test_service, integration_test_env):
         """Test that the authorization endpoint responds correctly"""
-        config = Config(integration_test_env['config'])
+        config = Config(Path(integration_test_env['config']))
         auth = Auth(integration_test_env['auth'])
         
         vat_client = VatLocalTest(config, auth, None)
@@ -55,7 +56,7 @@ class TestOAuthIntegration:
     
     async def test_token_exchange_format(self, vat_test_service, integration_test_env):
         """Test token exchange request format"""
-        config = Config(integration_test_env['config'])
+        config = Config(Path(integration_test_env['config']))
         auth = Auth(integration_test_env['auth'])
         
         vat_client = VatLocalTest(config, auth, None)
@@ -116,7 +117,7 @@ class TestOAuthIntegration:
     
     async def test_refresh_token_flow(self, vat_test_service, integration_test_env):
         """Test refresh token flow"""
-        config = Config(integration_test_env['config'])
+        config = Config(Path(integration_test_env['config']))
         auth = Auth(integration_test_env['auth'])
         
         vat_client = VatLocalTest(config, auth, None)
@@ -143,7 +144,7 @@ class TestOAuthIntegration:
     
     async def test_invalid_credentials_handling(self, vat_test_service, integration_test_env):
         """Test handling of invalid credentials"""
-        config = Config(integration_test_env['config'])
+        config = Config(Path(integration_test_env['config']))
         auth = Auth(integration_test_env['auth'])
         
         vat_client = VatLocalTest(config, auth, None)
@@ -196,7 +197,7 @@ class TestOAuthIntegration:
     
     async def test_bearer_token_usage(self, vat_test_service, integration_test_env):
         """Test using bearer token for API calls"""
-        config = Config(integration_test_env['config'])
+        config = Config(Path(integration_test_env['config']))
         auth = Auth(integration_test_env['auth'])
         
         vat_client = VatLocalTest(config, auth, None)
@@ -220,7 +221,7 @@ class TestOAuthIntegration:
     
     async def test_invalid_token_handling(self, vat_test_service, integration_test_env):
         """Test handling of invalid bearer tokens"""
-        config = Config(integration_test_env['config'])
+        config = Config(Path(integration_test_env['config']))
         auth = Auth(integration_test_env['auth'])
         
         # Set invalid token

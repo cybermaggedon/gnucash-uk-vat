@@ -8,6 +8,7 @@ combining multiple operations as a user would perform them.
 import pytest
 import asyncio
 from datetime import date
+from pathlib import Path
 
 from gnucash_uk_vat.config import Config
 from gnucash_uk_vat.auth import Auth
@@ -21,7 +22,7 @@ class TestEndToEndWorkflows:
     
     async def test_complete_vat_period_workflow(self, vat_test_service, integration_test_env):
         """Test complete workflow for a VAT period from obligations to submission"""
-        config = Config(integration_test_env['config'])
+        config = Config(Path(integration_test_env['config']))
         auth = Auth(integration_test_env['auth'])
         vat_client = VatLocalTest(config, auth, None)
         
@@ -73,7 +74,7 @@ class TestEndToEndWorkflows:
     
     async def test_vat_reconciliation_workflow(self, vat_test_service, integration_test_env):
         """Test workflow for reconciling VAT liabilities with payments"""
-        config = Config(integration_test_env['config'])
+        config = Config(Path(integration_test_env['config']))
         auth = Auth(integration_test_env['auth'])
         vat_client = VatLocalTest(config, auth, None)
         
@@ -109,7 +110,7 @@ class TestEndToEndWorkflows:
     
     async def test_multi_period_analysis_workflow(self, vat_test_service, integration_test_env):
         """Test workflow for analyzing multiple VAT periods"""
-        config = Config(integration_test_env['config'])
+        config = Config(Path(integration_test_env['config']))
         auth = Auth(integration_test_env['auth'])
         vat_client = VatLocalTest(config, auth, None)
         
@@ -171,7 +172,7 @@ class TestEndToEndWorkflows:
     
     async def test_error_recovery_workflow(self, vat_test_service, integration_test_env):
         """Test workflow with error conditions and recovery"""
-        config = Config(integration_test_env['config'])
+        config = Config(Path(integration_test_env['config']))
         auth = Auth(integration_test_env['auth'])
         vat_client = VatLocalTest(config, auth, None)
         
@@ -220,7 +221,7 @@ class TestEndToEndWorkflows:
     
     async def test_authentication_refresh_workflow(self, vat_test_service, integration_test_env):
         """Test workflow with token refresh"""
-        config = Config(integration_test_env['config'])
+        config = Config(Path(integration_test_env['config']))
         auth = Auth(integration_test_env['auth'])
         vat_client = VatLocalTest(config, auth, None)
         
@@ -250,7 +251,7 @@ class TestEndToEndWorkflows:
     
     async def test_comprehensive_data_export_workflow(self, vat_test_service, integration_test_env):
         """Test workflow for comprehensive data export"""
-        config = Config(integration_test_env['config'])
+        config = Config(Path(integration_test_env['config']))
         auth = Auth(integration_test_env['auth'])
         vat_client = VatLocalTest(config, auth, None)
         

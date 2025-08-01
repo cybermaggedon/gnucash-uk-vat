@@ -8,6 +8,7 @@ obligations, submitting returns, and fetching liabilities and payments.
 import pytest
 import asyncio
 from datetime import date, datetime
+from pathlib import Path
 
 from gnucash_uk_vat.config import Config
 from gnucash_uk_vat.auth import Auth
@@ -21,7 +22,7 @@ class TestVatOperationsIntegration:
     
     async def test_retrieve_obligations(self, vat_test_service, integration_test_env):
         """Test retrieving VAT obligations"""
-        config = Config(integration_test_env['config'])
+        config = Config(Path(integration_test_env['config']))
         auth = Auth(integration_test_env['auth'])
         
         vat_client = VatLocalTest(config, auth, None)
@@ -47,7 +48,7 @@ class TestVatOperationsIntegration:
     
     async def test_retrieve_open_obligations_only(self, vat_test_service, integration_test_env):
         """Test retrieving only open VAT obligations"""
-        config = Config(integration_test_env['config'])
+        config = Config(Path(integration_test_env['config']))
         auth = Auth(integration_test_env['auth'])
         
         vat_client = VatLocalTest(config, auth, None)
@@ -65,7 +66,7 @@ class TestVatOperationsIntegration:
     
     async def test_retrieve_liabilities(self, vat_test_service, integration_test_env):
         """Test retrieving VAT liabilities"""
-        config = Config(integration_test_env['config'])
+        config = Config(Path(integration_test_env['config']))
         auth = Auth(integration_test_env['auth'])
         
         vat_client = VatLocalTest(config, auth, None)
@@ -92,7 +93,7 @@ class TestVatOperationsIntegration:
     
     async def test_retrieve_payments(self, vat_test_service, integration_test_env):
         """Test retrieving VAT payments"""
-        config = Config(integration_test_env['config'])
+        config = Config(Path(integration_test_env['config']))
         auth = Auth(integration_test_env['auth'])
         
         vat_client = VatLocalTest(config, auth, None)
@@ -116,7 +117,7 @@ class TestVatOperationsIntegration:
     
     async def test_submit_vat_return(self, vat_test_service, integration_test_env):
         """Test submitting a VAT return"""
-        config = Config(integration_test_env['config'])
+        config = Config(Path(integration_test_env['config']))
         auth = Auth(integration_test_env['auth'])
         
         vat_client = VatLocalTest(config, auth, None)
@@ -153,7 +154,7 @@ class TestVatOperationsIntegration:
     
     async def test_retrieve_submitted_return(self, vat_test_service, integration_test_env):
         """Test retrieving a previously submitted VAT return"""
-        config = Config(integration_test_env['config'])
+        config = Config(Path(integration_test_env['config']))
         auth = Auth(integration_test_env['auth'])
         
         vat_client = VatLocalTest(config, auth, None)
@@ -183,7 +184,7 @@ class TestVatOperationsIntegration:
     
     async def test_invalid_vrn_handling(self, vat_test_service, integration_test_env):
         """Test handling of invalid VRN"""
-        config = Config(integration_test_env['config'])
+        config = Config(Path(integration_test_env['config']))
         auth = Auth(integration_test_env['auth'])
         
         # Set an invalid VRN
@@ -203,7 +204,7 @@ class TestVatOperationsIntegration:
     
     async def test_fraud_headers_inclusion(self, vat_test_service, integration_test_env):
         """Test that fraud prevention headers are included in requests"""
-        config = Config(integration_test_env['config'])
+        config = Config(Path(integration_test_env['config']))
         auth = Auth(integration_test_env['auth'])
         
         vat_client = VatLocalTest(config, auth, None)
@@ -241,7 +242,7 @@ class TestVatOperationsIntegration:
     
     async def test_date_range_validation(self, vat_test_service, integration_test_env):
         """Test date range validation in API calls"""
-        config = Config(integration_test_env['config'])
+        config = Config(Path(integration_test_env['config']))
         auth = Auth(integration_test_env['auth'])
         
         vat_client = VatLocalTest(config, auth, None)
@@ -258,7 +259,7 @@ class TestVatOperationsIntegration:
     
     async def test_api_error_responses(self, vat_test_service, integration_test_env):
         """Test handling of API error responses"""
-        config = Config(integration_test_env['config'])
+        config = Config(Path(integration_test_env['config']))
         auth = Auth(integration_test_env['auth'])
         
         vat_client = VatLocalTest(config, auth, None)
