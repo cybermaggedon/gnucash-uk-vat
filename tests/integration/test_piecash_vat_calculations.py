@@ -30,7 +30,7 @@ class TestPiecashVATCalculations:
             json.dump(config_data, f, indent=2)
             config_file = f.name
         
-        yield Config(config_file)
+        yield Config(Path(config_file))
         
         # Cleanup
         Path(config_file).unlink()
@@ -268,7 +268,7 @@ class TestPiecashAccountsBackend:
             json.dump(config_data, f, indent=2)
             config_file = f.name
         
-        yield Config(config_file)
+        yield Config(Path(config_file))
         
         # Cleanup
         Path(config_file).unlink()
