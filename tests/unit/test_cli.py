@@ -59,11 +59,11 @@ class TestCLIParser:
         """Test that --config option is parsed correctly"""
         parser = create_parser()
         args = parser.parse_args(['--config', 'custom-config.json'])
-        assert args.config == 'custom-config.json'
+        assert args.config == Path('custom-config.json')
         
         # Test short form
         args = parser.parse_args(['-c', 'another-config.json'])
-        assert args.config == 'another-config.json'
+        assert args.config == Path('another-config.json')
 
     def test_parser_auth_file_option(self):
         """Test that --auth option is parsed correctly"""
