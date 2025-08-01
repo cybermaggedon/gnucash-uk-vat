@@ -27,11 +27,12 @@ class TestAccountsPiecashUnit:
         
         with tempfile.NamedTemporaryFile(mode='w', suffix='.json', delete=False) as f:
             json.dump(config_data, f, indent=2)
+            config_file = Path(f.name)
         
-        yield Config(f)
+        yield Config(config_file)
         
         # Cleanup
-        f.unlink()
+        config_file.unlink()
     
     @patch('gnucash_uk_vat.accounts_piecash.piecash')
     def test_accounts_initialization(self, mock_piecash, piecash_config):
@@ -105,10 +106,11 @@ class TestAccountsPiecashEdgeCases:
         
         with tempfile.NamedTemporaryFile(mode='w', suffix='.json', delete=False) as f:
             json.dump(config_data, f, indent=2)
+            config_file = Path(f.name)
         
-        yield Config(f)
+        yield Config(config_file)
         
-        f.unlink()
+        config_file.unlink()
     
     @patch('gnucash_uk_vat.accounts_piecash.piecash')
     def test_file_not_found(self, mock_piecash, piecash_config):
