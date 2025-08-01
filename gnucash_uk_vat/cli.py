@@ -39,7 +39,7 @@ def create_parser() -> argparse.ArgumentParser:
                 default='user.json', type=Path,
                         help='MTD test user file returned by ./get-test-user (default: user.json)')
     parser.add_argument('--config', '-c',
-                default='config.json',
+                default='config.json', type=Path,
                         help='Configuration file (default: config.json)')
     parser.add_argument('--auth', '-a',
                 default='auth.json',
