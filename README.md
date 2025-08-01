@@ -113,6 +113,9 @@ you to fill in an application.  As I understand it, this involves going
 through a full acceptance test which involves testing against the
 sandbox (which is what I have done).
 
+You'll then need to change the config again using your production credentials and
+`profile` set to `prod`.
+
 ## Installing
 
 To install directly from a git repository:
