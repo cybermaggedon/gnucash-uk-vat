@@ -30,7 +30,7 @@ class TestConfig:
         # Load the config
         config = Config(config_file)
         
-        assert config.file == str(config_file)
+        assert config.file == config_file
         assert config.config == config_data
     
     def test_init_with_dict(self):
