@@ -16,6 +16,7 @@ from datetime import timedelta
 import io
 import gnucash_uk_vat.vat as vat
 import time
+from pathlib import Path
 
 class EventLoop(threading.Thread):
 
@@ -581,7 +582,7 @@ class Summary:
 
 # Overarching UI class, runs the assist dialogue
 class UI:
-    def __init__(self, config, auth):
+    def __init__(self, config: Path, auth):
         try:
             self.cfg = Config(config)
         except:
@@ -896,8 +897,8 @@ class Collector(threading.Thread):
         self.running = False
 
 # Entry point, runs the assist
-def run(config, auth):
-    ui = UI(config, auth)
+def run(config: str, auth):
+    ui = UI(Path(config).expanduser(), auth)
     coll = Collector(ui)
     coll.start()
 

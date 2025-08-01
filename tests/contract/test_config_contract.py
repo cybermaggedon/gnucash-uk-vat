@@ -8,8 +8,8 @@ to expected formats and contain all required fields.
 import pytest
 import json
 import tempfile
-import os
 from datetime import datetime, timezone
+from pathlib import Path
 
 from gnucash_uk_vat.config import Config, initialise_config, get_device_config
 from gnucash_uk_vat.model import vat_fields
@@ -207,11 +207,11 @@ class TestConfigInitializationContract:
     def test_config_file_creation_format(self):
         """Verify config file creation follows expected format"""
         with tempfile.NamedTemporaryFile(mode='w', suffix='.json', delete=False) as temp_file:
-            temp_config_path = temp_file.name
+            temp_config_path = Path(temp_file.name)
         
         try:
             # Remove the file so initialise_config can create it
-            os.unlink(temp_config_path)
+            temp_config_path.unlink()
             
             # Mock get_device_config to return test data
             def mock_get_device_config():
@@ -230,10 +230,10 @@ class TestConfigInitializationContract:
                 result_config = initialise_config(temp_config_path, None)
                 
                 # Verify file was created
-                assert os.path.exists(temp_config_path)
+                assert temp_config_path.exists()
                 
                 # Load and verify the created file
-                with open(temp_config_path, 'r') as f:
+                with temp_config_path.open() as f:
                     config_data = json.load(f)
                 
                 # Verify basic structure
@@ -246,14 +246,12 @@ class TestConfigInitializationContract:
                 assert config_data["identity"]["device"]["device-manufacturer"] == "Test Manufacturer"
                 
                 # Verify JSON formatting (indented)
-                with open(temp_config_path, 'r') as f:
-                    content = f.read()
-                    assert "    " in content  # Indentation present
-                    assert content.startswith("{\n")  # Pretty formatted
+                content = temp_config_path.read_text()
+                assert "    " in content  # Indentation present
+                assert content.startswith("{\n")  # Pretty formatted
         
         finally:
-            if os.path.exists(temp_config_path):
-                os.unlink(temp_config_path)
+            temp_config_path.unlink(missing_ok=True)
     
     def test_config_update_preservation(self):
         """Verify config updates preserve existing values"""
@@ -272,7 +270,7 @@ class TestConfigInitializationContract:
         
         with tempfile.NamedTemporaryFile(mode='w', suffix='.json', delete=False) as temp_file:
             json.dump(initial_config, temp_file, indent=4)
-            temp_config_path = temp_file.name
+            temp_config_path = Path(temp_file.name)
         
         try:
             # Mock device config
@@ -305,8 +303,7 @@ class TestConfigInitializationContract:
                 assert device_os is not None
         
         finally:
-            if os.path.exists(temp_config_path):
-                os.unlink(temp_config_path)
+            temp_config_path.unlink(missing_ok=True)
 
 
 class TestDeviceConfigurationContract:

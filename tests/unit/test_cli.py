@@ -9,6 +9,7 @@ import pytest
 from unittest.mock import Mock, patch, AsyncMock
 import sys
 from io import StringIO
+from pathlib import Path
 
 from gnucash_uk_vat.cli import create_parser, now
 
@@ -37,8 +38,8 @@ class TestCLIParser:
         parser = create_parser()
         args = parser.parse_args([])
         
-        assert args.userfile == 'user.json'
-        assert args.config == 'config.json'
+        assert args.userfile == Path('user.json')
+        assert args.config == Path('config.json')
         assert args.auth == 'auth.json'
         assert args.json is False
         assert args.init_config is False
@@ -58,11 +59,11 @@ class TestCLIParser:
         """Test that --config option is parsed correctly"""
         parser = create_parser()
         args = parser.parse_args(['--config', 'custom-config.json'])
-        assert args.config == 'custom-config.json'
+        assert args.config == Path('custom-config.json')
         
         # Test short form
         args = parser.parse_args(['-c', 'another-config.json'])
-        assert args.config == 'another-config.json'
+        assert args.config == Path('another-config.json')
 
     def test_parser_auth_file_option(self):
         """Test that --auth option is parsed correctly"""
@@ -78,11 +79,11 @@ class TestCLIParser:
         """Test that --userfile option is parsed correctly"""
         parser = create_parser()
         args = parser.parse_args(['--userfile', 'custom-user.json'])
-        assert args.userfile == 'custom-user.json'
+        assert args.userfile == Path('custom-user.json')
         
         # Test short form
         args = parser.parse_args(['-u', 'another-user.json'])
-        assert args.userfile == 'another-user.json'
+        assert args.userfile == Path('another-user.json')
 
     def test_parser_boolean_flags(self):
         """Test various boolean flags"""
