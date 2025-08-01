@@ -107,11 +107,6 @@ def initialise_config(config_path: Path, user: Optional['Config']) -> None:
 #    vrn = "<VRN>"
 
     configDefaults = {
-        "dates": {
-            "start": "2017-01-01",
-            "end": "2017-03-31",
-            "due": "2017-05-07"
-        },
         "accounts": {
             "kind": "piecash",
             "file": "<ACCOUNTS_FILE>",
