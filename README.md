@@ -90,14 +90,28 @@ portal (you need to register).
 Developer hub: 
 https://developer.service.hmrc.gov.uk/api-documentation/docs/using-the-hub
 
-You click 'Get production credentials' and enter details about the
+### Testing
+
+To use the staging API to test your integration, after registering you'll
+need to change some settings in `config.json` under the `application` section:
+
+  - Set `profile` to `test`.
+  - Change `product-name` to the name you registered your project under.
+  - Change `client-id` and `client-secret` matching what HMRC creates for you.
+
+In the HMRC hub, under your application, you need to go to the redirect URIs
+section and add `http://localhost:9876/auth`.
+
+When following the auth link, just follow the links to get credentials and
+a VRN for a test user from HMRC.
+
+### Production
+
+Once tested, you can click 'Get production credentials' and enter details about the
 application.  When you apply for credentials, HMRC will contact
 you to fill in an application.  As I understand it, this involves going
 through a full acceptance test which involves testing against the
 sandbox (which is what I have done).
-
-Once you have credentials, you should put them in the `config.json` file in
-the `application` section placeholders.
 
 ## Installing
 
