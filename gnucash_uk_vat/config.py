@@ -20,7 +20,7 @@ def now() -> datetime.datetime:
 # supports path navigate with config.get("part1.part2.part3")
 class Config:
     def __init__(self, file: Path = Path("config.json"), config: Optional[Dict[str, Any]] = None) -> None:
-        self.file = file
+        self.file = file.expanduser()
         if config:
             # Used to populate default values when creating new config
             self.config = config

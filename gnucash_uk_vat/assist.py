@@ -898,7 +898,7 @@ class Collector(threading.Thread):
 
 # Entry point, runs the assist
 def run(config: str, auth):
-    ui = UI(Path(config).expanduser(), auth)
+    ui = UI(Path(config), auth)
     coll = Collector(ui)
     coll.start()
 

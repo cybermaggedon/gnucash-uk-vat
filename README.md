@@ -105,6 +105,18 @@ section and add `http://localhost:9876/auth`.
 When following the auth link, just follow the links to get credentials and
 a VRN for a test user from HMRC.
 
+#### Fraud headers
+
+Before requesting production access, you'll need to test the fraud headers.
+
+To do this, run `test/test_fraud_api.py` (it accepts `--config` if not using the default).
+
+If your auth credentials have expired from the previous test, you can recreate
+them with `gnucash-uk-vat --authenticate` (again, accepts `--config`).
+
+The response is expected to include a warning due to `gov-client-multi-factor`
+being empty. But, no other errors should appear.
+
 ### Production
 
 Once tested, you can click 'Get production credentials' and enter details about the
