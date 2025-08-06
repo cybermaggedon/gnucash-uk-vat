@@ -112,7 +112,7 @@ Before requesting production access, you'll need to test the fraud headers.
 To do this, run `test/test-fraud-api` (it accepts `--config` if not using the default).
 
 If your auth credentials have expired from the previous test, you can recreate
-them with `python3 -m gnucash_uk_vat.cli --authenticate` (again, accepts `--config`).
+them with `gnucash-uk-vat --authenticate` (again, accepts `--config`).
 
 The response is expected to include a warning due to `gov-client-multi-factor`
 being empty. But, no other errors should appear.
