@@ -47,7 +47,7 @@ jobs:
 
       - name: Type check with mypy
         run: |
-          mypy gnucash_uk_vat/
+          mypy
 
       - name: Test package installation
         run: |
