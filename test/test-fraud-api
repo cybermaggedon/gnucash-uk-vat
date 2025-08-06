@@ -21,7 +21,7 @@ parser.add_argument('--config', '-c',
 args = parser.parse_args()
 
 # Loads default config, user and auth
-config = Config(args.config.expanduser())
+config = Config(args.config)
 a = Auth()
 
 # Use the sandbox service
