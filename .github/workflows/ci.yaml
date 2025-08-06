@@ -52,7 +52,7 @@ jobs:
 
       - name: Type check with mypy
         run: |
-          mypy gnucash_uk_vat/
+          mypy
 
       - name: Upload coverage to Codecov
         uses: codecov/codecov-action@v3
