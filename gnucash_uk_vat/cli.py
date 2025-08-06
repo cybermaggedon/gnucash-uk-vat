@@ -94,7 +94,7 @@ async def run() -> None:
         sys.exit(0)
 
     if args.userfile.exists():
-        user = Config(args.userfile.expanduser())
+        user = Config(args.userfile)
     else:
         user = None
 
