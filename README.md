@@ -109,7 +109,7 @@ a VRN for a test user from HMRC.
 
 Before requesting production access, you'll need to test the fraud headers.
 
-To do this, run `test/test-fraud-api.py` (it accepts `--config` if not using the default).
+To do this, run `test/test_fraud_api.py` (it accepts `--config` if not using the default).
 
 If your auth credentials have expired from the previous test, you can recreate
 them with `gnucash-uk-vat --authenticate` (again, accepts `--config`).
