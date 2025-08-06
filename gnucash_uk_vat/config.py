@@ -135,6 +135,7 @@ def initialise_config(config_path: Path, user: Optional['Config']) -> None:
             "user": getpass.getuser(),
             "local-ip": local_ip,
             "mac-address": mac,
+            # https://developer.service.hmrc.gov.uk/guides/fraud-prevention/connection-method/other-direct/#gov-client-local-ips-timestamp
             "time": now().strftime("%Y-%m-%dT%H:%M:%S.%fZ")
         }
     }
