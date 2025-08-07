@@ -20,7 +20,7 @@ example_product_name = "gnucash-UK-vAt"
 example_product_version = "12.412.41.251"
 example_user = "fred-bloggs"
 example_local_ip = "89.42.61.251"
-example_identity_time = datetime.datetime.fromisoformat("2045-03-30T15:34:51Z")
+example_identity_time = datetime.datetime.fromisoformat("2045-03-30T15:34:51.123Z")
 example_access_token = "l1kj23k1j31k2hu31k2hj3lkl12j3j123jklk23jl12k3j"
 example_period_key = "K1234"
 
@@ -113,7 +113,7 @@ expected_headers={
     'Gov-Client-User-Ids': 'os=fred-bloggs',
     'Gov-Client-Timezone': 'UTC+00:00',
     'Gov-Client-Local-IPs': '89.42.61.251',
-    'Gov-Client-Local-IPs-Timestamp': '2045-03-30 15:34:51+00:00',
+    'Gov-Client-Local-IPs-Timestamp': '2045-03-30T15:34:51.123Z',
     'Gov-Client-MAC-Addresses': '01%3A23%3A45%3A67%3A89%3Aab',
     'Gov-Client-User-Agent': 'os-family=Aardvark+Bunches&os-version=1.23.5.15-12312.515&device-manufacturer=Aardvark+Limited&device-model=Turtledove+Power+Buncher',
     'Gov-Vendor-Version': 'gnucash-UK-vAt=12.412.41.251',
@@ -171,7 +171,7 @@ def test_fraud_headers():
     assert(headers['Gov-Client-User-Ids'] == f'os={example_user}')
     assert(headers['Gov-Client-Timezone'] == 'UTC+00:00')
     assert(headers['Gov-Client-Local-IPs'] == example_local_ip)
-    assert(headers['Gov-Client-Local-IPs-Timestamp'] == str(example_identity_time))
+    assert(headers['Gov-Client-Local-IPs-Timestamp'] == '2045-03-30T15:34:51.123Z')
     assert(
         headers['Gov-Client-MAC-Addresses'] ==
         quote_plus(example_mac_address)
@@ -195,6 +195,108 @@ def test_fraud_headers():
 
     # What's the point of the above?  This tests just as well
     assert(headers == expected_headers)
+
+def test_timestamp_format_validation():
+    """Test Gov-Client-Local-IPs-Timestamp format validation"""
+    import re
+    import ipaddress
+    
+    vat = create_vat_client()
+    headers = vat.build_fraud_headers()
+    
+    timestamp = headers['Gov-Client-Local-IPs-Timestamp']
+    
+    # Test ISO format with Z suffix
+    iso_pattern = r'^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}\.\d{3}Z$'
+    assert re.match(iso_pattern, timestamp), f"Timestamp {timestamp} does not match ISO format with 3-digit milliseconds and Z suffix"
+    
+    # Test it's a valid datetime
+    parsed_dt = datetime.datetime.fromisoformat(timestamp.replace('Z', '+00:00'))
+    assert parsed_dt.tzinfo == datetime.timezone.utc, "Timestamp must be in UTC"
+    
+    # Test milliseconds are exactly 3 digits
+    millisecond_part = timestamp.split('.')[1][:-1]  # Remove 'Z'
+    assert len(millisecond_part) == 3, f"Milliseconds must be 3 digits, got {len(millisecond_part)}"
+    assert millisecond_part.isdigit(), "Milliseconds must be numeric"
+
+def test_ip_address_format_validation():
+    """Test Gov-Client-Local-IPs format validation"""
+    import ipaddress
+    
+    vat = create_vat_client()
+    headers = vat.build_fraud_headers()
+    
+    ip_address = headers['Gov-Client-Local-IPs']
+    
+    # Test it's a valid IP address
+    try:
+        ipaddress.ip_address(ip_address)
+    except ValueError:
+        pytest.fail(f"Invalid IP address format: {ip_address}")
+
+def test_mac_address_format_validation():
+    """Test Gov-Client-MAC-Addresses format validation"""
+    from urllib.parse import unquote_plus
+    import re
+    
+    vat = create_vat_client()
+    headers = vat.build_fraud_headers()
+    
+    mac_encoded = headers['Gov-Client-MAC-Addresses']
+    mac_decoded = unquote_plus(mac_encoded)
+    
+    # Test MAC address format (XX:XX:XX:XX:XX:XX)
+    mac_pattern = r'^([0-9A-Fa-f]{2}:){5}[0-9A-Fa-f]{2}$'
+    assert re.match(mac_pattern, mac_decoded), f"Invalid MAC address format: {mac_decoded}"
+    
+    # Test URL encoding is correct
+    expected_encoded = quote_plus(mac_decoded)
+    assert mac_encoded == expected_encoded, f"MAC address not properly URL encoded"
+
+def test_user_agent_format_validation():
+    """Test Gov-Client-User-Agent format validation"""
+    from urllib.parse import parse_qs, unquote_plus
+    
+    vat = create_vat_client()
+    headers = vat.build_fraud_headers()
+    
+    user_agent = headers['Gov-Client-User-Agent']
+    
+    # Test URL encoding format
+    try:
+        parsed = parse_qs(user_agent, keep_blank_values=True)
+        
+        # Test required fields are present
+        required_fields = ['os-family', 'os-version', 'device-manufacturer', 'device-model']
+        for field in required_fields:
+            assert field in parsed, f"Required field {field} missing from User-Agent"
+            assert len(parsed[field]) == 1, f"Field {field} should have exactly one value"
+            assert parsed[field][0], f"Field {field} should not be empty"
+            
+    except Exception as e:
+        pytest.fail(f"Invalid User-Agent URL encoding: {user_agent}, error: {e}")
+
+def test_license_ids_format_validation():
+    """Test Gov-Vendor-License-Ids format validation"""
+    import re
+    
+    vat = create_vat_client()
+    headers = vat.build_fraud_headers()
+    
+    license_ids = headers['Gov-Vendor-License-Ids']
+    
+    # Test format: product-name=sha1-hash
+    pattern = r'^[^=]+=[a-f0-9]{40}$'
+    assert re.match(pattern, license_ids), f"Invalid license IDs format: {license_ids}"
+    
+    # Extract and validate SHA1 hash
+    parts = license_ids.split('=', 1)
+    assert len(parts) == 2, "License IDs must be in format product=hash"
+    
+    product_name, hash_value = parts
+    assert product_name, "Product name must not be empty"
+    assert len(hash_value) == 40, f"SHA1 hash must be 40 characters, got {len(hash_value)}"
+    assert re.match(r'^[a-f0-9]+$', hash_value), "SHA1 hash must be lowercase hexadecimal"
 
 @pytest.mark.asyncio    
 async def test_get_vat_liabilities(mocker):
