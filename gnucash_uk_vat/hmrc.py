@@ -180,6 +180,12 @@ class Vat:
             async with client.post(url, headers=headers, data=params) as resp:
                 res = await resp.json()
 
+        # Check for required fields in response
+        required_fields = ["access_token", "refresh_token", "token_type", "expires_in"]
+        missing_fields = [field for field in required_fields if field not in res]
+        if missing_fields:
+            raise RuntimeError(f"OAuth response missing required fields: {missing_fields}. Response: {res}")
+
         # Turn expiry period into a datetime
         expiry = now + timedelta(seconds=int(res["expires_in"]))
         expiry = expiry.replace(microsecond=0)
@@ -223,6 +229,12 @@ class Vat:
         async with aiohttp.ClientSession() as client:
             async with client.post(url, headers=headers, data=params) as resp:
                 res = await resp.json()
+
+        # Check for required fields in response
+        required_fields = ["access_token", "refresh_token", "token_type", "expires_in"]
+        missing_fields = [field for field in required_fields if field not in res]
+        if missing_fields:
+            raise RuntimeError(f"OAuth response missing required fields: {missing_fields}. Response: {res}")
 
         expiry = now + timedelta(seconds=int(res["expires_in"]))
         expiry = expiry.replace(microsecond=0)
