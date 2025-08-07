@@ -40,6 +40,7 @@ class Auth:
         if "expires" not in self.auth:
             raise RuntimeError("No token expiry.  Have you authenticated?")
         expires = datetime.fromisoformat(self.auth["expires"])
+        expires = expires.replace(tzinfo=timezone.utc)
         if  datetime.now(timezone.utc) > expires:
             await self.refresh(svc)
 
