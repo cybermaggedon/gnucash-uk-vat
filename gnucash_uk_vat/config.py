@@ -25,7 +25,7 @@ class Config:
             # Used to populate default values when creating new config
             self.config = config
         else:
-            self.config = json.loads(file.read_text())
+            self.config = json.loads(self.file.read_text())
     def get(self, key: str) -> Any:
         cfg: Any = self.config
         for v in key.split("."):
