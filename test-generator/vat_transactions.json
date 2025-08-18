@@ -1,0 +1,329 @@
+[
+  {
+    "description": "Acme Ltd.",
+    "post_date": "2020-11-01",
+    "enter_date": "2020-12-24T15:30:53+00:00",
+    "currency": "GBP",
+    "splits_count": 3,
+    "splits": [
+      {
+        "account": "Accounts Receivable",
+        "account_name": "Accounts Receivable",
+        "value": 12000.0,
+        "quantity": 12000.0,
+        "memo": "Invoice 1"
+      },
+      {
+        "account": "VAT:Output:Sales",
+        "account_name": "Sales",
+        "value": -2000.0,
+        "quantity": -2000.0,
+        "memo": "Invoice 1"
+      },
+      {
+        "account": "Income:Sales:UK",
+        "account_name": "UK",
+        "value": -10000.0,
+        "quantity": -10000.0,
+        "memo": "Invoice 1"
+      }
+    ],
+    "balance": 0.0,
+    "is_balanced": true
+  },
+  {
+    "description": "Byzantine Antiques",
+    "post_date": "2020-10-14",
+    "enter_date": "2020-12-25T11:34:40+00:00",
+    "currency": "GBP",
+    "splits_count": 3,
+    "splits": [
+      {
+        "account": "VAT:Output:Sales",
+        "account_name": "Sales",
+        "value": 0.0,
+        "quantity": 0.0,
+        "memo": "Invoice E7"
+      },
+      {
+        "account": "Accounts Receivable",
+        "account_name": "Accounts Receivable",
+        "value": 12000.0,
+        "quantity": 12000.0,
+        "memo": "Invoice E7"
+      },
+      {
+        "account": "Income:Sales:EU:Services",
+        "account_name": "Services",
+        "value": -12000.0,
+        "quantity": -12000.0,
+        "memo": "Invoice E7"
+      }
+    ],
+    "balance": 0.0,
+    "is_balanced": true
+  },
+  {
+    "description": "Acme Ltd.",
+    "post_date": "2020-10-03",
+    "enter_date": "2020-12-24T20:07:06+00:00",
+    "currency": "GBP",
+    "splits_count": 3,
+    "splits": [
+      {
+        "account": "Accounts Receivable",
+        "account_name": "Accounts Receivable",
+        "value": 16920.0,
+        "quantity": 16920.0,
+        "memo": "Invoice 6"
+      },
+      {
+        "account": "VAT:Output:Sales",
+        "account_name": "Sales",
+        "value": -2820.0,
+        "quantity": -2820.0,
+        "memo": "Invoice 6"
+      },
+      {
+        "account": "Income:Sales:UK",
+        "account_name": "UK",
+        "value": -14100.0,
+        "quantity": -14100.0,
+        "memo": "Invoice 6"
+      }
+    ],
+    "balance": 0.0,
+    "is_balanced": true
+  },
+  {
+    "description": "Acme Ltd.",
+    "post_date": "2020-10-01",
+    "enter_date": "2020-12-24T20:06:27+00:00",
+    "currency": "GBP",
+    "splits_count": 3,
+    "splits": [
+      {
+        "account": "Accounts Receivable",
+        "account_name": "Accounts Receivable",
+        "value": 16920.0,
+        "quantity": 16920.0,
+        "memo": "Invoice 5"
+      },
+      {
+        "account": "VAT:Output:Sales",
+        "account_name": "Sales",
+        "value": -2820.0,
+        "quantity": -2820.0,
+        "memo": "Invoice 5"
+      },
+      {
+        "account": "Income:Sales:UK",
+        "account_name": "UK",
+        "value": -14100.0,
+        "quantity": -14100.0,
+        "memo": "Invoice 5"
+      }
+    ],
+    "balance": 0.0,
+    "is_balanced": true
+  },
+  {
+    "description": "Acme Ltd.",
+    "post_date": "2020-09-24",
+    "enter_date": "2020-12-24T18:22:10+00:00",
+    "currency": "GBP",
+    "splits_count": 3,
+    "splits": [
+      {
+        "account": "Accounts Receivable",
+        "account_name": "Accounts Receivable",
+        "value": 17046.41,
+        "quantity": 17046.41,
+        "memo": "Invoice 4"
+      },
+      {
+        "account": "VAT:Output:Sales",
+        "account_name": "Sales",
+        "value": -2841.07,
+        "quantity": -2841.07,
+        "memo": "Invoice 4"
+      },
+      {
+        "account": "Income:Sales:UK",
+        "account_name": "UK",
+        "value": -14205.34,
+        "quantity": -14205.34,
+        "memo": "Invoice 4"
+      }
+    ],
+    "balance": -4.547473508864641e-13,
+    "is_balanced": true
+  },
+  {
+    "description": "Acme Ltd.",
+    "post_date": "2020-09-22",
+    "enter_date": "2020-12-24T18:20:35+00:00",
+    "currency": "GBP",
+    "splits_count": 3,
+    "splits": [
+      {
+        "account": "Accounts Receivable",
+        "account_name": "Accounts Receivable",
+        "value": 12176.0,
+        "quantity": 12176.0,
+        "memo": "Invoice 3"
+      },
+      {
+        "account": "VAT:Output:Sales",
+        "account_name": "Sales",
+        "value": -2029.33,
+        "quantity": -2029.33,
+        "memo": "Invoice 3"
+      },
+      {
+        "account": "Income:Sales:UK",
+        "account_name": "UK",
+        "value": -10146.67,
+        "quantity": -10146.67,
+        "memo": "Invoice 3"
+      }
+    ],
+    "balance": 0.0,
+    "is_balanced": true
+  },
+  {
+    "description": "Dopeysoft",
+    "post_date": "2020-09-10",
+    "enter_date": "2020-12-24T18:37:58+00:00",
+    "currency": "GBP",
+    "splits_count": 3,
+    "splits": [
+      {
+        "account": "VAT:Input",
+        "account_name": "Input",
+        "value": 59.4,
+        "quantity": 59.4,
+        "memo": "Bill 1"
+      },
+      {
+        "account": "Expenses:VAT Purchases:Software",
+        "account_name": "Software",
+        "value": 297.0,
+        "quantity": 297.0,
+        "memo": "Bill 1"
+      },
+      {
+        "account": "Accounts Payable",
+        "account_name": "Accounts Payable",
+        "value": -356.4,
+        "quantity": -356.4,
+        "memo": "Bill 1"
+      }
+    ],
+    "balance": 2.1316282072803006e-14,
+    "is_balanced": true
+  },
+  {
+    "description": "ACME GmbH",
+    "post_date": "2020-09-01",
+    "enter_date": "2020-12-24T20:01:26+00:00",
+    "currency": "GBP",
+    "splits_count": 4,
+    "splits": [
+      {
+        "account": "VAT:Input",
+        "account_name": "Input",
+        "value": 48.0,
+        "quantity": 48.0,
+        "memo": "Bill 2"
+      },
+      {
+        "account": "Expenses:VAT Purchases:EU Reverse VAT",
+        "account_name": "EU Reverse VAT",
+        "value": 240.0,
+        "quantity": 240.0,
+        "memo": "Bill 2"
+      },
+      {
+        "account": "VAT:Output:EU",
+        "account_name": "EU",
+        "value": -48.0,
+        "quantity": -48.0,
+        "memo": "Bill 2"
+      },
+      {
+        "account": "Accounts Payable",
+        "account_name": "Accounts Payable",
+        "value": -240.0,
+        "quantity": -240.0,
+        "memo": "Bill 2"
+      }
+    ],
+    "balance": 0.0,
+    "is_balanced": true
+  },
+  {
+    "description": "Acme Ltd.",
+    "post_date": "2017-01-10",
+    "enter_date": "2020-12-24T18:16:40+00:00",
+    "currency": "GBP",
+    "splits_count": 3,
+    "splits": [
+      {
+        "account": "Accounts Receivable",
+        "account_name": "Accounts Receivable",
+        "value": 1488.0,
+        "quantity": 1488.0,
+        "memo": "Invoice 2"
+      },
+      {
+        "account": "VAT:Output:Sales",
+        "account_name": "Sales",
+        "value": -248.0,
+        "quantity": -248.0,
+        "memo": "Invoice 2"
+      },
+      {
+        "account": "Income:Sales:UK",
+        "account_name": "UK",
+        "value": -1240.0,
+        "quantity": -1240.0,
+        "memo": "Invoice 2"
+      }
+    ],
+    "balance": 0.0,
+    "is_balanced": true
+  },
+  {
+    "description": "MeecroZoft",
+    "post_date": "2017-01-05",
+    "enter_date": "2020-12-25T11:25:34+00:00",
+    "currency": "GBP",
+    "splits_count": 3,
+    "splits": [
+      {
+        "account": "VAT:Input",
+        "account_name": "Input",
+        "value": 10.4,
+        "quantity": 10.4,
+        "memo": "Invoice A1"
+      },
+      {
+        "account": "Expenses:VAT Purchases:Software",
+        "account_name": "Software",
+        "value": 52.0,
+        "quantity": 52.0,
+        "memo": "Invoice A1"
+      },
+      {
+        "account": "Accounts Payable",
+        "account_name": "Accounts Payable",
+        "value": -62.4,
+        "quantity": -62.4,
+        "memo": "Invoice A1"
+      }
+    ],
+    "balance": 1.7763568394002505e-15,
+    "is_balanced": true
+  }
+]
