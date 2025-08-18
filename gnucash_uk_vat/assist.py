@@ -134,6 +134,7 @@ class FileSelection:
                 self.check()
                 
         rb1 = Gtk.RadioButton.new_from_widget(None)
+        self.kind = "gnucash"
         self.ui.select_kind("gnucash")
         rb1.set_label("gnucash")
         rb1.connect("toggled", toggled, "gnucash")
