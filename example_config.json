@@ -1,0 +1,14 @@
+{
+  "start_year": 2021,
+  "end_year": 2023,
+  "monthly_revenue_base": 50000,
+  "annual_growth_rate": 25.0,
+  "international_percentage": 30.0,
+  "initial_staff": 2,
+  "final_staff": 8,
+  "transactions_per_month_base": 25,
+  "seasonal_variation": true,
+  "include_payroll": true,
+  "include_assets": true,
+  "random_seed": 42
+}
