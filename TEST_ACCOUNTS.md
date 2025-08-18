@@ -1,0 +1,68 @@
+# Test Accounts Structure
+
+Extracted from: `accounts2.gnucash`
+
+## Account Hierarchy
+
+- **Accounts Payable** (Unknown) - Currency: GBP - Description: Entities we are in credit to
+- **Accounts Receivable** (Unknown) - Currency: GBP - Description: Entities in debit to us
+- **Assets** (Unknown) - Currency: GBP - Description: Fixed and semi-fixed assets
+  - **Capital Equipment** (Unknown) - Currency: GBP - Description: Additions only, Box 7
+    - **Computer Equipment** (Unknown) - Currency: GBP
+    - **EU Reverse VAT Purchase** (Unknown) - Currency: GBP
+  - **Other** (Unknown) - Currency: GBP
+- **Bank Accounts** (Unknown) - Currency: GBP - Description: Liquids
+  - **Current Account** (Unknown) - Currency: GBP - Description: Main bank account
+  - **Reserve Account** (Unknown) - Currency: GBP - Description: Reserves held e.g. for paying tax
+- **Cash** (Unknown) - Currency: GBP
+- **Equity** (Unknown) - Currency: GBP - Description: Capital and other interests
+  - **Corporation Tax** (Unknown) - Currency: GBP - Description: Payable to HMRC
+  - **Director's Loan** (Unknown) - Currency: GBP - Description: Loan by company to director
+  - **Dividends** (Unknown) - Currency: GBP
+    - **Director's Dividends 1** (Unknown) - Currency: GBP
+    - **Director's Dividends 2** (Unknown) - Currency: GBP
+    - **Shareholder Dividends 1** (Unknown) - Currency: GBP
+  - **Grants** (Unknown) - Currency: GBP
+  - **Opening Balances** (Unknown) - Currency: GBP
+- **Expenses** (Unknown) - Currency: GBP - Description: Money going out
+  - **Depreciation** (Unknown) - Currency: GBP
+  - **Emoluments** (Unknown) - Currency: GBP
+    - **Director's Fees** (Unknown) - Currency: GBP
+    - **Employees** (Unknown) - Currency: GBP
+      - **Income Tax** (Unknown) - Currency: GBP
+      - **NICs** (Unknown) - Currency: GBP
+      - **Net Salaries** (Unknown) - Currency: GBP
+      - **Stakeholder Contributions** (Unknown) - Currency: GBP
+    - **Employer's NICs** (Unknown) - Currency: GBP
+  - **Other non-VAT expenses** (Unknown) - Currency: GBP
+  - **VAT Purchases** (Unknown) - Currency: GBP
+    - **Accountant** (Unknown) - Currency: GBP
+    - **Bank Charges** (Unknown) - Currency: GBP
+    - **EU Reverse VAT** (Unknown) - Currency: GBP
+    - **Office** (Unknown) - Currency: GBP
+    - **Software** (Unknown) - Currency: GBP
+    - **Subscriptions** (Unknown) - Currency: GBP
+    - **Sundries** (Unknown) - Currency: GBP
+    - **Telecoms** (Unknown) - Currency: GBP
+    - **Travel/Accom** (Unknown) - Currency: GBP
+- **Income** (Unknown) - Currency: GBP - Description: Money coming in
+  - **Interest** (Unknown) - Currency: GBP - Description: Bank and loan interest
+  - **Misc** (Unknown) - Currency: GBP - Description: Other sources of income
+  - **Sales** (Unknown) - Currency: GBP - Description: Income from customers
+    - **EU** (Unknown) - Currency: GBP - Description: Sales in EU
+      - **Goods** (Unknown) - Currency: GBP - Description: Sale of goods within EU
+      - **Services** (Unknown) - Currency: GBP - Description: Sale of services within EU
+    - **UK** (Unknown) - Currency: GBP - Description: Sales in UK
+    - **World** (Unknown) - Currency: GBP - Description: Sales in rest of world
+- **Liabilities** (Unknown) - Currency: GBP - Description: Corporation tax and other fees
+  - **Other** (Unknown) - Currency: GBP
+  - **Owed Corporation Tax** (Unknown) - Currency: GBP
+  - **Owed Fees** (Unknown) - Currency: GBP
+  - **Owed Tax/NI** (Unknown) - Currency: GBP
+- **Orphan-GBP** (Unknown) - Currency: GBP
+- **VAT** (Unknown) - Currency: GBP - Description: HMRC input/output accounts
+  - **Input** (Unknown) - Currency: GBP - Description: Purchases, box 4
+  - **Liabilities** (Unknown) - Currency: GBP - Description: Liabilities
+  - **Output** (Unknown) - Currency: GBP - Description: Box 3
+    - **EU** (Unknown) - Currency: GBP - Description: On reverse VAT purchases (Box 2)
+    - **Sales** (Unknown) - Currency: GBP - Description: All, including zero rate UK/EU and World  (Box 1)
