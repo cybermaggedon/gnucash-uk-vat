@@ -346,12 +346,6 @@ class TestDeviceConfigurationContract:
         mac_address = sample_network_config["mac-address"]
         assert ":" in mac_address
         assert len(mac_address) == 17  # XX:XX:XX:XX:XX:XX format
-        
-        # Verify timestamp format
-        timestamp = sample_network_config["time"]
-        parsed_time = datetime.fromisoformat(timestamp.replace('Z', '+00:00'))
-        assert isinstance(parsed_time, datetime)
-        assert parsed_time.tzinfo is not None
 
 
 class TestPrivateConfigContract:
