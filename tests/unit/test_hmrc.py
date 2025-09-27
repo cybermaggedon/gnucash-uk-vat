@@ -189,7 +189,7 @@ class TestVat:
     
     def test_build_fraud_headers(self, vat_client):
         """Test building fraud prevention headers"""
-        with mock.patch("vat.config.get_gateway_ip", autospec=True, spec_set=True, return_value="192.168.1.100"):
+        with patch("vat.config.get_gateway_ip", autospec=True, spec_set=True, return_value="192.168.1.100"):
             headers = vat_client.build_fraud_headers()
         
         assert headers['Gov-Client-Connection-Method'] == 'OTHER_DIRECT'
