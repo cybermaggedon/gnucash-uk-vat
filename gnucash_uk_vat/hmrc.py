@@ -9,6 +9,7 @@ import json
 import hashlib
 from typing import Optional, Dict, Any, List, Union
 
+from . import config
 from . model import *
 
 # AuthCollector is a class which provides a temporary web service in order
@@ -285,6 +286,10 @@ class Vat:
         
         hashed_license_id = hashlib.sha1(b'GPL3').hexdigest()
 
+        local_ips = config.get_gateway_ip()
+        # https://developer.service.hmrc.gov.uk/guides/fraud-prevention/connection-method/other-direct/#gov-client-local-ips-timestamp
+        timestamp = config.now().strftime("%Y-%m-%dT%H:%M:%S.%f")[:-3] + "Z"
+
         # Return headers
         return {
             'Gov-Client-Connection-Method': 'OTHER_DIRECT',
@@ -292,8 +297,8 @@ class Vat:
             'Gov-Client-User-Ids': 'os=%s' % self.config.get("identity.user"),
             # Batch code, we're doing everything in UTC
             'Gov-Client-Timezone': 'UTC+00:00',
-            'Gov-Client-Local-IPs': self.config.get("identity.local-ip"),
-            'Gov-Client-Local-IPs-Timestamp': self.config.get("identity.time"),
+            'Gov-Client-Local-IPs': local_ips,
+            'Gov-Client-Local-IPs-Timestamp': timestamp,
             'Gov-Client-MAC-Addresses': mac,
             'Gov-Client-User-Agent': ua,
             'Gov-Vendor-Version': '%s=%s' % (product_name,product_version),

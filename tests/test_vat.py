@@ -92,8 +92,6 @@ example_config = {
     "application.product-name": example_product_name,
     "application.product-version": example_product_version,
     "identity.user": example_user,
-    "identity.local-ip": example_local_ip,
-    "identity.time": str(example_identity_time),
 }
 
 example_auth = {
@@ -161,7 +159,9 @@ def test_fraud_headers():
 
     vat = create_vat_client()
 
-    headers = vat.build_fraud_headers()
+    with mock.patch("vat.config.get_gateway_ip", autospec=True, spec_set=True, return_value=example_local_ip):
+        with mock.patch("vat.config.now", autospec=True, spec_set=True, return_value=example_identity_time):
+            headers = vat.build_fraud_headers()
 
     hashed_license_id = hashlib.sha1(b'GPL3').hexdigest()
 

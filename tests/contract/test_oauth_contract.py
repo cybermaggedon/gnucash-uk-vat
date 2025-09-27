@@ -219,9 +219,7 @@ class TestAuthHeaderContract:
             "identity.device.id": "device-12345",
             "application.product-name": "gnucash-uk-vat",
             "application.product-version": "1.0.0",
-            "identity.user": "test-user",
-            "identity.local-ip": "192.168.1.100",
-            "identity.time": "2023-04-15T10:30:00Z"
+            "identity.user": "test-user"
         }[key]
         
         headers = vat_client.build_fraud_headers()

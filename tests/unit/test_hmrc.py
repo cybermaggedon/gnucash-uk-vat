@@ -120,9 +120,7 @@ class TestVat:
             "identity.device.device-manufacturer": "Dell",
             "identity.device.device-model": "XPS",
             "identity.device.id": "device123",
-            "identity.user": "testuser",
-            "identity.local-ip": "192.168.1.100",
-            "identity.time": "2023-01-01T00:00:00Z"
+            "identity.user": "testuser"
         }.get(key, "")
         return config
     
@@ -191,7 +189,8 @@ class TestVat:
     
     def test_build_fraud_headers(self, vat_client):
         """Test building fraud prevention headers"""
-        headers = vat_client.build_fraud_headers()
+        with mock.patch("vat.config.get_gateway_ip", autospec=True, spec_set=True, return_value="192.168.1.100"):
+            headers = vat_client.build_fraud_headers()
         
         assert headers['Gov-Client-Connection-Method'] == 'OTHER_DIRECT'
         assert headers['Gov-Client-Device-ID'] == 'device123'

@@ -86,7 +86,6 @@ def initialise_config(config_path: Path, user: Optional['Config']) -> None:
         # Fallback.
         mac = '00:00:00:00:00:00'
 
-    local_ip = get_gateway_ip()
     di = get_device_config()
 
 #    vatDueSales = "VAT:Output:Sales" 
@@ -133,10 +132,7 @@ def initialise_config(config_path: Path, user: Optional['Config']) -> None:
             "vrn": "<VRN>",
             "device": di,
             "user": getpass.getuser(),
-            "local-ip": local_ip,
-            "mac-address": mac,
-            # https://developer.service.hmrc.gov.uk/guides/fraud-prevention/connection-method/other-direct/#gov-client-local-ips-timestamp
-            "time": now().strftime("%Y-%m-%dT%H:%M:%S.%f")[:-3] + "Z"
+            "mac-address": mac
         }
     }
 
