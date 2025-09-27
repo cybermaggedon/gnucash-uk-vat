@@ -202,6 +202,12 @@ class TestVat:
         assert 'Gov-Client-User-Agent' in headers
         assert 'Gov-Vendor-Version' in headers
         assert 'Gov-Vendor-License-Ids' in headers
+
+        # Verify timestamp format
+        timestamp = headers['Gov-Client-Local-IPs-Timestamp']
+        parsed_time = datetime.fromisoformat(timestamp.replace('Z', '+00:00'))
+        assert isinstance(parsed_time, datetime)
+        assert parsed_time.tzinfo is not None
     
     def test_build_fraud_headers_missing_fields(self, mock_config, mock_auth):
         """Test build_fraud_headers with missing required fields"""
