@@ -296,6 +296,93 @@ class TestOverriddenHeadersFlowThrough:
         assert actual_headers['Authorization'] == 'Bearer obligations-token'
 
 
+class TestHeadersDoNotLeak:
+    """Test that omitted headers don't leak through from base class"""
+
+    @pytest.mark.asyncio
+    async def test_deliberately_omitted_headers_stay_omitted(self):
+        """Test that headers deliberately omitted in override don't appear in requests
+
+        This simulates accountsmachine's use case where certain headers like MAC address
+        and local IP are deliberately not included (e.g., in cloud environments where they
+        don't exist or aren't available).
+        """
+
+        # Create a subclass that deliberately omits headers that the base class would include
+        class CloudVat(Vat):
+            def build_fraud_headers(self):
+                # Deliberately omit Gov-Client-MAC-Addresses and Gov-Client-Local-IPs
+                # which the base class would normally include
+                return {
+                    'Gov-Client-Connection-Method': 'WEB_APP_VIA_SERVER',
+                    'Gov-Client-Public-IP': '203.0.113.50',
+                    'Gov-Client-Device-ID': 'cloud-device-123',
+                    'Gov-Vendor-Product-Name': 'cloudservice',
+                    'Authorization': f'Bearer {self.auth.get("access_token")}'
+                }
+
+        # Configure with MAC and local IP (base class would use these)
+        config = {
+            "identity.mac-address": "aa:bb:cc:dd:ee:ff",  # Base class would include this
+            "identity.device.os-family": "Linux",
+            "identity.device.os-version": "5.0",
+            "identity.device.device-manufacturer": "Test",
+            "identity.device.device-model": "TestModel",
+            "identity.device.id": "test-device",
+            "application.product-name": "test",
+            "application.product-version": "1.0",
+            "identity.user": "testuser",
+            "identity.local-ip": "192.168.1.100",  # Base class would include this
+            "identity.time": "2023-01-01T00:00:00.000Z",
+        }
+        auth = {"access_token": "cloud-token"}
+
+        vat = CloudVat(config, auth)
+        vat.api_base = "https://test.example.com"
+
+        # Mock aiohttp response
+        mock_response = AsyncMock()
+        mock_response.status = 200
+        mock_response.json = AsyncMock(return_value={"obligations": []})
+        mock_response.__aenter__.return_value = mock_response
+        mock_response.__aexit__.return_value = None
+
+        mock_session = MagicMock()
+        mock_get = MagicMock(return_value=mock_response)
+        mock_session.get = mock_get
+        mock_session.__aenter__.return_value = mock_session
+        mock_session.__aexit__.return_value = None
+
+        with patch('aiohttp.ClientSession', return_value=mock_session):
+            await vat.get_obligations("123456789", date(2023, 1, 1), date(2023, 12, 31))
+
+        # Get the headers that were actually sent
+        call_kwargs = mock_get.call_args[1]
+        actual_headers = call_kwargs['headers']
+
+        # Verify our custom headers are present
+        assert actual_headers['Gov-Client-Connection-Method'] == 'WEB_APP_VIA_SERVER'
+        assert actual_headers['Gov-Client-Public-IP'] == '203.0.113.50'
+        assert actual_headers['Gov-Client-Device-ID'] == 'cloud-device-123'
+        assert actual_headers['Gov-Vendor-Product-Name'] == 'cloudservice'
+        assert actual_headers['Authorization'] == 'Bearer cloud-token'
+
+        # CRITICAL: Verify deliberately omitted headers are NOT present
+        # These would be in base class headers but we deliberately excluded them
+        assert 'Gov-Client-MAC-Addresses' not in actual_headers, \
+            "MAC address header should not be present when deliberately omitted"
+        assert 'Gov-Client-Local-IPs' not in actual_headers, \
+            "Local IP header should not be present when deliberately omitted"
+        assert 'Gov-Client-Local-IPs-Timestamp' not in actual_headers, \
+            "Local IP timestamp header should not be present when deliberately omitted"
+
+        # Also verify other base class headers don't leak through
+        assert 'Gov-Client-Timezone' not in actual_headers, \
+            "Timezone header should not be present when deliberately omitted"
+        assert 'Gov-Client-User-Ids' not in actual_headers, \
+            "User IDs header should not be present when deliberately omitted"
+
+
 class TestExtensionPointStability:
     """Test that the extension point is called by all relevant methods"""
 
