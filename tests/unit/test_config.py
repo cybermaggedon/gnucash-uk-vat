@@ -242,7 +242,6 @@ class TestInitialiseConfig:
         assert "identity" in created_config
         assert "accounts" in created_config
         assert created_config["identity"]["mac-address"] == "aa:bb:cc:dd:ee:ff"
-        assert created_config["identity"]["local-ip"] == "192.168.1.100"
     
     @patch('gnucash_uk_vat.config.get_device_config')
     @patch('gnucash_uk_vat.config.get_gateway_mac')

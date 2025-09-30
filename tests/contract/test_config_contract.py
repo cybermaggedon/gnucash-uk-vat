@@ -40,8 +40,6 @@ class TestConfigurationContract:
         required_identity_fields = [
             "vrn",
             "mac-address",
-            "local-ip",
-            "time",
             "user"
         ]
         
@@ -75,8 +73,6 @@ class TestConfigurationContract:
             "identity": {
                 "vrn": "123456789",
                 "mac-address": "00:11:22:33:44:55",
-                "local-ip": "192.168.1.100",
-                "time": "2023-04-15T10:30:00Z",
                 "user": "test-user",
                 "device": {
                     "os-family": "Linux",
@@ -344,29 +340,12 @@ class TestDeviceConfigurationContract:
     def test_network_configuration_contract(self):
         """Verify network configuration format"""
         # Expected network info format
-        sample_network_config = {
-            "mac-address": "00:11:22:33:44:55",
-            "local-ip": "192.168.1.100",
-            "time": "2023-04-15T10:30:00Z"
-        }
+        sample_network_config = {"mac-address": "00:11:22:33:44:55"}
         
         # Verify MAC address format
         mac_address = sample_network_config["mac-address"]
         assert ":" in mac_address
         assert len(mac_address) == 17  # XX:XX:XX:XX:XX:XX format
-        
-        # Verify IP address format
-        local_ip = sample_network_config["local-ip"]
-        parts = local_ip.split(".")
-        assert len(parts) == 4
-        for part in parts:
-            assert 0 <= int(part) <= 255
-        
-        # Verify timestamp format
-        timestamp = sample_network_config["time"]
-        parsed_time = datetime.fromisoformat(timestamp.replace('Z', '+00:00'))
-        assert isinstance(parsed_time, datetime)
-        assert parsed_time.tzinfo is not None
 
 
 class TestPrivateConfigContract:
@@ -408,7 +387,6 @@ class TestPrivateConfigContract:
         pii_fields = [
             "identity.vrn",
             "identity.mac-address",
-            "identity.local-ip",
             "identity.user",
             "user.userId"
         ]

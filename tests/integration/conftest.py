@@ -93,9 +93,7 @@ def test_config_file(tmp_path):
                 "id": "test-device-12345"
             },
             "user": "test-user",
-            "local-ip": "192.168.1.100",
-            "mac-address": "00:11:22:33:44:55",
-            "time": "2023-04-15T10:30:00Z"
+            "mac-address": "00:11:22:33:44:55"
         }
     }
     
