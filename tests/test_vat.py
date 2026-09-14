@@ -160,8 +160,8 @@ def test_fraud_headers():
 
     vat = create_vat_client()
 
-    with mock.patch("vat.config.get_gateway_ip", autospec=True, spec_set=True, return_value=example_local_ip):
-        with mock.patch("vat.config.now", autospec=True, spec_set=True, return_value=example_identity_time):
+    with mock.patch("gnucash_uk_vat.config.get_gateway_ip", autospec=True, spec_set=True, return_value=example_local_ip):
+        with mock.patch("gnucash_uk_vat.config.now", autospec=True, spec_set=True, return_value=example_identity_time):
             headers = vat.build_fraud_headers()
 
     hashed_license_id = hashlib.sha1(b'GPL3').hexdigest()
@@ -299,25 +299,27 @@ def test_license_ids_format_validation():
     assert len(hash_value) == 40, f"SHA1 hash must be 40 characters, got {len(hash_value)}"
     assert re.match(r'^[a-f0-9]+$', hash_value), "SHA1 hash must be lowercase hexadecimal"
 
-@pytest.mark.asyncio    
-async def test_get_vat_liabilities(mocker):
+@pytest.mark.asyncio
+async def test_get_vat_liabilities():
 
     vat = create_vat_client()
 
     resp = MockResponse(example_liabilities, 200)
 
-    mocker.patch('aiohttp.ClientSession.get', return_value=resp)
+    with mock.patch("gnucash_uk_vat.config.get_gateway_ip", return_value=example_local_ip):
+        with mock.patch("gnucash_uk_vat.config.now", return_value=example_identity_time):
+            with mock.patch.object(aiohttp.ClientSession, 'get', return_value=resp) as mock_get:
 
-    liabs = await vat.get_vat_liabilities(
-        example_vrn, example_start, example_end
-    )
+                liabs = await vat.get_vat_liabilities(
+                    example_vrn, example_start, example_end
+                )
 
-    aiohttp.ClientSession.get.assert_called_once_with(
-        f"{example_api_base}/organisations/vat/918273645/liabilities?from=2019-04-06&to=2023-12-29",
-        headers=expected_headers | {
-            'Accept': 'application/vnd.hmrc.1.0+json'
-        }
-    )
+                mock_get.assert_called_once_with(
+                    f"{example_api_base}/organisations/vat/918273645/liabilities?from=2019-04-06&to=2023-12-29",
+                    headers=expected_headers | {
+                        'Accept': 'application/vnd.hmrc.1.0+json'
+                    }
+                )
 
     assert(
         str(liabs[0].start) ==
@@ -349,23 +351,25 @@ async def test_get_vat_liabilities(mocker):
         example_liabilities["liabilities"][0]["due"]
     )
 
-@pytest.mark.asyncio    
-async def test_get_vat_return(mocker):
+@pytest.mark.asyncio
+async def test_get_vat_return():
 
     vat = create_vat_client()
 
     resp = MockResponse(example_return, 200)
 
-    mocker.patch('aiohttp.ClientSession.get', return_value=resp)
+    with mock.patch("gnucash_uk_vat.config.get_gateway_ip", return_value=example_local_ip):
+        with mock.patch("gnucash_uk_vat.config.now", return_value=example_identity_time):
+            with mock.patch.object(aiohttp.ClientSession, 'get', return_value=resp) as mock_get:
 
-    rtn = await vat.get_vat_return(example_vrn, example_period_key)
+                rtn = await vat.get_vat_return(example_vrn, example_period_key)
 
-    aiohttp.ClientSession.get.assert_called_once_with(
-        f"{example_api_base}/organisations/vat/918273645/returns/K1234",
-        headers=expected_headers | {
-            'Accept': 'application/vnd.hmrc.1.0+json'
-        }
-    )
+                mock_get.assert_called_once_with(
+                    f"{example_api_base}/organisations/vat/918273645/returns/K1234",
+                    headers=expected_headers | {
+                        'Accept': 'application/vnd.hmrc.1.0+json'
+                    }
+                )
 
     assert(rtn.periodKey == example_return["periodKey"])
     assert(rtn.vatDueSales == example_return["vatDueSales"])
@@ -379,27 +383,29 @@ async def test_get_vat_return(mocker):
     assert(rtn.totalAcquisitionsExVAT == example_return["totalAcquisitionsExVAT"])
     assert(rtn.finalised == example_return["finalised"])
     
-@pytest.mark.asyncio    
-async def test_submit_vat_return(mocker):
+@pytest.mark.asyncio
+async def test_submit_vat_return():
 
     vat = create_vat_client()
 
     resp = MockResponse(example_submission_response, 201)
 
-    mocker.patch('aiohttp.ClientSession.post', return_value=resp)
+    with mock.patch("gnucash_uk_vat.config.get_gateway_ip", return_value=example_local_ip):
+        with mock.patch("gnucash_uk_vat.config.now", return_value=example_identity_time):
+            with mock.patch.object(aiohttp.ClientSession, 'post', return_value=resp) as mock_post:
 
-    resp = await vat.submit_vat_return(
-        example_vrn,
-        Return.from_dict(example_return)
-    )
+                resp = await vat.submit_vat_return(
+                    example_vrn,
+                    Return.from_dict(example_return)
+                )
 
-    aiohttp.ClientSession.post.assert_called_once_with(
-        f"{example_api_base}/organisations/vat/918273645/returns",
-        headers=expected_headers | {
-            'Accept': 'application/vnd.hmrc.1.0+json'
-        },
-        json=example_return,
-    )
+                mock_post.assert_called_once_with(
+                    f"{example_api_base}/organisations/vat/918273645/returns",
+                    headers=expected_headers | {
+                        'Accept': 'application/vnd.hmrc.1.0+json'
+                    },
+                    json=example_return,
+                )
 
     assert(resp == example_submission_response)
 

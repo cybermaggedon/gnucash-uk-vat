@@ -7,6 +7,7 @@ import asyncio
 from datetime import datetime, timedelta, date, timezone
 import json
 import hashlib
+import hmac as hmac_mod
 from typing import Optional, Dict, Any, List, Union
 
 from . import config
@@ -93,7 +94,27 @@ class Vat:
     async def get_code(self):
         return await self.get_code_coro()
 
+    def _is_proxy_mode(self):
+        email = self.config.get("proxy.email")
+        return isinstance(email, str) and email != ""
+
+    def _proxy_url(self):
+        return self.config.get("proxy.url") or self.DEFAULT_PROXY_URL
+
+    DEFAULT_PROXY_URL = "https://auth.prod.accountsmachine.io"
+    DEFAULT_VERIFICATION_SECRET = "m5FwWVJKV0V5Ic9WnTyDFfdO74jXmJzUhKtN1ldFQNowfx2a"
+
+    def _compute_hash(self):
+        secret = self.config.get("proxy.secret") or self.DEFAULT_VERIFICATION_SECRET
+        email = self.config.get("proxy.email")
+        return hmac_mod.new(
+            secret.encode(), email.encode(), hashlib.sha256
+        ).hexdigest()
+
     def get_auth_url(self):
+
+        if self._is_proxy_mode():
+            return self._get_auth_url_proxy()
 
         # Build request to OAUTH endpoint
         url = self.oauth_base + '/oauth/authorize'
@@ -108,6 +129,33 @@ class Vat:
         )
 
         return url + "?" + params
+
+    def _get_auth_url_proxy(self):
+
+        import urllib.request
+        proxy_url = self._proxy_url()
+        payload = json.dumps({
+            "email": self.config.get("proxy.email"),
+            "hash": self._compute_hash(),
+            "redirect_uri": "http://localhost:9876/auth",
+        }).encode()
+
+        req = urllib.request.Request(
+            proxy_url + "/auth-url",
+            data=payload,
+            headers={"Content-Type": "application/json"},
+            method="POST",
+        )
+
+        try:
+            with urllib.request.urlopen(req) as resp:
+                result = json.loads(resp.read())
+        except urllib.error.HTTPError as e:
+            if e.code == 403:
+                raise RuntimeError("Proxy rejected verification hash")
+            raise RuntimeError(f"Proxy error: HTTP {e.code}")
+
+        return result["url"]
 
     def get_auth_credentials(self):
         auth_credentials = None
@@ -154,6 +202,9 @@ class Vat:
     # Co-routine implementation
     async def get_auth_coro(self, code):
 
+        if self._is_proxy_mode():
+            return await self._get_auth_coro_proxy(code)
+
         # Construct auth request
         url = self.api_base + "/oauth/token"
 
@@ -199,6 +250,45 @@ class Vat:
             "expires": expiry.isoformat()
         }
 
+    async def _get_auth_coro_proxy(self, code):
+
+        proxy_url = self._proxy_url()
+        payload = {
+            "code": code,
+            "redirect_uri": "http://localhost:9876/auth",
+            "email": self.config.get("proxy.email"),
+            "hash": self._compute_hash(),
+        }
+
+        now = datetime.now(timezone.utc)
+
+        async with aiohttp.ClientSession() as client:
+            async with client.post(
+                proxy_url + "/token", json=payload
+            ) as resp:
+                if resp.status == 403:
+                    raise RuntimeError("Proxy rejected verification hash")
+                if resp.status == 502:
+                    raise RuntimeError("HMRC rejected the token exchange")
+                if resp.status != 200:
+                    raise RuntimeError(f"Proxy error: HTTP {resp.status}")
+                res = await resp.json()
+
+        required_fields = ["access_token", "refresh_token", "token_type", "expires_in"]
+        missing_fields = [field for field in required_fields if field not in res]
+        if missing_fields:
+            raise RuntimeError(f"OAuth response missing required fields: {missing_fields}. Response: {res}")
+
+        expiry = now + timedelta(seconds=int(res["expires_in"]))
+        expiry = expiry.replace(microsecond=0)
+
+        return {
+            "access_token": res["access_token"],
+            "refresh_token": res["refresh_token"],
+            "token_type": res["token_type"],
+            "expires": expiry.isoformat()
+        }
+
     # Called to refresh credentials, re-issue auth request from refresh
     # token
     async def refresh_token(self, refresh):
@@ -206,6 +296,9 @@ class Vat:
 
     # Co-routine implementation of refresh
     async def refresh_token_coro(self, refresh):
+
+        if self._is_proxy_mode():
+            return await self._refresh_token_coro_proxy(refresh)
 
         url = self.api_base + "/oauth/token"
 
@@ -232,6 +325,44 @@ class Vat:
                 res = await resp.json()
 
         # Check for required fields in response
+        required_fields = ["access_token", "refresh_token", "token_type", "expires_in"]
+        missing_fields = [field for field in required_fields if field not in res]
+        if missing_fields:
+            raise RuntimeError(f"OAuth response missing required fields: {missing_fields}. Response: {res}")
+
+        expiry = now + timedelta(seconds=int(res["expires_in"]))
+        expiry = expiry.replace(microsecond=0)
+
+        return {
+            "access_token": res["access_token"],
+            "refresh_token": res["refresh_token"],
+            "token_type": res["token_type"],
+            "expires": expiry.isoformat()
+        }
+
+    async def _refresh_token_coro_proxy(self, refresh):
+
+        proxy_url = self._proxy_url()
+        payload = {
+            "refresh_token": refresh,
+            "email": self.config.get("proxy.email"),
+            "hash": self._compute_hash(),
+        }
+
+        now = datetime.now(timezone.utc)
+
+        async with aiohttp.ClientSession() as client:
+            async with client.post(
+                proxy_url + "/refresh", json=payload
+            ) as resp:
+                if resp.status == 403:
+                    raise RuntimeError("Proxy rejected verification hash")
+                if resp.status == 502:
+                    raise RuntimeError("HMRC rejected the refresh request")
+                if resp.status != 200:
+                    raise RuntimeError(f"Proxy error: HTTP {resp.status}")
+                res = await resp.json()
+
         required_fields = ["access_token", "refresh_token", "token_type", "expires_in"]
         missing_fields = [field for field in required_fields if field not in res]
         if missing_fields:

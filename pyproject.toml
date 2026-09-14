@@ -43,6 +43,7 @@ Documentation = "https://github.com/cybermaggedon/gnucash-uk-vat/blob/main/READM
 [project.scripts]
 gnucash-uk-vat = "gnucash_uk_vat.cli:main"
 vat-test-service = "gnucash_uk_vat.test_service:main"
+vat-oauth-proxy = "gnucash_uk_vat.oauth_proxy:main"
 
 [project.optional-dependencies]
 dev = [

@@ -2,7 +2,52 @@ import pytest
 from unittest.mock import patch, MagicMock
 import sys
 
+import gnucash_uk_vat
 from gnucash_uk_vat import accounts
+
+
+def _patch_submodule(name, mock_module):
+    """Patch a gnucash_uk_vat submodule so that 'from . import <name>'
+    picks up the mock even when the real module is already cached."""
+    full = f"gnucash_uk_vat.{name}"
+    return patch.multiple(
+        "",  # unused, we use the dict + object patches below
+    ) if False else _combined_patch(name, full, mock_module)
+
+
+class _combined_patch:
+    """Context manager that patches both sys.modules and the parent package attr."""
+    def __init__(self, attr, full, mock_module):
+        self.attr = attr
+        self.full = full
+        self.mock_module = mock_module
+        self._saved_attr = None
+        self._had_attr = False
+        self._saved_mod = None
+        self._had_mod = False
+
+    def __enter__(self):
+        if hasattr(gnucash_uk_vat, self.attr):
+            self._had_attr = True
+            self._saved_attr = getattr(gnucash_uk_vat, self.attr)
+        setattr(gnucash_uk_vat, self.attr, self.mock_module)
+
+        if self.full in sys.modules:
+            self._had_mod = True
+            self._saved_mod = sys.modules[self.full]
+        sys.modules[self.full] = self.mock_module
+        return self.mock_module
+
+    def __exit__(self, *args):
+        if self._had_attr:
+            setattr(gnucash_uk_vat, self.attr, self._saved_attr)
+        elif hasattr(gnucash_uk_vat, self.attr):
+            delattr(gnucash_uk_vat, self.attr)
+
+        if self._had_mod:
+            sys.modules[self.full] = self._saved_mod
+        elif self.full in sys.modules:
+            del sys.modules[self.full]
 
 
 class TestGetClass:
@@ -15,9 +60,9 @@ class TestGetClass:
         mock_accounts_class = MagicMock()
         mock_accounts_module.Accounts = mock_accounts_class
         
-        with patch.dict('sys.modules', {'gnucash_uk_vat.accounts_gnucash': mock_accounts_module}):
+        with _patch_submodule('accounts_gnucash', mock_accounts_module):
             result = accounts.get_class("gnucash")
-            
+
             assert result == mock_accounts_class
     
     def test_get_class_piecash(self):
@@ -27,9 +72,9 @@ class TestGetClass:
         mock_accounts_class = MagicMock()
         mock_accounts_module.Accounts = mock_accounts_class
         
-        with patch.dict('sys.modules', {'gnucash_uk_vat.accounts_piecash': mock_accounts_module}):
+        with _patch_submodule('accounts_piecash', mock_accounts_module):
             result = accounts.get_class("piecash")
-            
+
             assert result == mock_accounts_class
     
     def test_get_class_unknown_kind(self):
@@ -63,11 +108,11 @@ class TestImportBehavior:
         mock_accounts_class = MagicMock()
         mock_accounts_module.Accounts = mock_accounts_class
         
-        with patch.dict('sys.modules', {'gnucash_uk_vat.accounts_gnucash': mock_accounts_module}):
+        with _patch_submodule('accounts_gnucash', mock_accounts_module):
             # First call should trigger import
             result1 = accounts.get_class("gnucash")
             assert result1 == mock_accounts_class
-            
+
             # Second call should use already imported module
             result2 = accounts.get_class("gnucash")
             assert result2 == mock_accounts_class
@@ -78,11 +123,11 @@ class TestImportBehavior:
         mock_accounts_class = MagicMock()
         mock_accounts_module.Accounts = mock_accounts_class
         
-        with patch.dict('sys.modules', {'gnucash_uk_vat.accounts_piecash': mock_accounts_module}):
+        with _patch_submodule('accounts_piecash', mock_accounts_module):
             # First call should trigger import
             result1 = accounts.get_class("piecash")
             assert result1 == mock_accounts_class
-            
+
             # Second call should use already imported module
             result2 = accounts.get_class("piecash")
             assert result2 == mock_accounts_class
@@ -96,20 +141,18 @@ class TestImportBehavior:
         mock_gnucash_module.Accounts = mock_gnucash_class
         mock_piecash_module.Accounts = mock_piecash_class
         
-        with patch.dict('sys.modules', {
-            'gnucash_uk_vat.accounts_gnucash': mock_gnucash_module,
-            'gnucash_uk_vat.accounts_piecash': mock_piecash_module
-        }):
-            # Get gnucash class
-            gnucash_result = accounts.get_class("gnucash")
-            assert gnucash_result == mock_gnucash_class
-            
-            # Get piecash class
-            piecash_result = accounts.get_class("piecash")
-            assert piecash_result == mock_piecash_class
-            
-            # Verify they are different
-            assert gnucash_result != piecash_result
+        with _patch_submodule('accounts_gnucash', mock_gnucash_module):
+            with _patch_submodule('accounts_piecash', mock_piecash_module):
+                # Get gnucash class
+                gnucash_result = accounts.get_class("gnucash")
+                assert gnucash_result == mock_gnucash_class
+
+                # Get piecash class
+                piecash_result = accounts.get_class("piecash")
+                assert piecash_result == mock_piecash_class
+
+                # Verify they are different
+                assert gnucash_result != piecash_result
 
 
 class TestFactoryPatternCompliance:
@@ -121,9 +164,9 @@ class TestFactoryPatternCompliance:
         mock_accounts_class = MagicMock()
         mock_accounts_module.Accounts = mock_accounts_class
         
-        with patch.dict('sys.modules', {'gnucash_uk_vat.accounts_gnucash': mock_accounts_module}):
+        with _patch_submodule('accounts_gnucash', mock_accounts_module):
             result = accounts.get_class("gnucash")
-            
+
             # Should return the class itself, not an instance
             assert result is mock_accounts_class
             # Verify it wasn't instantiated
@@ -137,10 +180,10 @@ class TestFactoryPatternCompliance:
         mock_accounts_class.return_value = mock_instance
         mock_accounts_module.Accounts = mock_accounts_class
         
-        with patch.dict('sys.modules', {'gnucash_uk_vat.accounts_gnucash': mock_accounts_module}):
+        with _patch_submodule('accounts_gnucash', mock_accounts_module):
             AccountsClass = accounts.get_class("gnucash")
             instance = AccountsClass("test_file.gnucash")
-            
+
             # Verify the class was called with correct arguments
             mock_accounts_class.assert_called_once_with("test_file.gnucash")
             assert instance == mock_instance
@@ -157,11 +200,11 @@ class TestIntegration:
         mock_accounts_class.return_value = mock_instance
         mock_accounts_module.Accounts = mock_accounts_class
         
-        with patch.dict('sys.modules', {'gnucash_uk_vat.accounts_gnucash': mock_accounts_module}):
+        with _patch_submodule('accounts_gnucash', mock_accounts_module):
             # Typical usage: get class, then instantiate
             AccountsClass = accounts.get_class("gnucash")
             accounts_instance = AccountsClass("my_accounts.gnucash")
-            
+
             # Verify correct behavior
             assert accounts_instance == mock_instance
             mock_accounts_class.assert_called_once_with("my_accounts.gnucash")
@@ -174,11 +217,11 @@ class TestIntegration:
         mock_accounts_class.return_value = mock_instance
         mock_accounts_module.Accounts = mock_accounts_class
         
-        with patch.dict('sys.modules', {'gnucash_uk_vat.accounts_piecash': mock_accounts_module}):
+        with _patch_submodule('accounts_piecash', mock_accounts_module):
             # Typical usage: get class, then instantiate
             AccountsClass = accounts.get_class("piecash")
             accounts_instance = AccountsClass("my_accounts.gnucash", rw=True)
-            
+
             # Verify correct behavior
             assert accounts_instance == mock_instance
             mock_accounts_class.assert_called_once_with("my_accounts.gnucash", rw=True)
@@ -222,20 +265,18 @@ class TestModuleStructure:
         mock_gnucash_module.Accounts = MagicMock()
         mock_piecash_module.Accounts = MagicMock()
         
-        with patch.dict('sys.modules', {
-            'gnucash_uk_vat.accounts_gnucash': mock_gnucash_module,
-            'gnucash_uk_vat.accounts_piecash': mock_piecash_module
-        }):
-            # Call multiple times in different orders
-            accounts.get_class("gnucash")
-            accounts.get_class("piecash")
-            accounts.get_class("gnucash")
-            accounts.get_class("piecash")
-            
-            # Should not raise any exceptions
-            # Both modules should have been accessed
-            assert mock_gnucash_module.Accounts is not None
-            assert mock_piecash_module.Accounts is not None
+        with _patch_submodule('accounts_gnucash', mock_gnucash_module):
+            with _patch_submodule('accounts_piecash', mock_piecash_module):
+                # Call multiple times in different orders
+                accounts.get_class("gnucash")
+                accounts.get_class("piecash")
+                accounts.get_class("gnucash")
+                accounts.get_class("piecash")
+
+                # Should not raise any exceptions
+                # Both modules should have been accessed
+                assert mock_gnucash_module.Accounts is not None
+                assert mock_piecash_module.Accounts is not None
 
 
 class TestDocumentationCompliance:
@@ -250,7 +291,7 @@ class TestDocumentationCompliance:
             mock_accounts_module = MagicMock()
             mock_accounts_module.Accounts = MagicMock()
             
-            with patch.dict('sys.modules', {f'gnucash_uk_vat.accounts_{account_type}': mock_accounts_module}):
+            with _patch_submodule(f'accounts_{account_type}', mock_accounts_module):
                 # Should not raise an exception
                 result = accounts.get_class(account_type)
                 assert result is not None
@@ -274,12 +315,12 @@ class TestRobustness:
         mock_accounts_class = MagicMock()
         mock_accounts_module.Accounts = mock_accounts_class
         
-        with patch.dict('sys.modules', {'gnucash_uk_vat.accounts_gnucash': mock_accounts_module}):
+        with _patch_submodule('accounts_gnucash', mock_accounts_module):
             # Call multiple times
             result1 = accounts.get_class("gnucash")
             result2 = accounts.get_class("gnucash")
             result3 = accounts.get_class("gnucash")
-            
+
             # All should return the same class
             assert result1 == mock_accounts_class
             assert result2 == mock_accounts_class

@@ -14,88 +14,95 @@ from gnucash_uk_vat.auth import Auth
 from unittest.mock import MagicMock
 
 
+def _mock_config_get(key):
+    """Return realistic config values; proxy keys return None (direct mode)."""
+    return {
+        "application.client-id": "test-client-id",
+    }.get(key)
+
+
 class TestOAuthAuthorizationContract:
     """Test OAuth authorization flow contract"""
-    
+
     def test_authorization_url_format(self):
         """Verify authorization URL matches HMRC OAuth specification"""
         mock_config = MagicMock()
-        mock_config.get.return_value = "test-client-id"
-        
+        mock_config.get.side_effect = _mock_config_get
+
         mock_auth = MagicMock()
         vat_client = Vat(mock_config, mock_auth)
-        
+
         auth_url = vat_client.get_auth_url()
-        
+
         # Parse the URL
         parsed_url = urlparse(auth_url)
         query_params = parse_qs(parsed_url.query)
-        
+
         # Verify base URL
         assert parsed_url.scheme == "https"
         assert parsed_url.netloc == "www.tax.service.gov.uk"
         assert parsed_url.path == "/oauth/authorize"
-        
+
         # Verify required OAuth parameters
         assert query_params["response_type"][0] == "code"
         assert query_params["client_id"][0] == "test-client-id"
         assert query_params["scope"][0] == "read:vat write:vat"
         assert query_params["redirect_uri"][0] == "http://localhost:9876/auth"
-        
+
         # Verify no unexpected parameters
         expected_params = {"response_type", "client_id", "scope", "redirect_uri"}
         actual_params = set(query_params.keys())
         assert actual_params == expected_params
-    
+
     def test_test_environment_authorization_url(self):
         """Verify test environment authorization URL"""
         mock_config = MagicMock()
-        mock_config.get.return_value = "test-client-id"
-        
+        mock_config.get.side_effect = _mock_config_get
+
         mock_auth = MagicMock()
         vat_test_client = VatTest(mock_config, mock_auth, None)
-        
+
         auth_url = vat_test_client.get_auth_url()
         parsed_url = urlparse(auth_url)
-        
+
         # Should use test environment domain
         assert parsed_url.netloc == "test-www.tax.service.gov.uk"
         assert parsed_url.path == "/oauth/authorize"
-    
+
     def test_redirect_uri_format(self):
         """Verify redirect URI matches expected format"""
         mock_config = MagicMock()
-        mock_config.get.return_value = "test-client-id"
-        
+        mock_config.get.side_effect = _mock_config_get
+
         mock_auth = MagicMock()
         vat_client = Vat(mock_config, mock_auth)
-        
+
         auth_url = vat_client.get_auth_url()
         parsed_url = urlparse(auth_url)
         query_params = parse_qs(parsed_url.query)
-        
+
         redirect_uri = query_params["redirect_uri"][0]
         parsed_redirect = urlparse(redirect_uri)
-        
+
         # Verify redirect URI format
         assert parsed_redirect.scheme == "http"
         assert parsed_redirect.netloc == "localhost:9876"
         assert parsed_redirect.path == "/auth"
-    
+
     def test_scope_format(self):
         """Verify OAuth scope matches HMRC specification"""
         mock_config = MagicMock()
-        mock_config.get.return_value = "test-client-id"
-        
+        mock_config.get.side_effect = _mock_config_get
+
         mock_auth = MagicMock()
         vat_client = Vat(mock_config, mock_auth)
-        
+
         auth_url = vat_client.get_auth_url()
         parsed_url = urlparse(auth_url)
         query_params = parse_qs(parsed_url.query)
-        
+
         scope = query_params["scope"][0]
-        
+
         # Verify scope format and required permissions
         assert "read:vat" in scope
         assert "write:vat" in scope
