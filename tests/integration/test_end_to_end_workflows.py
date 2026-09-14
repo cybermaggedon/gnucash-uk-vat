@@ -16,6 +16,7 @@ from gnucash_uk_vat.hmrc import VatLocalTest
 from gnucash_uk_vat.model import Return
 
 
+@pytest.mark.slow
 @pytest.mark.asyncio
 class TestEndToEndWorkflows:
     """Test complete VAT management workflows"""

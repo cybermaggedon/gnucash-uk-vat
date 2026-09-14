@@ -17,7 +17,7 @@ from pathlib import Path
 class TestCLIIntegration:
     """Test CLI operations end-to-end"""
     
-    async def test_cli_help_command(self, vat_test_service):
+    async def test_cli_help_command(self):
         """Test that CLI help command works"""
         result = subprocess.run(
             ['python', '-m', 'gnucash_uk_vat', '--help'],
@@ -29,7 +29,7 @@ class TestCLIIntegration:
         assert "usage:" in result.stdout.lower()
         assert "Gnucash to HMRC VAT API" in result.stdout
     
-    async def test_cli_init_config(self, vat_test_service, tmp_path):
+    async def test_cli_init_config(self, tmp_path):
         """Test CLI config initialization"""
         config_file = tmp_path / "test_cli_config.json"
         
@@ -52,7 +52,7 @@ class TestCLIIntegration:
         assert "identity" in config_data
         assert "accounts" in config_data
     
-    async def test_cli_version_display(self, vat_test_service):
+    async def test_cli_version_display(self):
         """Test CLI version display via help command"""
         
         result = subprocess.run([
@@ -63,6 +63,7 @@ class TestCLIIntegration:
         assert result.returncode == 0
         assert "Gnucash to HMRC VAT API" in result.stdout
     
+    @pytest.mark.slow
     async def test_cli_show_obligations(self, vat_test_service, integration_test_env):
         """Test CLI show obligations command"""
         
@@ -84,6 +85,7 @@ class TestCLIIntegration:
         # Should show obligation statuses
         assert "O" in result.stdout or "F" in result.stdout  # Open or Fulfilled status
     
+    @pytest.mark.slow
     async def test_cli_show_open_obligations(self, vat_test_service, integration_test_env):
         """Test CLI show open obligations command"""
         
@@ -106,6 +108,7 @@ class TestCLIIntegration:
                 # If there's an 'F', it should be part of a date, not a status
                 assert 'F ' not in line  # 'F ' indicates status, not date
     
+    @pytest.mark.slow
     async def test_cli_show_liabilities(self, vat_test_service, integration_test_env):
         """Test CLI show liabilities command"""
         
@@ -124,6 +127,7 @@ class TestCLIIntegration:
         # Should show liability amounts
         assert any(char.isdigit() for char in result.stdout)  # Should contain numbers
     
+    @pytest.mark.slow
     async def test_cli_show_payments(self, vat_test_service, integration_test_env):
         """Test CLI show payments command"""
         
@@ -142,6 +146,7 @@ class TestCLIIntegration:
         # Should show payment amounts
         assert any(char.isdigit() for char in result.stdout)  # Should contain numbers
     
+    @pytest.mark.slow
     async def test_cli_show_vat_return(self, vat_test_service, integration_test_env):
         """Test CLI show VAT return command"""
         
@@ -165,7 +170,7 @@ class TestCLIIntegration:
         else:
             assert "does not match" in result.stderr or "No" in result.stderr
     
-    async def test_cli_invalid_config_file(self, vat_test_service, tmp_path):
+    async def test_cli_invalid_config_file(self, tmp_path):
         """Test CLI with invalid config file"""
         invalid_config = tmp_path / "invalid_config.json"
         
@@ -182,7 +187,7 @@ class TestCLIIntegration:
         # Should fail with non-zero exit code
         assert result.returncode != 0
     
-    async def test_cli_missing_config_file(self, vat_test_service, tmp_path):
+    async def test_cli_missing_config_file(self, tmp_path):
         """Test CLI with missing config file"""
         missing_config = tmp_path / "missing_config.json"
         
@@ -195,7 +200,7 @@ class TestCLIIntegration:
         # Should fail with non-zero exit code
         assert result.returncode != 0
     
-    async def test_cli_missing_auth_file(self, vat_test_service, integration_test_env, tmp_path):
+    async def test_cli_missing_auth_file(self, integration_test_env, tmp_path):
         """Test CLI with missing auth file"""
         missing_auth = tmp_path / "missing_auth.json"
         
@@ -209,6 +214,7 @@ class TestCLIIntegration:
         # Should fail with non-zero exit code (no auth file)
         assert result.returncode != 0
     
+    @pytest.mark.slow
     async def test_cli_authentication_url_display(self, vat_test_service, integration_test_env, tmp_path):
         """Test CLI authentication URL display"""
         
@@ -226,6 +232,7 @@ class TestCLIIntegration:
         output = result.stdout + result.stderr
         assert "http://localhost:8081/oauth/authorize" in output or "authenticate" in output.lower()
     
+    @pytest.mark.slow
     async def test_cli_date_range_parameters(self, vat_test_service, integration_test_env):
         """Test CLI with date range parameters"""
         
@@ -244,6 +251,7 @@ class TestCLIIntegration:
         # Should show obligations in the specified range
         assert "Start" in result.stdout and "End" in result.stdout
     
+    @pytest.mark.slow
     async def test_cli_json_output(self, vat_test_service, integration_test_env):
         """Test CLI with JSON output"""
         

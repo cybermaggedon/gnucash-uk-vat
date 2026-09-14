@@ -7,3 +7,4 @@ mypy>=1.0.0
 types-tabulate  # Type stubs for tabulate
 netifaces
 aiohttp
+pytest-aiohttp>=1.0.0
