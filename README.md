@@ -121,12 +121,20 @@ being empty. But, no other errors should appear.
 
 Once tested, you can click 'Get production credentials' and enter details about the
 application.  When you apply for credentials, HMRC will contact
-you to fill in an application.  As I understand it, this involves going
-through a full acceptance test which involves testing against the
-sandbox (which is what I have done).
+you to fill in an application.
 
-You'll then need to change the config again using your production credentials and
-`profile` set to `prod`.
+The list of endpoints supported at any point in time can be found by looking through
+the features at: https://github.com/cybermaggedon/gnucash-uk-vat/blob/master/docs/cli.md#using-gnucash-uk-vat
+
+As the software doesn't handle user data, you shouldn't need to include ToS, but you
+can always point to the simple license and notice at:
+https://github.com/cybermaggedon/gnucash-uk-vat#licences-compliance-etc
+
+You will likely be asked to test all supported features, so probably best to run
+through each example command listed in the CLI docs when submitting.
+
+After approval (can takes months), you'll then need to change the config again
+using your production ID and secret, plus change `profile` to `prod`.
 
 ## Installing
 
