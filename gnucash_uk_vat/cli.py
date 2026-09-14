@@ -69,8 +69,8 @@ def create_parser() -> argparse.ArgumentParser:
                         help='Define obligation by specifying due date')
     parser.add_argument('--submit-vat-return', action='store_true',
                         help='Submit VAT return for obligation due date')
-    #parser.add_argument('--post-vat-bill', action='store_true',
-    #                    help='Post a VAT bill to accounts for due date')
+    parser.add_argument('--post-vat-bill', action='store_true',
+                        help='Post a VAT bill to accounts for due date')
     parser.add_argument('--show-liabilities', action='store_true',
                         help='Show VAT liabilities')
     parser.add_argument('--show-payments', action='store_true',
@@ -136,14 +136,14 @@ async def run() -> None:
         due = datetime.datetime.fromisoformat(args.due_date).date()
         await submit_vat_return(due, h, config)
         sys.exit(0)
-#    elif args.post_vat_bill:
-#        start = datetime.datetime.fromisoformat(args.start).date()
-#        end = datetime.datetime.fromisoformat(args.end).date()
-#        if args.due_date == None:
-#            raise RuntimeError("--due-date must be specified")
-#        due = datetime.datetime.fromisoformat(args.due_date).date()
-#        post_vat_bill(start, end, due, h, config)
-#        sys.exit(0)
+    elif args.post_vat_bill:
+        start = datetime.datetime.fromisoformat(args.start).date()
+        end = datetime.datetime.fromisoformat(args.end).date()
+        if args.due_date == None:
+            raise RuntimeError("--due-date must be specified")
+        due = datetime.datetime.fromisoformat(args.due_date).date()
+        await post_vat_bill(start, end, due, h, config)
+        sys.exit(0)
     elif args.show_account_detail:
         if args.due_date == None:
             raise RuntimeError("--due-date must be specified")

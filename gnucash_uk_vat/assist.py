@@ -656,7 +656,9 @@ class UI:
         # from end of accounting period
         end = self.selected_obligation.end
         due = self.selected_obligation.due
-        accts.post_bill(
+        vat.post_vat_bill(
+            accts,
+            self.vat.config,
             str(due),
             end,
             end + timedelta(days=28) + timedelta(days=7),
@@ -665,7 +667,7 @@ class UI:
             "VAT payment for due date " + str(due)
         )
 
-        # self.assistant.set_page_complete(self.post_bill_w.widget, True)
+        self.assistant.set_page_complete(self.post_bill_w.widget, True)
 
         self.summary.write("Posted bill for period, due %s\n\n" % str(due))
         
@@ -795,11 +797,11 @@ class UI:
                                      Gtk.AssistantPageType.CONTENT)
         self.assistant.set_page_title(self.vat_return_w.widget, "VAT return")
 
-#        self.post_bill_w = BillPosting(self)
-#        self.assistant.append_page(self.post_bill_w.widget)
-#        self.assistant.set_page_type(self.post_bill_w.widget,
-#                                     Gtk.AssistantPageType.CONTENT)
-#        self.assistant.set_page_title(self.post_bill_w.widget, "Post VAT bill")
+        self.post_bill_w = BillPosting(self)
+        self.assistant.append_page(self.post_bill_w.widget)
+        self.assistant.set_page_type(self.post_bill_w.widget,
+                                     Gtk.AssistantPageType.CONTENT)
+        self.assistant.set_page_title(self.post_bill_w.widget, "Post VAT bill")
 
         self.summary_w = Summary(self)
         self.assistant.append_page(self.summary_w.widget)
@@ -857,8 +859,8 @@ class UI:
             if page == self.vat_return_w.widget:
                 self.configure_vat_return()
 
-#            if page == self.post_bill_w.widget:
-#                self.post_bill_w.configure(self.vat_return)
+            if page == self.post_bill_w.widget:
+                self.post_bill_w.configure(self.vat_return)
 
             if page == self.summary_w.widget:
                 self.summary_w.show(self.summary.getvalue())
