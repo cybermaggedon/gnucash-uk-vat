@@ -397,7 +397,7 @@ class SelectObligation:
             if w.get_active():
                 self.ui.select_obligation(ob)
 
-        for v in obls:
+        for v in reversed(obls):
             rb = Gtk.RadioButton.new_from_widget(grp)
             if grp == None:
                 grp = rb
