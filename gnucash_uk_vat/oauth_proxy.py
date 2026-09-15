@@ -9,6 +9,8 @@ import sys
 import aiohttp
 from aiohttp import web
 
+from .crypto import encrypt_response
+
 
 def verify_hash(secret, email, provided_hash):
     expected = hmac.new(
@@ -120,7 +122,10 @@ class OAuthProxy:
                     )
                 result = await resp.json()
 
-        return web.json_response(result)
+        encrypted = encrypt_response(
+            result, email, self.verification_secret,
+        )
+        return web.json_response(encrypted)
 
     async def refresh(self, request):
 
@@ -175,7 +180,10 @@ class OAuthProxy:
                     )
                 result = await resp.json()
 
-        return web.json_response(result)
+        encrypted = encrypt_response(
+            result, email, self.verification_secret,
+        )
+        return web.json_response(encrypted)
 
     def create_app(self):
         app = web.Application()

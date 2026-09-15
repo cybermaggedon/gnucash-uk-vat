@@ -8,6 +8,7 @@ from unittest.mock import MagicMock, patch, AsyncMock
 from datetime import datetime, timezone
 
 from gnucash_uk_vat.hmrc import Vat
+from gnucash_uk_vat.crypto import encrypt_response
 
 
 PROXY_URL = "http://localhost:8888"
@@ -100,14 +101,17 @@ class TestGetAuthCoroProxy:
     async def test_exchanges_code_via_proxy(self):
         vat = Vat(make_config(proxy=True), make_auth())
 
-        mock_resp = AsyncMock()
-        mock_resp.status = 200
-        mock_resp.json.return_value = {
+        token_payload = {
             "access_token": "new-access",
             "refresh_token": "new-refresh",
             "token_type": "bearer",
             "expires_in": 14400,
         }
+        encrypted = encrypt_response(token_payload, PROXY_EMAIL, PROXY_SECRET)
+
+        mock_resp = AsyncMock()
+        mock_resp.status = 200
+        mock_resp.json.return_value = encrypted
 
         mock_post_ctx = AsyncMock()
         mock_post_ctx.__aenter__.return_value = mock_resp
@@ -160,14 +164,17 @@ class TestRefreshTokenCoroProxy:
     async def test_refreshes_via_proxy(self):
         vat = Vat(make_config(proxy=True), make_auth())
 
-        mock_resp = AsyncMock()
-        mock_resp.status = 200
-        mock_resp.json.return_value = {
+        token_payload = {
             "access_token": "refreshed-access",
             "refresh_token": "refreshed-refresh",
             "token_type": "bearer",
             "expires_in": 14400,
         }
+        encrypted = encrypt_response(token_payload, PROXY_EMAIL, PROXY_SECRET)
+
+        mock_resp = AsyncMock()
+        mock_resp.status = 200
+        mock_resp.json.return_value = encrypted
 
         mock_post_ctx = AsyncMock()
         mock_post_ctx.__aenter__.return_value = mock_resp

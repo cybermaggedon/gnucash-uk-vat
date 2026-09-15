@@ -11,6 +11,7 @@ import hmac as hmac_mod
 from typing import Optional, Dict, Any, List, Union
 
 from . import config
+from .crypto import decrypt_response
 from . model import *
 
 # AuthCollector is a class which provides a temporary web service in order
@@ -274,6 +275,10 @@ class Vat:
                     raise RuntimeError(f"Proxy error: HTTP {resp.status}")
                 res = await resp.json()
 
+        secret = self.config.get("proxy.secret") or self.DEFAULT_VERIFICATION_SECRET
+        email = self.config.get("proxy.email")
+        res = decrypt_response(res, email, secret)
+
         required_fields = ["access_token", "refresh_token", "token_type", "expires_in"]
         missing_fields = [field for field in required_fields if field not in res]
         if missing_fields:
@@ -362,6 +367,10 @@ class Vat:
                 if resp.status != 200:
                     raise RuntimeError(f"Proxy error: HTTP {resp.status}")
                 res = await resp.json()
+
+        secret = self.config.get("proxy.secret") or self.DEFAULT_VERIFICATION_SECRET
+        email = self.config.get("proxy.email")
+        res = decrypt_response(res, email, secret)
 
         required_fields = ["access_token", "refresh_token", "token_type", "expires_in"]
         missing_fields = [field for field in required_fields if field not in res]
