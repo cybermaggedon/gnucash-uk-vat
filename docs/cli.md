@@ -55,7 +55,8 @@ To continue you need to edit some things:
   `gnucash-uk-vat` to the HMRC APIs.
   The `profile` element can be `test` (Sandbox) or `prod` (production)
   to determine which HMRC API to talk to.  Or `local` to talk to my test VAT
-  service (see below).
+  service (see below).  In proxy mode (see Authentication below), the
+  `client-id` and `client-secret` fields are not needed.
 - The `identity` block contains information about you.  The `vrn` elements
   contains your VAT registration number.  The other elements are *legally
   required* by HMRC's fraud API, but are difficult to gather.  So, you
@@ -64,14 +65,43 @@ To continue you need to edit some things:
 
 ### Authentication
 
-Once you have the configuration set up, you can proceed to authenticate using
-a web browser.
+There are two authentication modes.  In both cases, the user-facing steps
+are the same: you visit a URL, log into HMRC, and grant permission.
+
+#### Proxy mode (recommended)
+
+Add a `proxy` section to your configuration file:
+
+```json
+{
+  "proxy": {
+    "email": "you@example.com"
+  }
+}
+```
+
+Setting `proxy.email` activates proxy mode.  The hosted proxy holds the
+HMRC application credentials on your behalf, so you do not need to
+register as an HMRC developer or set `client-id` / `client-secret` in
+your configuration.
+
+#### Direct mode
+
+If you have your own HMRC developer credentials, you can authenticate
+directly.  Set `client-id` and `client-secret` in the `application`
+block of your configuration file.  When `proxy.email` is not set, the
+client talks directly to HMRC for all authentication operations.
+
+#### Authenticating
+
+Once you have the configuration set up, you can proceed to authenticate
+using a web browser.
 
 ```
 gnucash-uk-vat --authenticate
 ```
 
-This initiates an OAUTH2 authentication process.  You should see output:
+This initiates an OAuth2 authentication process.  You should see output:
 ```
 Please visit the following URL and authenticate:
 https://....gov.uk/oauth/authorize?response_type=code&client_id=...

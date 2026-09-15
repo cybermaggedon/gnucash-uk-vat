@@ -30,7 +30,9 @@ containing VAT records.  See [GnuCash accounts structure](accounts.md).
 ![alt text](screen3.png)
 
 The next screen allows you to authenticate with HMRC and store a
-credential in `auth.json`.
+credential in `auth.json`.  This works in both proxy mode and direct
+mode -- see [CLI usage](cli.md#authentication) for details on
+configuring each mode.
 
 ![alt text](screen4.png)
 
