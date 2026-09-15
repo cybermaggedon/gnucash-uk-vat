@@ -15,41 +15,6 @@ owing, and posted to an Accounts Payable account.
 There's a #gnucash-uk-vat channel on our Discord server if you want
 to discuss... https://discord.gg/3cAvPASS6p
 
-## A word from our sponsors :)
-
-If you need low cost, automated accounts filing for small businesses,
-Accounts Machine has a commercial offering which incorporates the
-functionality you see here in a web service.
-
-The proposition is simple.  Accounts Machine does not offer an
-accounting system.  You manage your accounts using GnuCash or anything
-which produces CSV output.  You manage your accounts, manage your
-invoices, manage receipts, and record everything in your application
-under your control.  When it comes to filing returns, you upload your
-accounts to accountsmachine.io and use the system to file VAT returns,
-corporation tax returns, and company accounts with Companies House.
-The production of returns is as automated as possible.  Accounts
-production conforms to iXBRL specifications, and HMRC VAT MTD.
-
-This service is able to simplify accounts filing for simple businesses.
-Your company should be a Limited Company, conform to micro-entity
-requirements, and have a single trade.  This service is aimed at making
-life easier for startups and small businesses.
-
-The roadmap is for launch in 2Q2022.  VAT filing is complete, just going
-through the final validation process with HMRC.
-[Demo is here](https://drive.google.com/file/d/1hMIPaSKxuWNScTD_0-tdmwexLYWCzTAv/view?usp=sharing)
-
-Visit https://accountsmachine.io.  Accounts Machine is registered with HMRC
-and Companies House for filing purposes and have successfully filed VAT,
-corp tax and company accounts.
-
-Join our discord service to keep on top of latest progress:
-https://discord.gg/3cAvPASS6p
-
-Enthusiastic early adopters will find free deal links on the Discord
-server.  Looking forward to filing for you. :)
-
 ## GnuCash backends
 
 Two ways of interacting with your GnuCash accounts are supported:
@@ -70,29 +35,41 @@ https://discord.gg/3cAvPASS6p and I'll try to help you through the process.
 
 ## Credentials
 
-In order to use this, you need production credentials (client ID and secret)
-for the VAT submission API.  HMRC does not permit these credentials to be
-shared publicly:
+There are two ways to authenticate with HMRC.
 
-> We have checked with our colleagues who look after HMRC’s API
-> Platform. They have advised that this is not allowed and would be likely
-> to result in your Developer Hub application being blocked. We recommend
-> that instead of sharing these credentials that you inform your users how
-> they can register for their own Developer Hub application and use its
-> credentials with your code.
+### Proxy mode (recommended)
 
-In order to get credentials you would need to go through the full process to
-register as a VAT MTD provider, which is not a simple process.
+The simplest approach is to use the hosted OAuth proxy.  The proxy holds
+the HMRC application credentials on your behalf, so you do not need to
+register as an HMRC developer.  Add a `proxy` section to your
+configuration file:
 
-You would need to apply for production credentials using the HMRC developer
-portal (you need to register).
+```json
+{
+  "proxy": {
+    "email": "you@example.com"
+  }
+}
+```
 
-Developer hub: 
+Setting `proxy.email` activates proxy mode.  Authentication, token
+exchange, and token refresh are handled through the proxy; all other
+HMRC API calls (obligations, returns, etc.) go directly to HMRC using
+your bearer token.
+
+### Direct mode
+
+If you prefer to authenticate directly with HMRC, you will need your own
+production credentials (client ID and secret).  HMRC does not permit
+these credentials to be shared publicly, so you must register for your
+own.
+
+Developer hub:
 https://developer.service.hmrc.gov.uk/api-documentation/docs/using-the-hub
 
-### Testing
+#### Testing
 
-To use the staging API to test your integration, after registering you'll
+To use the staging API to test your integration, after registering you’ll
 need to change some settings in `config.json` under the `application` section:
 
   - Set `profile` to `test`.
@@ -105,9 +82,9 @@ section and add `http://localhost:9876/auth`.
 When following the auth link, just follow the links to get credentials and
 a VRN for a test user from HMRC.
 
-#### Fraud headers
+##### Fraud headers
 
-Before requesting production access, you'll need to test the fraud headers.
+Before requesting production access, you’ll need to test the fraud headers.
 
 To do this, run `test/test_fraud_api.py` (it accepts `--config` if not using the default).
 
@@ -117,23 +94,23 @@ them with `gnucash-uk-vat --authenticate` (again, accepts `--config`).
 The response is expected to include a warning due to `gov-client-multi-factor`
 being empty. But, no other errors should appear.
 
-### Production
+#### Production
 
-Once tested, you can click 'Get production credentials' and enter details about the
+Once tested, you can click ‘Get production credentials’ and enter details about the
 application.  When you apply for credentials, HMRC will contact
 you to fill in an application.
 
 The list of endpoints supported at any point in time can be found by looking through
 the features at: https://github.com/cybermaggedon/gnucash-uk-vat/blob/master/docs/cli.md#using-gnucash-uk-vat
 
-As the software doesn't handle user data, you shouldn't need to include ToS, but you
+As the software doesn’t handle user data, you shouldn’t need to include ToS, but you
 can always point to the simple license and notice at:
 https://github.com/cybermaggedon/gnucash-uk-vat#licences-compliance-etc
 
 You will likely be asked to test all supported features, so probably best to run
 through each example command listed in the CLI docs when submitting.
 
-After approval (can takes months), you'll then need to change the config again
+After approval (can take months), you’ll then need to change the config again
 using your production ID and secret, plus change `profile` to `prod`.
 
 ## Installing
@@ -182,19 +159,29 @@ which match the obligations in the `dummy-vat-service` data.
 
 ## Privacy
 
-`gnucash-uk-vat` is hosted by you.  It runs on your computer, accesses
-information from your accounts, and forwards data using the HMRC APIs.
-Everything is within your control.  No other network systems are used, and no
-information is transmitted to other parties.
+`gnucash-uk-vat` is hosted by you.  It runs on your computer and accesses
+information from your accounts.
 
-Additional data (configuration and credentials) is stored on your
-filesystem under your control and you should manage the credential
-files as you would any password or other secret.
+In **direct mode**, all data flows directly between your software and
+HMRC services.  No other network systems are involved.
+
+In **proxy mode**, all data also flows directly between you and HMRC,
+with the sole exception of credential provisioning.  A proxy operated
+by this project acts as a mediator so that HMRC application credentials
+are provisioned to you using our security credentials, without revealing
+those credentials to anyone else.  No information is stored by us in
+this process.  The proxy source code is included in this repository
+and can be inspected.  All other interactions -- VAT submissions, API
+access, and so on -- are done directly between your software and HMRC
+services.
+
+Configuration and credentials are stored on your filesystem under your
+control and you should manage the credential files as you would any
+password or other secret.
 
 ## Licence
 
-Copyright (c) 2020-2021, Cyberapocalypse Limited
-Copyright (c) 2021-2024, Accounts Machine Limited
+Copyright (c) 2021-2026, Cybermaggedon
 
 This program is free software: you can redistribute it and/or modify
 it under the terms of the GNU General Public License as published by

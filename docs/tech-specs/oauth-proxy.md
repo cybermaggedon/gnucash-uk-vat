@@ -213,27 +213,29 @@ The email and hash are validated by the proxy and not forwarded to HMRC.
 ## Client Changes
 
 A new authentication mode is added alongside the existing direct mode.  The
-choice is driven by configuration: when `application.client-id` and
-`application.client-secret` are present, the client authenticates directly
-with HMRC as it does today.  When a `proxy.url` is configured instead, the
-client uses the proxy service.
+choice is driven by configuration: when `proxy.email` is set, the client
+uses the proxy service.  Otherwise the client authenticates directly
+with HMRC using `application.client-id` and `application.client-secret`
+as it does today.
 
 ### Configuration
 
 ```json
 {
   "proxy": {
-    "url": "https://auth.example.com",
-    "email": "user@example.com",
-    "secret": "shared-secret-here"
+    "email": "user@example.com"
   }
 }
 ```
 
+| Field          | Required | Description                                                                 |
+|----------------|----------|-----------------------------------------------------------------------------|
+| `proxy.email`  | yes      | User's email address.  Presence of this field activates proxy mode.         |
+| `proxy.url`    | no       | Proxy service URL.  Defaults to `https://auth.prod.accountsmachine.io`.     |
+
 When proxy mode is active, `application.client-id` and
-`application.client-secret` are not required.  The `email` and `secret`
-fields are used to compute the verification hash sent with each proxy
-request.
+`application.client-secret` are not required.  The `email` is used to
+compute the verification hash sent with each proxy request.
 
 ### Affected code
 
