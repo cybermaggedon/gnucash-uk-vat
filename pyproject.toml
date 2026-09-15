@@ -28,6 +28,7 @@ classifiers = [
 keywords = ["vat", "hmrc", "gnucash", "accounting", "uk", "tax"]
 dependencies = [
     "aiohttp",
+    "cryptography",
     "py-dmidecode",
     "piecash",
     "netifaces",

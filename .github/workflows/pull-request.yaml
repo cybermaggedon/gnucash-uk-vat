@@ -71,7 +71,7 @@ jobs:
         run: |
           python -m pip install --upgrade pip
           pip install pytest pytest-asyncio pytest-mock
-          pip install aiohttp tabulate netifaces
+          pip install aiohttp cryptography tabulate netifaces
 
       - name: Run core unit tests (without hardware-dependent tests)
         run: |

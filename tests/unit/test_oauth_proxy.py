@@ -10,6 +10,7 @@ from aiohttp import web
 from aiohttp.test_utils import AioHTTPTestCase, TestClient, TestServer
 
 from gnucash_uk_vat.oauth_proxy import OAuthProxy, verify_hash
+from gnucash_uk_vat.crypto import decrypt_response
 
 
 VERIFICATION_SECRET = "test-verification-secret"
@@ -124,7 +125,50 @@ class TestAuthUrl:
         assert "localhost%3A5555" in data["url"] or "localhost:5555" in data["url"]
 
 
+HMRC_TOKEN_RESPONSE = {
+    "access_token": "test-access-token",
+    "refresh_token": "test-refresh-token",
+    "token_type": "bearer",
+    "expires_in": 14400,
+}
+
+
 class TestToken:
+
+    @pytest.mark.asyncio
+    async def test_returns_encrypted_response(self, client):
+        mock_resp = AsyncMock()
+        mock_resp.status = 200
+        mock_resp.json.return_value = HMRC_TOKEN_RESPONSE
+
+        mock_ctx = AsyncMock()
+        mock_ctx.__aenter__.return_value = mock_resp
+
+        mock_session = MagicMock()
+        mock_session.post.return_value = mock_ctx
+
+        mock_cs = AsyncMock()
+        mock_cs.__aenter__.return_value = mock_session
+
+        with patch("aiohttp.ClientSession", return_value=mock_cs):
+            resp = await client.post("/token", json={
+                "code": "testcode",
+                "redirect_uri": "http://localhost:9876/auth",
+                "email": TEST_EMAIL,
+                "hash": VALID_HASH,
+            })
+
+        assert resp.status == 200
+        data = await resp.json()
+        assert "slug" in data
+        assert "encrypted" in data
+        assert "access_token" not in data
+
+        decrypted = decrypt_response(data, TEST_EMAIL, VERIFICATION_SECRET)
+        assert decrypted["access_token"] == "test-access-token"
+        assert decrypted["refresh_token"] == "test-refresh-token"
+        assert decrypted["token_type"] == "bearer"
+        assert decrypted["expires_in"] == 14400
 
     @pytest.mark.asyncio
     async def test_missing_code_returns_400(self, client):
@@ -156,6 +200,38 @@ class TestToken:
 
 
 class TestRefresh:
+
+    @pytest.mark.asyncio
+    async def test_returns_encrypted_response(self, client):
+        mock_resp = AsyncMock()
+        mock_resp.status = 200
+        mock_resp.json.return_value = HMRC_TOKEN_RESPONSE
+
+        mock_ctx = AsyncMock()
+        mock_ctx.__aenter__.return_value = mock_resp
+
+        mock_session = MagicMock()
+        mock_session.post.return_value = mock_ctx
+
+        mock_cs = AsyncMock()
+        mock_cs.__aenter__.return_value = mock_session
+
+        with patch("aiohttp.ClientSession", return_value=mock_cs):
+            resp = await client.post("/refresh", json={
+                "refresh_token": "old-token",
+                "email": TEST_EMAIL,
+                "hash": VALID_HASH,
+            })
+
+        assert resp.status == 200
+        data = await resp.json()
+        assert "slug" in data
+        assert "encrypted" in data
+        assert "access_token" not in data
+
+        decrypted = decrypt_response(data, TEST_EMAIL, VERIFICATION_SECRET)
+        assert decrypted["access_token"] == "test-access-token"
+        assert decrypted["refresh_token"] == "test-refresh-token"
 
     @pytest.mark.asyncio
     async def test_missing_refresh_token_returns_400(self, client):
