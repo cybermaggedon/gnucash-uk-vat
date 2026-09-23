@@ -22,9 +22,18 @@ def get_vat(accounts, config, start, end):
         elif isinstance(locator, list):
             all_splits = []
             for elt in locator:
-                acct = accounts.get_account(None, elt)
+                if isinstance(elt, dict):
+                    acct_name = elt["account"]
+                    reversed = elt.get("reversed", False)
+                else:
+                    acct_name = elt
+                    reversed = False
+                acct = accounts.get_account(None, acct_name)
                 splits = accounts.get_splits(acct, start, end)
                 if accounts.is_debit(acct):
+                    for spl in splits:
+                        spl["amount"] *= -1
+                if reversed:
                     for spl in splits:
                         spl["amount"] *= -1
                 all_splits.extend(splits)

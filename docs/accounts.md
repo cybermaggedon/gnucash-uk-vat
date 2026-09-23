@@ -23,6 +23,36 @@ accounts.  Here are the default mappings:
 - Box 8 (`totalValueGoodsSuppliedExVAT`): "Income:Sales:EU:Goods"
 - Box 9 (`totalAcquisitionsExVAT`): "Expenses:VAT Purchases:EU Reverse VAT"
 
+## Multiple accounts per box
+
+Each account mapping can be a single string or an array of strings to
+aggregate multiple accounts into one box:
+
+```
+"totalValuePurchasesExVAT": [
+    "Assets:Capital Equipment",
+    "Expenses"
+]
+```
+
+## Reversed accounts
+
+When using array mappings, each element can be an object with an `account`
+field and a `reversed` flag.  When `reversed` is `true`, the sign of that
+account's contribution is flipped (after the normal debit/credit
+adjustment).  This is useful when an account's natural sign doesn't match
+what the VAT box expects:
+
+```
+"totalValuePurchasesExVAT": [
+    {"account": "Assets:Capital Equipment", "reversed": true},
+    "Expenses"
+]
+```
+
+Plain strings and objects can be mixed in the same array.  The `reversed`
+flag defaults to `false` if omitted.
+
 If you have experience with VAT accounting feel free to offer me a rewrite this
 section :)
 

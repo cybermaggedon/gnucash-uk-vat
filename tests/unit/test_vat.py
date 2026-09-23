@@ -137,6 +137,78 @@ class TestGetVat:
         assert result["vatDueSales"]["splits"][1]["amount"] == -50.0
         assert result["vatDueSales"]["total"] == -150.0  # Negated total
     
+    def test_get_vat_reversed_dict_in_list(self):
+        """Test that reversed flag in dict list elements flips sign"""
+        mock_accounts = MagicMock()
+        mock_account = MagicMock()
+        mock_accounts.get_account.return_value = mock_account
+        mock_accounts.is_debit.return_value = False
+
+        def fresh_splits(*args, **kwargs):
+            return [{"amount": 100.0, "date": date(2023, 1, 15), "description": "Item 1"}]
+        mock_accounts.get_splits.side_effect = fresh_splits
+
+        mock_config = MagicMock()
+        mock_config.get.return_value = {
+            "vatDueSales": "Sales:VAT",
+            "vatDueAcquisitions": "Purchases:VAT",
+            "totalVatDue": "VAT:Total",
+            "vatReclaimedCurrPeriod": "VAT:Reclaimed",
+            "netVatDue": "VAT:Net",
+            "totalValueSalesExVAT": "Sales:ExVAT",
+            "totalValuePurchasesExVAT": [
+                {"account": "Assets:Equipment", "reversed": True},
+                "Expenses"
+            ],
+            "totalValueGoodsSuppliedExVAT": "Sales:Goods",
+            "totalAcquisitionsExVAT": "Purchases:Acquisitions"
+        }
+
+        start_date = date(2023, 1, 1)
+        end_date = date(2023, 3, 31)
+
+        result = vat.get_vat(mock_accounts, mock_config, start_date, end_date)
+
+        splits = result["totalValuePurchasesExVAT"]["splits"]
+        # First element (reversed=True): 100 -> -100
+        assert splits[0]["amount"] == -100.0
+        # Second element (plain string, not reversed): 100
+        assert splits[1]["amount"] == 100.0
+
+    def test_get_vat_reversed_false_dict_in_list(self):
+        """Test that reversed=False in dict behaves same as plain string"""
+        mock_accounts = MagicMock()
+        mock_account = MagicMock()
+        mock_accounts.get_account.return_value = mock_account
+        mock_accounts.is_debit.return_value = False
+
+        test_splits = [
+            {"amount": 100.0, "date": date(2023, 1, 15), "description": "Item 1"},
+        ]
+        mock_accounts.get_splits.return_value = test_splits
+
+        mock_config = MagicMock()
+        mock_config.get.return_value = {
+            "vatDueSales": "Sales:VAT",
+            "vatDueAcquisitions": "Purchases:VAT",
+            "totalVatDue": "VAT:Total",
+            "vatReclaimedCurrPeriod": "VAT:Reclaimed",
+            "netVatDue": "VAT:Net",
+            "totalValueSalesExVAT": "Sales:ExVAT",
+            "totalValuePurchasesExVAT": [
+                {"account": "Expenses", "reversed": False}
+            ],
+            "totalValueGoodsSuppliedExVAT": "Sales:Goods",
+            "totalAcquisitionsExVAT": "Purchases:Acquisitions"
+        }
+
+        start_date = date(2023, 1, 1)
+        end_date = date(2023, 3, 31)
+
+        result = vat.get_vat(mock_accounts, mock_config, start_date, end_date)
+
+        assert result["totalValuePurchasesExVAT"]["splits"][0]["amount"] == 100.0
+
     def test_get_vat_pence_rounding(self):
         """Test that pence boxes (0-4) are rounded to 2 decimal places"""
         # Mock accounts
