@@ -4,8 +4,6 @@ import uuid
 import getpass
 import socket
 import sys
-import netifaces
-
 import datetime
 from pathlib import Path
 from typing import Optional, Dict, Any, Union
@@ -48,21 +46,18 @@ class Config:
         file_path = fileOverride if fileOverride else self.file
         file_path.write_text(json.dumps(self.config, indent=4))
 
-def get_default_gateway_if() -> Any:
-    gateways = netifaces.gateways()
-    default_gateway_if = gateways['default'][netifaces.AF_INET][1]
-    ifaddresses = netifaces.ifaddresses(default_gateway_if)
-    return ifaddresses
+def get_gateway_ip() -> str:
+    s = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
+    try:
+        s.connect(("8.8.8.8", 80))
+        addr: str = s.getsockname()[0]
+        return addr
+    finally:
+        s.close()
 
-def get_gateway_ip() -> Any:
-    default_gateway_if = get_default_gateway_if()
-    ip_addr = default_gateway_if[netifaces.AF_INET][0]['addr']
-    return ip_addr
-
-def get_gateway_mac() -> Any:
-    default_gateway_if = get_default_gateway_if()
-    mac_addr = default_gateway_if[netifaces.AF_LINK][0]['addr']
-    return mac_addr
+def get_gateway_mac() -> str:
+    mac = uuid.getnode()
+    return ':'.join(f'{(mac >> (8 * i)) & 0xff:02x}' for i in reversed(range(6)))
 
 
 
